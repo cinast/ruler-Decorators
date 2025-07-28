@@ -26,8 +26,5 @@
     "scripts": {
         "build": "tsc && node rulerDecorators.js",
         "egg": "echo 'no egg'"
-    },
-    "dependencies": {
-        "tsc": "^2.0.4"
     }
 }
