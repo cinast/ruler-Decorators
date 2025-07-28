@@ -7,7 +7,7 @@
 "experimentalDecorators": true
 ```
 
-# **装饰器神教 _ruler-DECORATORS_** <br> `NOT WELL PREPEARED`
+# **装饰器神教 _ruler-DECORATORS_** <br> (`NOT WELL PREPEARED`)
 
 以下是你为什么选择这个库的原因：
 
