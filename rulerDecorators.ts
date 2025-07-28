@@ -118,103 +118,7 @@ export namespace rulerDecorators {
      * built-in functions
      */
 
-    //     -------- math limit --------
-    /**
-     * Ensures the property value is never less than zero.
-     * @overload Property decorator
-     * @overload Method decorator (set accessor)
-     * @overload Auto-accessor decorator
-     */
-    export const isPositive = $setter((thisArg, key, v: bigint | number) =>
-        typeof v === "bigint" ? (v > 0 ? v : 0n) : Math.max(0, v)
-    );
-
-    /**
-     * Ensures the property value does not exceed a specified limit.
-     * @overload Property decorator
-     * @overload Method decorator (set accessor)
-     * @overload Auto-accessor decorator
-     * @param limit - `[b,n]`The maximum allowed value, \
-     *                `[str]`or the key of the property that holds the limit.
-     */
-    export const noOver = (limit: bigint | number | string) =>
-        $setter<bigint | number>((thisArg, key, v: bigint | number) => {
-            let resolvedLimit: bigint | number;
-
-            if (typeof limit === "string") {
-                const refValue = thisArg[limit];
-                if (typeof refValue === "bigint" || typeof refValue === "number") {
-                    resolvedLimit = refValue;
-                } else {
-                    throw new Error("Referenced limit must be bigint or number");
-                }
-            } else {
-                resolvedLimit = limit;
-            }
-
-            if (typeof v === "bigint") {
-                const bigintLimit = typeof resolvedLimit === "bigint" ? resolvedLimit : BigInt(resolvedLimit);
-                return v < bigintLimit ? v : bigintLimit;
-            } else {
-                const numberLimit = typeof resolvedLimit === "number" ? resolvedLimit : Number(resolvedLimit);
-                return Math.min(numberLimit, v);
-            }
-        });
-
-    /**
-     * Ensures the property value is never less than a specified limit.
-     * @overload Property decorator
-     * @overload Method decorator (set accessor)
-     * @overload Auto-accessor decorator
-     * @param limit - `[b,n]`The minimum allowed value, \
-     *                `[str]`or the key of the property that holds the limit.
-     */
-    export const noLower = (limit: bigint | number | string) =>
-        $setter((thisArg, key, v: bigint | number) => {
-            let resolvedLimit: bigint | number;
-
-            if (typeof limit === "string") {
-                const refValue = thisArg[limit];
-                if (typeof refValue === "bigint" || typeof refValue === "number") {
-                    resolvedLimit = refValue;
-                } else {
-                    throw new Error("Referenced limit must be bigint or number");
-                }
-            } else {
-                resolvedLimit = limit;
-            }
-
-            return typeof v === "bigint"
-                ? BigInt(resolvedLimit) < v
-                    ? v
-                    : BigInt(resolvedLimit)
-                : Math.max(Number(resolvedLimit), v);
-        });
-
-    //     -------- conditional --------
-
-    /**
-     * Intercept when it gonna change, do sth or process input than cover the value
-     * So is why it called `Watch`
-     * @overload Property decorator
-     * @overload Method decorator (set accessor)
-     * @overload Auto-accessor decorator
-     * @param T Input type, or let it infer by itself
-     */
-    export const watchSet = <T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T) => $setter<T>(handle);
-
-    /**
-     * Only allows property changes when condition is satisfied
-     * @overload Property decorator
-     * @overload Method decorator (set accessor)
-     * @overload Auto-accessor decorator
-     * @param condition - Condition checker function
-     * @returns Decorator function
-     */
-    export const changeable_Only_Satisfies = (condition: () => boolean) =>
-        $setter((thisArg, key, v) => (condition() ? v : thisArg));
-
-    //     -------- authority like --------
+    // wonderful tools
 
     /**
      * Conditional write decorator
@@ -224,8 +128,8 @@ export namespace rulerDecorators {
      * @param conditionHandles - Conditions to check
      * @returns Decorator function
      */
-    export const conditionalWrite = (...conditionHandles: (boolean | ((thisArg: any, key: any, v: any) => boolean))[]) => {
-        return $setter((thisArg, key, v) =>
+    export const conditionalWrite = <T = any>(...conditionHandles: (boolean | ((thisArg: any, key: any, v: T) => boolean))[]) => {
+        return $setter<T>((thisArg, key, v: T) =>
             conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, v) : h)) ? v : thisArg[key]
         );
     };
@@ -243,6 +147,60 @@ export namespace rulerDecorators {
             conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key) : h)) ? thisArg[key] : undefined
         );
     };
+
+    //     -------- math limit --------
+    /**
+     * rejects negative numbers, receives positive one
+     * @overload Property decorator
+     * @overload Method decorator (set accessor)
+     * @overload Auto-accessor decorator
+     */
+    export const alwaysPositive = conditionalWrite<bigint | number>((thisArg, key, v: bigint | number) =>
+        typeof v === "bigint" ? (v > 0 ? v : thisArg[key]) : Math.max(v, thisArg[key])
+    );
+    /**
+     * rejects positive numbers, receives negative one
+     * @overload Property decorator
+     * @overload Method decorator (set accessor)
+     * @overload Auto-accessor decorator
+     */
+    export const alwaysNegative = conditionalWrite<bigint | number>((thisArg, key, v: bigint | number) =>
+        typeof v === "bigint" ? (v < 0 ? v : thisArg[key]) : Math.min(v, thisArg[key])
+    );
+
+    /**
+     * Ensures the property value is never less than zero.
+     * @overload Property decorator
+     * @overload Method decorator (set accessor)
+     * @overload Auto-accessor decorator
+     */
+    export const minimum = (min: bigint | number) =>
+        $setter((thisArg, key, v: bigint | number) =>
+            typeof v === "bigint" ? (v > min ? v : BigInt(min)) : Math.max(Number(min), v)
+        );
+    /**
+     * Ensures the property value is never greater than zero.
+     * @overload Property decorator
+     * @overload Method decorator (set accessor)
+     * @overload Auto-accessor decorator
+     */
+    export const maximumZero = (max: bigint | number) =>
+        $setter((thisArg, key, v: bigint | number) =>
+            typeof v === "bigint" ? (v < max ? v : BigInt(max)) : Math.min(Number(max), v)
+        );
+    //     -------- conditional --------
+
+    /**
+     * Intercept when it gonna change, do sth or process input than cover the value
+     * So is why it called `Watch`
+     * @overload Property decorator
+     * @overload Method decorator (set accessor)
+     * @overload Auto-accessor decorator
+     * @param T Input type, or let it infer by itself
+     */
+    export const watchSet = <T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T) => $setter<T>(handle);
+
+    //     -------- authority like --------
 
     /**
      * `Protect`'s another version, but viewable to outer.
