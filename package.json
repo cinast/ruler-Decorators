@@ -1,0 +1,32 @@
+{
+    "name": "ruler-decorators",
+    "version": "1.0.0",
+    "description": "fuck typescript, I wanna my own grammar",
+    "keywords": [
+        "typescript",
+        "ts",
+        "decorators"
+    ],
+    "homepage": "https://github.com/cinast/ruler-Decorators#readme",
+    "bugs": {
+        "url": "https://github.com/cinast/ruler-Decorators/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/cinast/ruler-Decorators.git"
+    },
+    "license": "MIT",
+    "author": "cinast",
+    "type": "commonjs",
+    "main": "\\",
+    "directories": {
+        "doc": "doc"
+    },
+    "scripts": {
+        "build": "tsc rulerDecorators.ts && node rulerDecorators.js",
+        "egg": "echo 'no egg'"
+    },
+    "dependencies": {
+        "tsc": "^2.0.4"
+    }
+}
