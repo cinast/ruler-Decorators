@@ -2,7 +2,7 @@
 
 😈 恶魔选项 😈
 
-```json
+```json5
 //tsconfig.json
 "experimentalDecorators": true
 ```
