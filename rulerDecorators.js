@@ -5,14 +5,17 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.rulerDecorators = void 0;
 /**
- * \*code candies\*
- * Make u easier decorate ur properties
+ * \*code candies\* \
+ * Make u easier decorate ur properties \
  * soo trash it to add additional get or set,
  *
  * @author cinast
- * @date 2022-11-29
- * **@warning** tsconfg `experimentalDecorators` must be `true`
- * **@tip** tsconfg.json with that should be placed at ts files' Parent or sibling folders
+ * @since 2022-11-29
+ * @update 2025-7-28
+ * @version 1.0.0
+ *
+ * **@warning** tsconfg `experimentalDecorators` must be `true` \
+ * **@tip** tsconfg.json with that should be placed at ts files' Parent or sibling folders \
  * **@tip** tsc need 5.2+
  */
 var rulerDecorators;

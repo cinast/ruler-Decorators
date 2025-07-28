@@ -1,11 +1,12 @@
 {
     "name": "ruler-decorators",
     "version": "1.0.0",
-    "description": "fuck typescript, I wanna my own grammar",
+    "description": "",
     "keywords": [
         "typescript",
         "ts",
-        "decorators"
+        "decorators",
+        "code-candy"
     ],
     "homepage": "https://github.com/cinast/ruler-Decorators#readme",
     "bugs": {
@@ -23,7 +24,7 @@
         "doc": "doc"
     },
     "scripts": {
-        "build": "tsc rulerDecorators.ts && node rulerDecorators.js",
+        "build": "tsc && node rulerDecorators.js",
         "egg": "echo 'no egg'"
     },
     "dependencies": {
