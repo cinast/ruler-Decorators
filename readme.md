@@ -41,8 +41,8 @@
 
     ```ts
     class name {
-        @propRules.onlyTheClassAndSubCanWrite
-        @$setter((thisArg, key, v: string) => (badWords.includes(v) ? thisArg[key] : v))
+        @rulerDecorators.onlyTheClassAndSubCanWrite;
+        @rulerDecorators.conditionalWrite((thisArg, key, v: string) => badWords.includes(v));
         v: string = "";
     }
     ```
