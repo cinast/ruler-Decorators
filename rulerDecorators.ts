@@ -178,6 +178,7 @@ export namespace rulerDecorators {
         $setter((thisArg, key, v: bigint | number) =>
             typeof v === "bigint" ? (v > min ? v : BigInt(min)) : Math.max(Number(min), v)
         );
+
     /**
      * Ensures the property value is never greater than zero.
      * @overload Property decorator
