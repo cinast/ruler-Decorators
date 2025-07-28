@@ -4,10 +4,11 @@
 
 ```json5
 //tsconfig.json
-"experimentalDecorators": true
+"experimentalDecorators": true,
+"ts":"^5.2"
 ```
 
-# **装饰器神教 _ruler-DECORATORS_** <br> (`NOT WELL PREPEARED`)
+# **装饰器神教 _ruler-DECORATORS_**
 
 以下是你为什么选择这个库的原因：
 
