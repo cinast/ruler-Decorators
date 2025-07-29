@@ -1,7 +1,6 @@
 import { rulerDecorators, $debugger } from "./rulerDecorators";
 class cls {
     @rulerDecorators.onlyTheClassCanWrite(cls)
-    @rulerDecorators.onlyTheClassCanRead(cls)
     secret = [-1, 0, 1, 2, 3, 4, 5, 6];
     @rulerDecorators.onlyTheClassCanWrite(cls)
     code: number[];

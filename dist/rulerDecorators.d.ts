@@ -18,6 +18,16 @@
  *           ————————base fn————————
  */
 /**
+ * @WARNING @DEBUGGING
+ */
+/**
+ * @WARNING
+ * @Mind the order of the decorators, as they are applied in the order they are defined.
+ * @Mind the getter and setter will might call each other INFINITY
+ *
+ *          setter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → ...
+ */
+/**
  * Getter decorator Factory.
  * @factory
  * @param handle - Function to define the getter behavior.

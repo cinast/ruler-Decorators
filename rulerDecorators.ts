@@ -14,7 +14,7 @@
  * **@tip** tsconfg.json with that should be placed at ts files' Parent or sibling folders \
  * **@tip** tsc need 5.2+
  */
-
+"use strict";
 /**
  *           ————————base fn————————
  */
@@ -30,46 +30,6 @@
  *
  *          setter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → ...
  */
-
-/**
- * Getter decorator Factory.
- * @factory
- * @param handle - Function to define the getter behavior.
- * @returns A property decorator.
- *
- * @overload Method decorator (for get accessors)
- * @param handle - Function to define the getter behavior
- * @returns A method decorator for get accessors
- *
- * @overload Auto-accessor decorator
- * @param handle - Function to define the getter behavior
- * @returns An auto-accessor decorator
- */
-export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
-export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
-export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): any {
-    return function (target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
-        if (descriptor) {
-            // Method decorator (for get accessor)
-            const originalGet = descriptor.get;
-            if (originalGet) {
-                descriptor.get = function (this: any) {
-                    return handle(this, propertyKey, originalGet.call(this));
-                };
-            }
-            return descriptor;
-        } else {
-            // Property decorator
-            Object.defineProperty(target, propertyKey, {
-                get(): any {
-                    return handle(target, propertyKey);
-                },
-                enumerable: true,
-                configurable: true,
-            });
-        }
-    };
-}
 
 /**
  * Setter decorator Factory.
@@ -111,6 +71,48 @@ export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, 
         }
     };
 }
+
+/**
+ * Getter decorator Factory.
+ * @factory
+ * @param handle - Function to define the getter behavior.
+ * @returns A property decorator.
+ *
+ * @overload Method decorator (for get accessors)
+ * @param handle - Function to define the getter behavior
+ * @returns A method decorator for get accessors
+ *
+ * @overload Auto-accessor decorator
+ * @param handle - Function to define the getter behavior
+ * @returns An auto-accessor decorator
+ */
+export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
+export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
+export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): any {
+    return function (target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
+        if (descriptor) {
+            // Method decorator (for get accessor)
+            const originalGet = descriptor.get;
+            if (originalGet) {
+                descriptor.get = function (this: any) {
+                    return handle(this, propertyKey, originalGet.call(this));
+                };
+            }
+            return descriptor;
+        } else {
+            // Property decorator
+
+            Object.defineProperty(target, propertyKey, {
+                get(): any {
+                    return handle(target, propertyKey);
+                },
+                enumerable: true,
+                configurable: true,
+            });
+        }
+    };
+}
+
 /**
  * and anywise
  * @param props
