@@ -45,10 +45,13 @@
  * @param handle - Function to define the setter behavior
  * @returns An auto-accessor decorator
  */
-export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): PropertyDecorator;
-export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): MethodDecorator;
-export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): any {
+export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => [T, boolean]): PropertyDecorator;
+export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => [T, boolean]): MethodDecorator;
+export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => [T, boolean]): any {
     return function (target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
+        const trigger = Symbol("trigger");
+        const tmp = Symbol("tmp");
+
         if (descriptor) {
             // Method decorator (for set accessor)
             const originalSet = descriptor.set;
@@ -60,14 +63,21 @@ export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, 
             }
             return descriptor;
         } else {
-            // Property decorator
-            Object.defineProperty(target, propertyKey, {
+            const descriptor = {
                 set(value: T) {
-                    target[propertyKey] = handle(target, propertyKey, value);
+                    if (this[trigger]) return;
+                    const result = handle(target, propertyKey, value);
+                    if (!result[1]) return;
+                    this[trigger] = false;
+                    target[propertyKey] = result[0];
                 },
                 enumerable: true,
                 configurable: true,
-            });
+                [trigger]: false,
+                [tmp]: {},
+            };
+            // Property decorator
+            Object.defineProperty(target, propertyKey, descriptor);
         }
     };
 }
@@ -118,7 +128,7 @@ export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...
  * @param props
  * @returns
  */
-export function $defineProperty<T>(...props: any[][]): PropertyDecorator {
+export function $defineProperty<T>(...props: any[]): PropertyDecorator {
     return function (target: any, propertyKey: string | symbol) {
         Object.defineProperty(target, propertyKey, props);
     };

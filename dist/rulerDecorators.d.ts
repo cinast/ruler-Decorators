@@ -1,20 +1,4 @@
 /**
- * \*code candies\* \
- * Make u easier decorate ur properties \
- * soo trash it to add additional get or set,
- *
- * @author cinast
- * @since 2022-11-29
- * @update 2025-7-28
- * @version 1.0.0
- *
- * **@notice** Decorators type: experimental **stage 2**
- *
- * **@warning** tsconfg `experimentalDecorators` must be `true` \
- * **@tip** tsconfg.json with that should be placed at ts files' Parent or sibling folders \
- * **@tip** tsc need 5.2+
- */
-/**
  *           ————————base fn————————
  */
 /**
@@ -27,22 +11,6 @@
  *
  *          setter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → ...
  */
-/**
- * Getter decorator Factory.
- * @factory
- * @param handle - Function to define the getter behavior.
- * @returns A property decorator.
- *
- * @overload Method decorator (for get accessors)
- * @param handle - Function to define the getter behavior
- * @returns A method decorator for get accessors
- *
- * @overload Auto-accessor decorator
- * @param handle - Function to define the getter behavior
- * @returns An auto-accessor decorator
- */
-export declare function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
-export declare function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
 /**
  * Setter decorator Factory.
  * @factory
@@ -59,6 +27,22 @@ export declare function $getter(handle: (thisArg: any, propertyKey: string | sym
  */
 export declare function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): PropertyDecorator;
 export declare function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): MethodDecorator;
+/**
+ * Getter decorator Factory.
+ * @factory
+ * @param handle - Function to define the getter behavior.
+ * @returns A property decorator.
+ *
+ * @overload Method decorator (for get accessors)
+ * @param handle - Function to define the getter behavior
+ * @returns A method decorator for get accessors
+ *
+ * @overload Auto-accessor decorator
+ * @param handle - Function to define the getter behavior
+ * @returns An auto-accessor decorator
+ */
+export declare function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
+export declare function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
 /**
  * and anywise
  * @param props
