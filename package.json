@@ -25,6 +25,7 @@
     },
     "scripts": {
         "build": "tsc && node rulerDecorators.js",
-        "egg": "echo 'no egg'"
+        "egg": "echo 'no egg'",
+        "test": "node dist/example.js"
     }
 }
