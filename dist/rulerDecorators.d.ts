@@ -48,7 +48,7 @@ export declare function $getter(handle: (thisArg: any, propertyKey: string | sym
  * @param props
  * @returns
  */
-export declare function $defineProperty<T>(...props: any[][]): PropertyDecorator;
+export declare function $defineProperty<T>(...props: any[]): PropertyDecorator;
 /**
  * Debugger decorator factory that pauses execution during decorator application.
  * Supports all decorator types: class, method, property, and parameter decorators.

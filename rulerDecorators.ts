@@ -45,9 +45,9 @@
  * @param handle - Function to define the setter behavior
  * @returns An auto-accessor decorator
  */
-export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => [T, boolean]): PropertyDecorator;
-export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => [T, boolean]): MethodDecorator;
-export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => [T, boolean]): any {
+export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): PropertyDecorator;
+export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): MethodDecorator;
+export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): any {
     return function (target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
         const trigger = Symbol("trigger");
         const tmp = Symbol("tmp");
@@ -63,21 +63,22 @@ export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, 
             }
             return descriptor;
         } else {
-            const descriptor = {
+            // 属性装饰器
+            Object.defineProperty(target, propertyKey, {
                 set(value: T) {
-                    if (this[trigger]) return;
-                    const result = handle(target, propertyKey, value);
-                    if (!result[1]) return;
-                    this[trigger] = false;
-                    target[propertyKey] = result[0];
+                    if (target[trigger]) {
+                        target[tmp] = value;
+                        return;
+                    }
+                    target[trigger] = true;
+                    const processedValue = handle(target, propertyKey, value);
+                    target[tmp] = processedValue;
+                    delete target[trigger];
+                    target[propertyKey] = processedValue;
                 },
                 enumerable: true,
                 configurable: true,
-                [trigger]: false,
-                [tmp]: {},
-            };
-            // Property decorator
-            Object.defineProperty(target, propertyKey, descriptor);
+            });
         }
     };
 }
@@ -100,6 +101,8 @@ export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...
 export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
 export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): any {
     return function (target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
+        const trigger = Symbol("trigger");
+        const tmp = Symbol("tmp");
         if (descriptor) {
             // Method decorator (for get accessor)
             const originalGet = descriptor.get;
@@ -110,11 +113,17 @@ export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...
             }
             return descriptor;
         } else {
-            // Property decorator
-
+            // 属性装饰器
             Object.defineProperty(target, propertyKey, {
                 get(): any {
-                    return handle(target, propertyKey);
+                    if (target[trigger]) {
+                        return target[tmp];
+                    }
+                    target[trigger] = true;
+                    const result = handle(target, propertyKey);
+                    target[tmp] = result;
+                    delete target[trigger];
+                    return result;
                 },
                 enumerable: true,
                 configurable: true,
