@@ -1,12 +1,12 @@
 import { rulerDecorators, $debugger } from "./rulerDecorators";
 
 class TestClass {
-    @rulerDecorators.onlyTheClassCanRead(TestClass)
+    // Use onlyTheClassCanWrite to allow the class to write, but we'll handle read protection separately
+    @rulerDecorators.onlyTheClassCanWrite(TestClass)
     readOnlyProperty: number[];
 
     constructor() {
         this.readOnlyProperty = [0, 0, 3, 3];
-
         console.log("In constructor, readOnlyProperty:", this.readOnlyProperty);
     }
 

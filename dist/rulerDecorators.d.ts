@@ -1,20 +1,4 @@
 /**
- *           ————————base fn————————
- */
-/**
- * @WARNING @DEBUGGING
- */
-/**
- * @WARNING
- * @Mind the order of the decorators, as they are applied in the order they are defined.
- * @Mind the getter and setter will might call each other INFINITY
- *
- *          setter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → ...
- *          setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → ...
- *
- *          世纪笑话↑
- */
-/**
  * Setter decorator Factory.
  * @factory
  * @param handle - Function to define the setter behavior.
@@ -44,8 +28,8 @@ export declare function $setter<T>(handle: (thisArg: any, propertyKey: string | 
  * @param handle - Function to define the getter behavior
  * @returns An auto-accessor decorator
  */
-export declare function $getter(handle: (thisArg: any, propertyKey: string | symbol, value: any, ...arg: any[]) => unknown): PropertyDecorator;
-export declare function $getter(handle: (thisArg: any, propertyKey: string | symbol, value: any, ...arg: any[]) => unknown): MethodDecorator;
+export declare function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
+export declare function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
 /**
  * and anywise
  * @param props

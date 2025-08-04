@@ -60,7 +60,7 @@ const storage = new WeakMap<any, any>();
 export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): PropertyDecorator;
 export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): MethodDecorator;
 export function $setter<T>(
-    handle: (thisArg: any, propertyKey: string | symbol, value: T) => T
+    handle: (thisArg: any, propertyKey: string | symbol, value: T, ...arg: any[]) => T
 ): PropertyDecorator | MethodDecorator {
     return function (target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
         /**
@@ -118,14 +118,10 @@ export function $setter<T>(
  * @param handle - Function to define the getter behavior
  * @returns An auto-accessor decorator
  */
+export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
+export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
 export function $getter(
-    handle: (thisArg: any, propertyKey: string | symbol, value: any, ...arg: any[]) => unknown
-): PropertyDecorator;
-export function $getter(
-    handle: (thisArg: any, propertyKey: string | symbol, value: any, ...arg: any[]) => unknown
-): MethodDecorator;
-export function $getter(
-    handle: (thisArg: any, propertyKey: string | symbol, value: any, ...arg: any[]) => unknown
+    handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown
 ): PropertyDecorator | MethodDecorator {
     // 棘手玩意
 
@@ -143,7 +139,7 @@ export function $getter(
             // 属性装饰器
             Object.defineProperty(target, propertyKey, {
                 get(): any {
-                    return handle(this, propertyKey, Object.getOwnPropertyDescriptor(this, propertyKey)?.value);
+                    return handle(this, propertyKey);
                 },
                 enumerable: true,
                 configurable: true,
