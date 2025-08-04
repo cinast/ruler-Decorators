@@ -13,7 +13,11 @@ help NEEDED indeed
 "ts":"^5.2"
 ```
 
-# **装饰器神教 _ruler-DECORATORS_**<br>（~~实验性阶段~~）
+---
+
+![wallpaper](doc/img/gitbub_main/wallpaper.png)
+
+# **装饰器神教 _ruler-DECORATORS_**（~~实验性阶段~~）
 
 ## ~~📦 安装~~
 

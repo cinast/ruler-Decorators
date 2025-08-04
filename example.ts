@@ -5,7 +5,6 @@ class TestClass {
 
     @rulerDecorators.onlyTheClassCanRead(TestClass)
     readOnlyProperty: number[];
-
     constructor() {
         this.readOnlyProperty = [0, 0, 3, 3];
         console.log("In constructor, readOnlyProperty:", this.readOnlyProperty);
