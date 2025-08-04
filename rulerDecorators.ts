@@ -458,7 +458,7 @@ export namespace rulerDecorators {
      * @overload Method decorator (set accessor)
      * @overload Auto-accessor decorator
      */
-    export const maximumZero = (max: bigint | number) =>
+    export const maximum = (max: bigint | number) =>
         $setter((thisArg, key, v: bigint | number) =>
             typeof v === "bigint" ? (v < max ? v : BigInt(max)) : Math.min(Number(max), v)
         );

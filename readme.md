@@ -1,5 +1,8 @@
 _fk，和编译器斗智斗勇了三百天，怎么还写不完啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊_
 
+look **THIS** [_help_](doc/known_issues.md)  
+help NEED indeed
+
 # 前情提要
 
 😈 恶魔选项 😈
@@ -10,38 +13,40 @@ _fk，和编译器斗智斗勇了三百天，怎么还写不完啊啊啊啊啊�
 "ts":"^5.2"
 ```
 
-# **装饰器神教 _ruler-DECORATORS_**<br>（实验性阶段）
+# **装饰器神教 _ruler-DECORATORS_**<br>（~~实验性阶段~~）
 
-以下是你为什么选择这个库的原因：
-
-## 📦 安装
+## ~~📦 安装~~
 
 ```bash
 npm install ruler-decorators
 ```
 
-## 🛠️ 完整 API
+## 🛠️ ~~完整~~ API
 
 ### 核心装饰器
 
--   `$setter`: 创建 setter 装饰器
--   `$getter`: 创建 getter 装饰器
--   `$debugger`: 调试装饰器
+-   ~~`$setter`~~: 创建 setter 装饰器
+-   ~~`$getter`~~: 创建 getter 装饰器
+-   `$debugger`: 调试装饰器（装饰器形态的断点）
 
 ### 实用工具
 
--   `$conditionalWrite`: 条件写入
--   `$conditionalRead`: 条件读取
--   `watchSet`: 值变化监听
+-   ~~`$conditionalWrite`~~: 条件写入
+-   ~~`$conditionalRead`~~: 条件读取
+-   ~~`watchSet`~~: 值变化监听
 
 ### 预设规则
 
--   `alwaysPositive`: 只接受正数
--   `alwaysNegative`: 只接受负数
--   `minimum`: 最小值限制
--   `maximumZero`: 最大值限制
--   `onlyTheClassCanRead`: 类访问控制
--   `onlyTheClassCanWrite`: 类写入控制
+-   ~~`alwaysPositive`: 只接受正数~~
+-   ~~`alwaysNegative`: 只接受负数~~
+-   ~~`minimum`: 最小值限制~~
+-   ~~`maximum`: 最大值限制~~
+-   ~~`onlyTheClassCanRead`: 类访问控制~~
+-   ~~`onlyTheClassCanWrite`: 类写入控制~~
+-   ~~`onlyTheClassAndSubCanRead`: 类访问控制~~
+-   ~~`onlyTheClassAndSubCanWrite`: 类写入控制~~
+
+![alt text](doc/img/balbalbalbla.gif)
 
 ## 🧪 更多示例
 
@@ -69,7 +74,7 @@ class SecureData {
 
 -   详见[已知问题文档](./doc/known_issues.md)
 -   需要 TypeScript 5.2+
--   必须启用`experimentalDecorators`
+-   **必须启用**`experimentalDecorators`
 
 ## 🤔 为什么选择这个库？
 
@@ -101,7 +106,21 @@ class SecureData {
     ## 对比
 
     ```ts
-    class name {
+    class cls {
+        #v: string = "";
+        public set v(v: string) {
+            if (!this instanceof cls) return;
+            if ((thisArg, key, v: string) => badWords.includes(v)) return;
+            this.#v = v;
+        }
+        public get v(): string {
+            return this.#v;
+        }
+    }
+    ```
+
+    ```ts
+    class cls {
         @rulerDecorators.onlyTheClassAndSubCanWrite;
         @rulerDecorators.conditionalWrite((thisArg, key, v: string) => badWords.includes(v));
         v: string = "";

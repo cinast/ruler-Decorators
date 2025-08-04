@@ -56,4 +56,5 @@ setter → getter → setter → getter... (无限循环)
 
 ## 📅 计划修复
 
-这些问题将在未来版本中逐步解决，当前版本请~~谨慎使用~~ **来人救我！**![cry, laugh and sense of embarrassment](img/捂脸哭笑.png)![cry, laugh and sense of embarrassment](img/捂脸哭笑.png)![cry, laugh and sense of embarrassment](img/捂脸哭笑.png)
+这些问题将在未来版本中逐步解决，当前版本请~~谨慎使用~~ **来人救我！**![cry, laugh and sense of embarrassment](img/捂脸哭笑.png)![cry, laugh and sense of embarrassment](img/捂脸哭笑.png)![cry, laugh and sense of embarrassment](img/捂脸哭笑.png)  
+![alt text](img/LUAGH.jpg)
