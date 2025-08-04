@@ -1,8 +1,7 @@
 import { rulerDecorators, $debugger } from "./rulerDecorators";
 
 class TestClass {
-    // Use onlyTheClassCanWrite to allow the class to write, but we'll handle read protection separately
-    @rulerDecorators.onlyTheClassCanRead(TestClass)
+    // Simplified approach: Use onlyTheClassCanWrite for write protection
     @rulerDecorators.onlyTheClassCanWrite(TestClass)
     readOnlyProperty: number[];
 

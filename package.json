@@ -32,11 +32,7 @@
         "LICENSE"
     ],
     "scripts": {
-        "build": "tsc",
-        "dev": "tsc --watch",
-        "test": "node dist/example.js",
-        "test:readonly": "node dist/test_readonly_behavior.js",
-        "prepublishOnly": "npm run build"
+        "test": "npx tsc && node .\\dist\\example.js"
     },
     "devDependencies": {
         "typescript": "^5.2.0"
