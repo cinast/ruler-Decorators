@@ -291,19 +291,21 @@ function getDecoratorType(args: any[]): string {
  * @returns Decorator function
  */
 export const $conditionalWrite = <T = any>(...conditionHandles: (boolean | ((thisArg: any, key: any, v: T) => boolean))[]) => {
-    return $setter<T>((thisArg, key, value: T) => {
-        // console.log("DDDD");
-        // console.log(
-        //     thisArg,
-        //     key,
-        //     value,
-        //     conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))
-        // );
-        if (conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))) {
-            return value;
+    return $setter<T>((thisArg, key, newVal: T) => {
+        console.log("$conditionalWrite run");
+        console.log(
+            thisArg,
+            key,
+            newVal,
+            conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))
+        );
+        console.log("——————");
+
+        if (conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))) {
+            return newVal;
         } else {
             if (rulerDecorators.__Setting.readOnlyPropertyWarningEnabled) {
-                console.warn(` ${conditionHandles.map((h) => (typeof h === "function" ? h(thisArg, key, value) : h))}`);
+                console.warn(` ${conditionHandles.map((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))}`);
                 console.warn(`${conditionHandles}`);
                 switch (rulerDecorators.__Setting.readOnlyPropertyWarningType) {
                     case "Warning":
@@ -328,13 +330,14 @@ export const $conditionalWrite = <T = any>(...conditionHandles: (boolean | ((thi
  */
 export const $conditionalRead = (...conditionHandles: (boolean | ((thisArg: any, key: any, value: any) => boolean))[]) => {
     return $getter((thisArg, key, value) => {
-        // console.log("DDDD");
-        // console.log(
-        //     thisArg,
-        //     key,
-        //     value,
-        //     conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))
-        // );
+        console.log("$conditionalRead run");
+        console.log(
+            thisArg,
+            key,
+            value,
+            conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))
+        );
+        console.log("——————");
 
         if (conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))) {
             return value;
@@ -469,15 +472,14 @@ export namespace rulerDecorators {
      */
     export const onlyTheClassCanRead = (thisClass: new (...args: any[]) => any) =>
         $conditionalRead((thisArg) => {
-            // console.log(
-            //     thisArg,
-            //     String(Object.getPrototypeOf(thisArg)),
-            //     String(thisClass),
-            //     String(Object.getPrototypeOf(thisClass)),
-            //     thisArg instanceof thisClass,
-            //     thisClass.prototype,
-            //     Object.getPrototypeOf(thisArg) === thisClass.prototype
-            // );
+            // console.info("onlyTheClassCanRead");
+            // console.log(thisArg);
+            // console.log(String(Object.getPrototypeOf(thisArg)));
+            // console.log(String(thisClass));
+            // console.log(String(Object.getPrototypeOf(thisClass)));
+            // console.log(thisArg instanceof thisClass);
+            // console.log(thisClass.prototype);
+            // console.log(Object.getPrototypeOf(thisArg) === thisClass.prototype);
             return thisArg instanceof thisClass;
         });
 
@@ -491,15 +493,14 @@ export namespace rulerDecorators {
      */
     export const onlyTheClassCanWrite = (thisClass: new (...args: any[]) => any) =>
         $conditionalWrite((thisArg) => {
-            // console.log(
-            //     thisArg,
-            //     String(Object.getPrototypeOf(thisArg)),
-            //     String(thisClass),
-            //     String(Object.getPrototypeOf(thisClass)),
-            //     thisArg instanceof thisClass,
-            //     thisClass.prototype,
-            //     Object.getPrototypeOf(thisArg) === thisClass.prototype
-            // );
+            // console.info("onlyTheClassCanWrite");
+            // console.log(thisArg);
+            // console.log(String(Object.getPrototypeOf(thisArg)));
+            // console.log(String(thisClass));
+            // console.log(String(Object.getPrototypeOf(thisClass)));
+            // console.log(thisArg instanceof thisClass);
+            // console.log(thisClass.prototype);
+            // console.log(Object.getPrototypeOf(thisArg) === thisClass.prototype);
             return thisArg instanceof thisClass;
         });
 

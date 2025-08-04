@@ -1,32 +1,36 @@
 import { rulerDecorators, $debugger } from "./rulerDecorators";
 
-class test {}
+class TestClass {
+    // Use onlyTheClassCanWrite to allow the class to write, but we'll handle read protection separately
+    @rulerDecorators.onlyTheClassCanRead(TestClass)
+    @rulerDecorators.onlyTheClassCanWrite(TestClass)
+    readOnlyProperty: number[];
 
-class cls {
-    @rulerDecorators.onlyTheClassCanWrite(cls)
-    secret = [-1, 0, 1, 2, 3, 4, 5, 6];
-    @rulerDecorators.onlyTheClassCanWrite(cls)
-    code: number[];
-    constructor(start: number | undefined, end: number | undefined) {
-        console.log(this.secret);
-        this.code = this.secret.slice(start, end);
+    constructor() {
+        this.readOnlyProperty = [0, 0, 3, 3];
+        console.log("In constructor, readOnlyProperty:", this.readOnlyProperty);
     }
-    @rulerDecorators.minimum(0)
-    num = -1;
+
+    testAccess() {
+        console.log("Accessing from within class:", this.readOnlyProperty);
+    }
 }
 
-@$debugger(true, "16")
-class sub extends cls {
-    @$debugger(false, "18")
-    secret = [-1, 0, 1];
-    @$debugger(true, "20")
-    @rulerDecorators.onlyTheClassCanWrite(cls)
-    @$debugger(true, "22")
-    code: number[] = [];
+class ExternalClass {
+    accessProperty(obj: TestClass) {
+        console.log("Accessing from external class:", obj.readOnlyProperty);
+        console.log("try to change that property", obj.readOnlyProperty);
+        obj.readOnlyProperty = [0, 289289];
+        console.log("result", obj.readOnlyProperty);
+    }
 }
 
-let c = new cls(0, 4);
-console.log(899890898989);
-let s = new sub(0, 1);
-console.log(c);
-console.log(s);
+console.log("Creating instance...");
+const test = new TestClass();
+test.testAccess();
+
+console.log("Accessing from external class...");
+const external = new ExternalClass();
+external.accessProperty(test);
+
+console.log("Instance created, readOnlyProperty:", test.readOnlyProperty);
