@@ -121,8 +121,8 @@ class SecureData {
 
     ```ts
     class cls {
-        @rulerDecorators.onlyTheClassAndSubCanWrite;
-        @rulerDecorators.conditionalWrite((thisArg, key, v: string) => badWords.includes(v));
+        @rulerDecorators.onlyTheClassAndSubCanWrite
+        @rulerDecorators.conditionalWrite((thisArg, key, v: string) => badWords.includes(v))
         v: string = "";
     }
     ```
