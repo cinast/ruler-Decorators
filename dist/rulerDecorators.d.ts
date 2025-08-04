@@ -30,7 +30,6 @@
  */
 export declare function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): PropertyDecorator;
 export declare function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): MethodDecorator;
-export declare function setReadOnlyPropertyWarning(enabled: boolean): void;
 /**
  * Getter decorator Factory.
  * @factory
@@ -153,6 +152,14 @@ export declare namespace rulerDecorators {
      * *when* u are extending this module
      */
     const thisSymbols: unique symbol;
+    /**
+     *
+     */
+    const __Setting: {
+        [key: string]: any;
+        readOnlyPropertyWarningEnabled: boolean;
+        readOnlyPropertyWarningType: "Warning" | "Error";
+    };
     /**
      * rejects negative numbers, receives positive one
      * @overload Property decorator

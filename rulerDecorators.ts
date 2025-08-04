@@ -15,6 +15,7 @@
  * **@tip** tsc need 5.2+
  */
 "use strict";
+
 /**
  *           ————————base fn————————
  */
@@ -34,6 +35,14 @@
  *          世纪笑话↑
  */
 
+// Use a WeakMap to store the property values to avoid infinite recursion
+// (property definition) a:number = 0 ⇒
+// a:number;
+// constructor(...) {
+// this.a = 0
+// 0 portaled into this ↓
+const storage = new WeakMap<any, any>();
+// 耻辱 ↑
 /**
  * Setter decorator Factory.
  * @factory
@@ -53,9 +62,6 @@ export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, 
 export function $setter<T>(
     handle: (thisArg: any, propertyKey: string | symbol, value: T) => T
 ): PropertyDecorator | MethodDecorator {
-    // Use a WeakMap to store the property values to avoid infinite recursion
-    const storage = new WeakMap<any, any>();
-
     return function (target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
         /**
          * 防重复调用
@@ -80,7 +86,6 @@ export function $setter<T>(
                         trigged = false;
                         return;
                     }
-                    console.log("990990");
 
                     trigged = true;
                     // Use the handle function to process the value and store it in the WeakMap
@@ -98,16 +103,6 @@ export function $setter<T>(
         }
     };
 }
-// Global switch to control read-only property behavior
-let readOnlyPropertyWarningEnabled = true;
-
-// Function to enable/disable read-only property warnings globally
-export function setReadOnlyPropertyWarning(enabled: boolean) {
-    readOnlyPropertyWarningEnabled = enabled;
-}
-
-// Storage for property values to support read-only properties with setters
-const readOnlyPropertyStorage = new WeakMap<any, Map<string | symbol, any>>();
 
 /**
  * Getter decorator Factory.
@@ -301,15 +296,29 @@ function getDecoratorType(args: any[]): string {
  */
 export const $conditionalWrite = <T = any>(...conditionHandles: (boolean | ((thisArg: any, key: any, v: T) => boolean))[]) => {
     return $setter<T>((thisArg, key, value: T) => {
-        console.log("DDDD");
-        console.log(
-            thisArg,
-            key,
-            value,
-            conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))
-        );
-
-        return conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h)) ? value : thisArg[key];
+        // console.log("DDDD");
+        // console.log(
+        //     thisArg,
+        //     key,
+        //     value,
+        //     conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))
+        // );
+        if (conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))) {
+            return value;
+        } else {
+            if (rulerDecorators.__Setting.readOnlyPropertyWarningEnabled) {
+                console.warn(` ${conditionHandles.map((h) => (typeof h === "function" ? h(thisArg, key, value) : h))}`);
+                console.warn(`${conditionHandles}`);
+                switch (rulerDecorators.__Setting.readOnlyPropertyWarningType) {
+                    case "Warning":
+                        console.warn(`⚠️ Attempted to write to read-only property '${String(key)}'`);
+                        break;
+                    case "Error":
+                        throw new Error(`🚫 Attempted to write to read-only property '${String(key)}`);
+                }
+            }
+            return thisArg[key];
+        }
     });
 };
 
@@ -323,15 +332,30 @@ export const $conditionalWrite = <T = any>(...conditionHandles: (boolean | ((thi
  */
 export const $conditionalRead = (...conditionHandles: (boolean | ((thisArg: any, key: any, value: any) => boolean))[]) => {
     return $getter((thisArg, key, value) => {
-        console.log("DDDD");
-        console.log(
-            thisArg,
-            key,
-            value,
-            conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))
-        );
+        // console.log("DDDD");
+        // console.log(
+        //     thisArg,
+        //     key,
+        //     value,
+        //     conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))
+        // );
 
-        return conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h)) ? value : undefined;
+        if (conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))) {
+            return value;
+        } else {
+            if (rulerDecorators.__Setting.readOnlyPropertyWarningEnabled) {
+                console.warn(` ${conditionHandles.map((h) => (typeof h === "function" ? h(thisArg, key, value) : h))}`);
+                console.warn(`${conditionHandles}`);
+                switch (rulerDecorators.__Setting.readOnlyPropertyWarningType) {
+                    case "Warning":
+                        console.warn(`⚠️ Cannot read this properties under unsatisfied conditions '${String(key)}'`);
+                        break;
+                    case "Error":
+                        throw new Error(`🚫 Cannot read this properties under unsatisfied conditions '${String(key)}`);
+                }
+            }
+            return void 0;
+        }
     });
 };
 
@@ -369,6 +393,22 @@ export namespace rulerDecorators {
      * *when* u are extending this module
      */
     export const thisSymbols: unique symbol = Symbol("rulerDecorators");
+
+    /**
+     *
+     */
+    export const __Setting: {
+        [key: string]: any;
+        readOnlyPropertyWarningEnabled: boolean;
+        readOnlyPropertyWarningType: "Warning" | "Error";
+    } = {
+        /**
+         * Global switch of warn or ignore when trying to change read-only property
+         */
+        readOnlyPropertyWarningEnabled: false,
+        readOnlyPropertyWarningType: "Warning",
+        readOnlyPropertyWarningThrow: false,
+    };
 
     //     -------- math toy --------
     /**

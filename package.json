@@ -1,12 +1,14 @@
 {
     "name": "ruler-decorators",
     "version": "1.0.0",
-    "description": "",
+    "description": "TypeScript decorators library for property access control and validation",
     "keywords": [
         "typescript",
         "ts",
         "decorators",
-        "code-candy"
+        "code-candy",
+        "property-decorators",
+        "access-control"
     ],
     "homepage": "https://github.com/cinast/ruler-Decorators#readme",
     "bugs": {
@@ -19,13 +21,24 @@
     "license": "MIT",
     "author": "cinast",
     "type": "commonjs",
-    "main": "\\",
+    "main": "./dist/rulerDecorators.js",
+    "types": "./dist/rulerDecorators.d.ts",
     "directories": {
         "doc": "doc"
     },
+    "files": [
+        "dist/",
+        "README.md",
+        "LICENSE"
+    ],
     "scripts": {
-        "build": "tsc && node rulerDecorators.js",
-        "egg": "echo 'no egg'",
-        "test": "node dist/example.js"
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "test": "node dist/example.js",
+        "test:readonly": "node dist/test_readonly_behavior.js",
+        "prepublishOnly": "npm run build"
+    },
+    "devDependencies": {
+        "typescript": "^5.2.0"
     }
 }

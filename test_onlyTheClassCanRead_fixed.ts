@@ -2,18 +2,10 @@ import { rulerDecorators, $debugger } from "./rulerDecorators";
 
 class TestClass {
     @rulerDecorators.onlyTheClassCanRead(TestClass)
-    //@ts-ignore
     readOnlyProperty: number[];
 
     constructor() {
-        // Use Object.defineProperty to initialize the property
-        Object.defineProperty(this, "readOnlyProperty", {
-            value: [1, 2, 3],
-            writable: false,
-            enumerable: true,
-            configurable: true,
-        });
-        //@ts-ignore
+        this.readOnlyProperty = [0, 0, 3, 3];
 
         console.log("In constructor, readOnlyProperty:", this.readOnlyProperty);
     }
@@ -25,17 +17,17 @@ class TestClass {
 
 class ExternalClass {
     accessProperty(obj: TestClass) {
+        console.log("Accessing from external class:", obj.readOnlyProperty);
         try {
-            console.log("Accessing from external class:", obj.readOnlyProperty);
         } catch (e: any) {
-            console.log("External class cannot access readOnlyProperty:", e.message);
+            // console.log("External class cannot access readOnlyProperty:", e.message);
         }
+        console.log("try to change that property", obj.readOnlyProperty);
+        obj.readOnlyProperty = [0, 289289];
+        console.log("result", obj.readOnlyProperty);
         try {
-            console.log("try to change that property", obj.readOnlyProperty);
-            obj.readOnlyProperty = [0, 289289];
-            console.log("result", obj.readOnlyProperty);
         } catch (e: any) {
-            console.log("failed to change:", e.message);
+            // console.log("failed to change:", e.message);
         }
     }
 }
