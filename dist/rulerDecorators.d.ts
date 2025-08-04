@@ -10,6 +10,9 @@
  * @Mind the getter and setter will might call each other INFINITY
  *
  *          setter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → ...
+ *          setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → ...
+ *
+ *          世纪笑话↑
  */
 /**
  * Setter decorator Factory.
@@ -27,6 +30,7 @@
  */
 export declare function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): PropertyDecorator;
 export declare function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): MethodDecorator;
+export declare function setReadOnlyPropertyWarning(enabled: boolean): void;
 /**
  * Getter decorator Factory.
  * @factory
@@ -41,8 +45,8 @@ export declare function $setter<T>(handle: (thisArg: any, propertyKey: string | 
  * @param handle - Function to define the getter behavior
  * @returns An auto-accessor decorator
  */
-export declare function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
-export declare function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
+export declare function $getter(handle: (thisArg: any, propertyKey: string | symbol, value: any, ...arg: any[]) => unknown): PropertyDecorator;
+export declare function $getter(handle: (thisArg: any, propertyKey: string | symbol, value: any, ...arg: any[]) => unknown): MethodDecorator;
 /**
  * and anywise
  * @param props
@@ -74,6 +78,8 @@ export declare function $defineProperty<T>(...props: any[]): PropertyDecorator;
  * }
  */
 /**
+ * 在装饰器上加debugger
+ *
  * Debugger decorator factory that pauses execution during decorator application.
  * Supports all decorator types: class, method, property, and parameter decorators.
  *
@@ -115,7 +121,7 @@ export declare const $conditionalWrite: <T = any>(...conditionHandles: (boolean 
  * @param conditionHandles - Conditions to check
  * @returns Decorator function
  */
-export declare const $conditionalRead: (...conditionHandles: (boolean | ((thisArg: any, key: any) => boolean))[]) => PropertyDecorator;
+export declare const $conditionalRead: (...conditionHandles: (boolean | ((thisArg: any, key: any, value: any) => boolean))[]) => PropertyDecorator;
 /**
  * Intercept when it gonna change, do sth or process input than cover the value
  * So is why it called `Watch`
@@ -186,38 +192,38 @@ export declare namespace rulerDecorators {
     /**
      * `Protect`'s another version, but viewable to outer.
      * @overload Property decorator
-     * @overload Method decorator (set accessor)
-     * @overload Auto-accessor decorator
-     * @param thisClassCtor Constructor of that class.
-     * @returns Keep still if you have no right of, otherwise receive changes.
-     */
-    const onlyTheClassCanWrite: (thisClassCtor: new (...args: any[]) => any) => PropertyDecorator;
-    /**
-     * `Protect`'s another version, but viewable to outer.
-     * @overload Property decorator
      * @overload Method decorator (get accessor)
      * @overload Auto-accessor decorator
-     * @param thisClassCtor Constructor of that class.
+     * @param thisClass Constructor of that class.
      * @returns `undefined` if you have no right of, otherwise returns value.
      */
-    const onlyTheClassCanRead: (thisClassCtor: new (...args: any[]) => any) => PropertyDecorator;
+    const onlyTheClassCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
     /**
      * `Protect`'s another version, but viewable to outer.
      * @overload Property decorator
      * @overload Method decorator (set accessor)
      * @overload Auto-accessor decorator
-     * @param thisClassCtor Constructor of that class.
+     * @param thisClass Constructor of that class.
      * @returns Keep still if you have no right of, otherwise receive changes.
      */
-    const onlyTheClassAndSubCanWrite: (thisClassCtor: new (...args: any[]) => any) => PropertyDecorator;
+    const onlyTheClassCanWrite: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
+    /**
+     * `Protect`'s another version, but viewable to outer.
+     * @overload Property decorator
+     * @overload Method decorator (set accessor)
+     * @overload Auto-accessor decorator
+     * @param thisClass Constructor of that class.
+     * @returns Keep still if you have no right of, otherwise receive changes.
+     */
+    const onlyTheClassAndSubCanWrite: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
     /**
      * `Protect`'s another version, but viewable to outer.
      * @overload Property decorator
      * @overload Method decorator (get accessor)
      * @overload Auto-accessor decorator
-     * @param thisClassCtor Constructor of that class.
+     * @param thisClass Constructor of that class.
      * @returns `undefined` if you have no right of, otherwise returns value.
      */
-    const onlyTheClassAndSubCanRead: (thisClassCtor: new (...args: any[]) => any) => PropertyDecorator;
+    const onlyTheClassAndSubCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
     function egg(): void;
 }

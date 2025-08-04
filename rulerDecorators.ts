@@ -29,6 +29,9 @@
  * @Mind the getter and setter will might call each other INFINITY
  *
  *          setter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → ...
+ *          setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → ...
+ *
+ *          世纪笑话↑
  */
 
 /**
@@ -47,10 +50,17 @@
  */
 export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): PropertyDecorator;
 export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): MethodDecorator;
-export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): any {
+export function $setter<T>(
+    handle: (thisArg: any, propertyKey: string | symbol, value: T) => T
+): PropertyDecorator | MethodDecorator {
+    // Use a WeakMap to store the property values to avoid infinite recursion
+    const storage = new WeakMap<any, any>();
+
     return function (target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
-        const trigger = Symbol("trigger");
-        const tmp = Symbol("tmp");
+        /**
+         * 防重复调用
+         */
+        let trigged = false; //直接在这闭包
 
         if (descriptor) {
             // Method decorator (for set accessor)
@@ -66,15 +76,21 @@ export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, 
             // 属性装饰器
             Object.defineProperty(target, propertyKey, {
                 set(value: T) {
-                    if (target[trigger]) {
-                        target[tmp] = value;
+                    if (trigged) {
+                        trigged = false;
                         return;
                     }
-                    target[trigger] = true;
-                    const processedValue = handle(target, propertyKey, value);
-                    target[tmp] = processedValue;
-                    delete target[trigger];
-                    target[propertyKey] = processedValue;
+                    console.log("990990");
+
+                    trigged = true;
+                    // Use the handle function to process the value and store it in the WeakMap
+                    const processedValue = handle(this, propertyKey, value);
+                    storage.set(this, processedValue);
+                    trigged = false;
+                },
+                get() {
+                    // Retrieve the value from the WeakMap
+                    return storage.get(this);
                 },
                 enumerable: true,
                 configurable: true,
@@ -82,6 +98,16 @@ export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, 
         }
     };
 }
+// Global switch to control read-only property behavior
+let readOnlyPropertyWarningEnabled = true;
+
+// Function to enable/disable read-only property warnings globally
+export function setReadOnlyPropertyWarning(enabled: boolean) {
+    readOnlyPropertyWarningEnabled = enabled;
+}
+
+// Storage for property values to support read-only properties with setters
+const readOnlyPropertyStorage = new WeakMap<any, Map<string | symbol, any>>();
 
 /**
  * Getter decorator Factory.
@@ -97,12 +123,18 @@ export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, 
  * @param handle - Function to define the getter behavior
  * @returns An auto-accessor decorator
  */
-export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
-export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
-export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): any {
+export function $getter(
+    handle: (thisArg: any, propertyKey: string | symbol, value: any, ...arg: any[]) => unknown
+): PropertyDecorator;
+export function $getter(
+    handle: (thisArg: any, propertyKey: string | symbol, value: any, ...arg: any[]) => unknown
+): MethodDecorator;
+export function $getter(
+    handle: (thisArg: any, propertyKey: string | symbol, value: any, ...arg: any[]) => unknown
+): PropertyDecorator | MethodDecorator {
+    // 棘手玩意
+
     return function (target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
-        const trigger = Symbol("trigger");
-        const tmp = Symbol("tmp");
         if (descriptor) {
             // Method decorator (for get accessor)
             const originalGet = descriptor.get;
@@ -116,14 +148,7 @@ export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...
             // 属性装饰器
             Object.defineProperty(target, propertyKey, {
                 get(): any {
-                    if (target[trigger]) {
-                        return target[tmp];
-                    }
-                    target[trigger] = true;
-                    const result = handle(target, propertyKey);
-                    target[tmp] = result;
-                    delete target[trigger];
-                    return result;
+                    return handle(this, propertyKey, Object.getOwnPropertyDescriptor(this, propertyKey)?.value);
                 },
                 enumerable: true,
                 configurable: true,
@@ -168,6 +193,8 @@ export function $defineProperty<T>(...props: any[]): PropertyDecorator {
  * }
  */
 /**
+ * 在装饰器上加debugger
+ *
  * Debugger decorator factory that pauses execution during decorator application.
  * Supports all decorator types: class, method, property, and parameter decorators.
  *
@@ -205,7 +232,6 @@ export function $debugger(
             console.log(`🚨 ${getDecoratorType(args)} decorator arguments:`);
             console.log(args);
         }
-
         // Execute debugger statement
         debugger;
 
@@ -263,7 +289,7 @@ function getDecoratorType(args: any[]): string {
     }
 }
 
-//     -------- wonderful tools --------
+//     -------- 神器 wonderful tools --------
 
 /**
  * Conditional write decorator
@@ -274,9 +300,17 @@ function getDecoratorType(args: any[]): string {
  * @returns Decorator function
  */
 export const $conditionalWrite = <T = any>(...conditionHandles: (boolean | ((thisArg: any, key: any, v: T) => boolean))[]) => {
-    return $setter<T>((thisArg, key, v: T) =>
-        conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, v) : h)) ? v : thisArg[key]
-    );
+    return $setter<T>((thisArg, key, value: T) => {
+        console.log("DDDD");
+        console.log(
+            thisArg,
+            key,
+            value,
+            conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))
+        );
+
+        return conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h)) ? value : thisArg[key];
+    });
 };
 
 /**
@@ -287,10 +321,18 @@ export const $conditionalWrite = <T = any>(...conditionHandles: (boolean | ((thi
  * @param conditionHandles - Conditions to check
  * @returns Decorator function
  */
-export const $conditionalRead = (...conditionHandles: (boolean | ((thisArg: any, key: any) => boolean))[]) => {
-    return $getter((thisArg, key) =>
-        conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key) : h)) ? thisArg[key] : undefined
-    );
+export const $conditionalRead = (...conditionHandles: (boolean | ((thisArg: any, key: any, value: any) => boolean))[]) => {
+    return $getter((thisArg, key, value) => {
+        console.log("DDDD");
+        console.log(
+            thisArg,
+            key,
+            value,
+            conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))
+        );
+
+        return conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h)) ? value : undefined;
+    });
 };
 
 /**
@@ -384,41 +426,23 @@ export namespace rulerDecorators {
     /**
      * `Protect`'s another version, but viewable to outer.
      * @overload Property decorator
-     * @overload Method decorator (set accessor)
-     * @overload Auto-accessor decorator
-     * @param thisClassCtor Constructor of that class.
-     * @returns Keep still if you have no right of, otherwise receive changes.
-     */
-    export const onlyTheClassCanWrite = (thisClassCtor: new (...args: any[]) => any) =>
-        $conditionalWrite((thisArg) => {
-            let currentProto = Object.getPrototypeOf(thisArg);
-            while (currentProto !== null) {
-                if (currentProto.constructor === thisClassCtor) {
-                    return true;
-                }
-                currentProto = Object.getPrototypeOf(currentProto);
-            }
-            return false;
-        });
-
-    /**
-     * `Protect`'s another version, but viewable to outer.
-     * @overload Property decorator
      * @overload Method decorator (get accessor)
      * @overload Auto-accessor decorator
-     * @param thisClassCtor Constructor of that class.
+     * @param thisClass Constructor of that class.
      * @returns `undefined` if you have no right of, otherwise returns value.
      */
-    export const onlyTheClassCanRead = (thisClassCtor: new (...args: any[]) => any) =>
+    export const onlyTheClassCanRead = (thisClass: new (...args: any[]) => any) =>
         $conditionalRead((thisArg) => {
-            let currentProto = Object.getPrototypeOf(thisArg);
-            while (currentProto !== null) {
-                if (currentProto.constructor === thisClassCtor) {
-                    return true;
-                }
-                currentProto = Object.getPrototypeOf(currentProto);
-            }
-            return false;
+            // console.log(
+            //     thisArg,
+            //     String(Object.getPrototypeOf(thisArg)),
+            //     String(thisClass),
+            //     String(Object.getPrototypeOf(thisClass)),
+            //     thisArg instanceof thisClass,
+            //     thisClass.prototype,
+            //     Object.getPrototypeOf(thisArg) === thisClass.prototype
+            // );
+            return thisArg instanceof thisClass;
         });
 
     /**
@@ -426,22 +450,44 @@ export namespace rulerDecorators {
      * @overload Property decorator
      * @overload Method decorator (set accessor)
      * @overload Auto-accessor decorator
-     * @param thisClassCtor Constructor of that class.
+     * @param thisClass Constructor of that class.
      * @returns Keep still if you have no right of, otherwise receive changes.
      */
-    export const onlyTheClassAndSubCanWrite = (thisClassCtor: new (...args: any[]) => any) =>
-        $conditionalWrite((thisArg) => thisArg instanceof thisClassCtor);
+    export const onlyTheClassCanWrite = (thisClass: new (...args: any[]) => any) =>
+        $conditionalWrite((thisArg) => {
+            // console.log(
+            //     thisArg,
+            //     String(Object.getPrototypeOf(thisArg)),
+            //     String(thisClass),
+            //     String(Object.getPrototypeOf(thisClass)),
+            //     thisArg instanceof thisClass,
+            //     thisClass.prototype,
+            //     Object.getPrototypeOf(thisArg) === thisClass.prototype
+            // );
+            return thisArg instanceof thisClass;
+        });
+
+    /**
+     * `Protect`'s another version, but viewable to outer.
+     * @overload Property decorator
+     * @overload Method decorator (set accessor)
+     * @overload Auto-accessor decorator
+     * @param thisClass Constructor of that class.
+     * @returns Keep still if you have no right of, otherwise receive changes.
+     */
+    export const onlyTheClassAndSubCanWrite = (thisClass: new (...args: any[]) => any) =>
+        $conditionalWrite((thisArg) => thisArg instanceof thisClass);
 
     /**
      * `Protect`'s another version, but viewable to outer.
      * @overload Property decorator
      * @overload Method decorator (get accessor)
      * @overload Auto-accessor decorator
-     * @param thisClassCtor Constructor of that class.
+     * @param thisClass Constructor of that class.
      * @returns `undefined` if you have no right of, otherwise returns value.
      */
-    export const onlyTheClassAndSubCanRead = (thisClassCtor: new (...args: any[]) => any) =>
-        $conditionalRead((thisArg) => thisArg instanceof thisClassCtor);
+    export const onlyTheClassAndSubCanRead = (thisClass: new (...args: any[]) => any) =>
+        $conditionalRead((thisArg) => thisArg instanceof thisClass);
 
     export function egg() {}
 }
