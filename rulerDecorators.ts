@@ -126,6 +126,8 @@ export function $getter(
     // 棘手玩意
 
     return function (target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
+        let trigged = false; //直接在这闭包
+
         if (descriptor) {
             // Method decorator (for get accessor)
             const originalGet = descriptor.get;
@@ -138,6 +140,16 @@ export function $getter(
         } else {
             // 属性装饰器
             Object.defineProperty(target, propertyKey, {
+                set(value) {
+                    if (trigged) {
+                        trigged = false;
+                        return;
+                    }
+
+                    trigged = true;
+                    storage.set(this, value);
+                    trigged = false;
+                },
                 get(): any {
                     return handle(this, propertyKey);
                 },
@@ -234,7 +246,7 @@ export function $debugger(
                     const result = debug(...args);
                     console.log({
                         index: `${i}`,
-                        message: `📢 Debugger result:`,
+                        message: `📢 Debugger result: ${result}`,
                     });
                 }
             } catch (e) {
@@ -292,14 +304,14 @@ function getDecoratorType(args: any[]): string {
  */
 export const $conditionalWrite = <T = any>(...conditionHandles: (boolean | ((thisArg: any, key: any, v: T) => boolean))[]) => {
     return $setter<T>((thisArg, key, newVal: T) => {
-        console.log("$conditionalWrite run");
-        console.log(
-            thisArg,
-            key,
-            newVal,
-            conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))
-        );
-        console.log("——————");
+        // console.log("$conditionalWrite run");
+        // console.log(
+        //     thisArg,
+        //     key,
+        //     newVal,
+        //     conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))
+        // );
+        // console.log("——————");
 
         if (conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))) {
             return newVal;
@@ -330,14 +342,14 @@ export const $conditionalWrite = <T = any>(...conditionHandles: (boolean | ((thi
  */
 export const $conditionalRead = (...conditionHandles: (boolean | ((thisArg: any, key: any, value: any) => boolean))[]) => {
     return $getter((thisArg, key, value) => {
-        console.log("$conditionalRead run");
-        console.log(
-            thisArg,
-            key,
-            value,
-            conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))
-        );
-        console.log("——————");
+        // console.log("$conditionalRead run");
+        // console.log(
+        //     thisArg,
+        //     key,
+        //     value,
+        //     conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))
+        // );
+        // console.log("——————");
 
         if (conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))) {
             return value;

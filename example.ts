@@ -2,7 +2,8 @@ import { rulerDecorators, $debugger } from "./rulerDecorators";
 
 class TestClass {
     // Simplified approach: Use onlyTheClassCanWrite for write protection
-    @rulerDecorators.onlyTheClassCanWrite(TestClass)
+
+    @rulerDecorators.onlyTheClassCanRead(TestClass)
     readOnlyProperty: number[];
 
     constructor() {
@@ -31,5 +32,9 @@ test.testAccess();
 console.log("Accessing from external class...");
 const external = new ExternalClass();
 external.accessProperty(test);
+
+console.log("Accessing from outer scope...");
+test.readOnlyProperty = [0, 28, 390, 219];
+console.log("result", test.readOnlyProperty);
 
 console.log("Instance created, readOnlyProperty:", test.readOnlyProperty);
