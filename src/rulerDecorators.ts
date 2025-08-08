@@ -4,7 +4,7 @@
  *
  * @author cinast
  * @since 2022-11-29
- * @update 2025-7-28
+ * @update 2025-8-8
  * @version 1.0.0
  *
  * @notice Decorators type: experimental stage 2
@@ -339,7 +339,8 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
 //     -------- 调用接口 api functions --------
 
 /**
- * Setter decorator Factory.
+ * Str句柄注入器 装饰器工厂
+ * Setter injector decorator Factory.
  * @factory
  * @param handle - Function to define the setter behavior.
  * @returns A property decorator.
@@ -371,7 +372,8 @@ export function $setter<T>(
 }
 
 /**
- * Getter decorator Factory.
+ * Gtr句柄注入器 装饰器工厂
+ * Getter injector decorator Factory.
  * @factory
  * @param handle - Function to define the getter behavior.
  * @returns A property decorator.
@@ -626,7 +628,7 @@ export const watchSet = <T>(handle: (thisArg: any, attr: string | symbol, value:
  *
  * @author cinast
  * @since 2022-11-29
- * @update 2025-7-28
+ * @update 2025-8-8
  * @version 1.0.0
  *
  * **@notice** Decorators type: experimental **stage 2**
@@ -643,22 +645,36 @@ export namespace rulerDecorators {
     export const thisSymbols: unique symbol = Symbol("rulerDecorators");
 
     /**
-     *
+     * setting for rd lib functions
      */
     export const __Setting: {
         [key: string]: any;
-        readOnlyPropertyWarningEnabled: boolean;
-        readOnlyPropertyWarningType: "Warning" | "Error";
-    } = {
         /**
          * Global switch of warn or ignore when trying to change read-only property
          */
+        readOnlyPropertyWarningEnabled: boolean;
+        readOnlyPropertyWarningType: "Warning" | "Error";
+    } = {
         readOnlyPropertyWarningEnabled: false,
         readOnlyPropertyWarningType: "Warning",
-        readOnlyPropertyWarningThrow: false,
     };
 
     //     -------- math toy --------
+
+    /**
+     * 形式Int，实际number，记得打jsdoc@Int
+     * 限制整数
+     * @param max - Maximum allowed value (number or bigint)
+     *              允许的最大值(数字或大整数)
+     * @overload Property decorator
+     * @overload Method decorator (set accessor)
+     * @overload Auto-accessor decorator
+     */
+    export const Int = (max: bigint | number) =>
+        $setter((thisArg, key, v: bigint | number) =>
+            typeof v === "bigint" ? (v < max ? v : BigInt(max)) : Math.min(Number(max), v)
+        );
+
     /**
      * Ensures property value is always positive
      * 确保属性值始终为正数
@@ -690,10 +706,20 @@ export namespace rulerDecorators {
      * @overload Method decorator (set accessor)
      * @overload Auto-accessor decorator
      */
-    export const minimum = (min: bigint | number) =>
-        $setter((thisArg, key, v: bigint | number) =>
-            typeof v === "bigint" ? (v > min ? v : BigInt(min)) : Math.max(Number(min), v)
+    export const minimum = (min: bigint | number, allowEqual: boolean) =>
+        $conditionalWrite<number | bigint>((_, __, v) =>
+            allowEqual
+                ? typeof v == "number"
+                    ? Math.min(v, Number(min)) == min
+                    : v >= min
+                : typeof v == "number"
+                ? Math.min(v, Number(min)) == min && v !== Number(min)
+                : v > min
         );
+
+    // coming-soon
+    // export const interval = (min: bigint | number, max: bigint | number, leftEqual: boolean = true, rightEqual: boolean = true) =>
+    //     $conditionalWrite<number | bigint>((_, __, v) => {});
 
     /**
      * Sets maximum value for property
@@ -704,9 +730,15 @@ export namespace rulerDecorators {
      * @overload Method decorator (set accessor)
      * @overload Auto-accessor decorator
      */
-    export const maximum = (max: bigint | number) =>
-        $setter((thisArg, key, v: bigint | number) =>
-            typeof v === "bigint" ? (v < max ? v : BigInt(max)) : Math.min(Number(max), v)
+    export const maximum = (max: bigint | number, allowEqual: boolean) =>
+        $conditionalWrite<number | bigint>((_, __, v) =>
+            allowEqual
+                ? typeof v == "number"
+                    ? Math.max(v, Number(max)) == max
+                    : v <= max
+                : typeof v == "number"
+                ? Math.max(v, Number(max)) == max && v !== Number(max)
+                : v < max
         );
 
     //     -------- String  toy --------

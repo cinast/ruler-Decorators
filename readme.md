@@ -1,8 +1,3 @@
-_fk，和编译器斗智斗勇了三百天，怎么还写不完啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊_
-
-look **THIS** [_help_](doc/known_issues.md)  
-help NEEDED indeed
-
 # 前情提要
 
 😈 恶魔选项 😈
@@ -17,7 +12,7 @@ help NEEDED indeed
 
 ![wallpaper](doc/img/gitbub_main/wallpaper.png)
 
-# **装饰器神教 _ruler-DECORATORS_**（~~实验性阶段~~）
+# **装饰器神教 _ruler-DECORATORS_**（实验性阶段）
 
 ## ~~📦 安装~~
 
@@ -29,8 +24,9 @@ npm install ruler-decorators
 
 ### 核心装饰器
 
--   ~~`$setter`~~: 创建 setter 装饰器
--   ~~`$getter`~~: 创建 getter 装饰器
+-   **`$$init`**: **万恶之源**
+-   `$setter`: 创建并注入 setter 句柄的装饰器
+-   `$getter`: 创建并注入 getter 句柄的装饰器
 -   `$debugger`: 调试装饰器（装饰器形态的断点）
 
 ### 实用工具
@@ -76,13 +72,17 @@ class SecureData {
 
 ## ⚠️ 注意事项
 
--   详见[已知问题文档](./doc/known_issues.md)
--   需要 TypeScript 5.2+
--   **必须启用**`experimentalDecorators`
+-   ⚠️**仅娱乐**⚠️ ，不要用于生成环境中  
+     `setterHandlers`、`getterHandlers` 目前是什么东西都有权更改，关于他的管理权我还没做好
+-   ℹ️ **必须启用**`experimentalDecorators`
+-   ℹ️ 需要 TypeScript 5.2+
+-   ⚠️ **一旦**使用`$$init`，这个属性/方法/类 不得再置新的 gtr/setr  
+    会直接破坏这个库的运行
+-   ℹ️ 详见[已知问题文档](./doc/known_issues.md)
 
 ## 🤔 为什么选择这个库？
 
-1. 看不惯 get/set 极其诡异的写法
+1. 看不惯 get/set 极其麻烦的写法
 
     ```ts
     class name {
@@ -96,16 +96,11 @@ class SecureData {
     }
     ```
 
-    我去你的 get 和 set，这是我见过世界上最蠢的语法
+    这是我见过世界上无语的语法
 
     ![ts2300 because I defined a prop v and a getter v](doc/img/ts2300.png)
 
-    为什么 getter**名字**不能是 v，我要 get 的东西他就是 v
-
     \> _tsc & node 你不可以：标识符 v 重复_
-
-    所以写一个一样的名字如何了？？  
-    还要绕个弯子架空原来的变量
 
     ## 对比
 

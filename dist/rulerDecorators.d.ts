@@ -68,7 +68,8 @@ export declare function removeGetterHandler(target: object, propertyKey: string 
  */
 export declare const $$init: (initialSetters?: rd_SetterHandle[], initialGetters?: rd_GetterHandle[]) => (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => any;
 /**
- * Setter decorator Factory.
+ * Str句柄注入器 装饰器工厂
+ * Setter injector decorator Factory.
  * @factory
  * @param handle - Function to define the setter behavior.
  * @returns A property decorator.
@@ -84,7 +85,8 @@ export declare const $$init: (initialSetters?: rd_SetterHandle[], initialGetters
 export declare function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): PropertyDecorator;
 export declare function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): MethodDecorator;
 /**
- * Getter decorator Factory.
+ * Gtr句柄注入器 装饰器工厂
+ * Getter injector decorator Factory.
  * @factory
  * @param handle - Function to define the getter behavior.
  * @returns A property decorator.
@@ -190,7 +192,7 @@ export declare const watchSet: <T>(handle: (thisArg: any, attr: string | symbol,
  *
  * @author cinast
  * @since 2022-11-29
- * @update 2025-7-28
+ * @update 2025-8-8
  * @version 1.0.0
  *
  * **@notice** Decorators type: experimental **stage 2**
@@ -206,13 +208,26 @@ export declare namespace rulerDecorators {
      */
     const thisSymbols: unique symbol;
     /**
-     *
+     * setting for rd lib functions
      */
     const __Setting: {
         [key: string]: any;
+        /**
+         * Global switch of warn or ignore when trying to change read-only property
+         */
         readOnlyPropertyWarningEnabled: boolean;
         readOnlyPropertyWarningType: "Warning" | "Error";
     };
+    /**
+     * 形式Int，实际number，记得打jsdoc@Int
+     * 限制整数
+     * @param max - Maximum allowed value (number or bigint)
+     *              允许的最大值(数字或大整数)
+     * @overload Property decorator
+     * @overload Method decorator (set accessor)
+     * @overload Auto-accessor decorator
+     */
+    const Int: (max: bigint | number) => PropertyDecorator;
     /**
      * Ensures property value is always positive
      * 确保属性值始终为正数
@@ -238,7 +253,7 @@ export declare namespace rulerDecorators {
      * @overload Method decorator (set accessor)
      * @overload Auto-accessor decorator
      */
-    const minimum: (min: bigint | number) => PropertyDecorator;
+    const minimum: (min: bigint | number, allowEqual: boolean) => PropertyDecorator;
     /**
      * Sets maximum value for property
      * 设置属性的最大值
@@ -248,7 +263,7 @@ export declare namespace rulerDecorators {
      * @overload Method decorator (set accessor)
      * @overload Auto-accessor decorator
      */
-    const maximum: (max: bigint | number) => PropertyDecorator;
+    const maximum: (max: bigint | number, allowEqual: boolean) => PropertyDecorator;
     /**
      * Rejects strings containing specified patterns
      * 拒绝包含指定模式的字符串

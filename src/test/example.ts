@@ -1,4 +1,4 @@
-import { rulerDecorators, $debugger } from "./rulerDecorators";
+import { rulerDecorators } from "../rulerDecorators";
 
 class TestClass {
     // Simplified approach: Use onlyTheClassCanWrite for write protection
