@@ -1,9 +1,9 @@
-import { $conditionalRead } from "../rulerDecorators";
+import { rulerDecorators } from "../src/rulerDecorators";
 
 class TestClass {
     // Simplified approach: Use onlyTheClassCanWrite for write protection
 
-    @$conditionalRead(true)
+    @rulerDecorators.onlyTheClassCanRead(TestClass)
     readOnlyProperty: number[];
     constructor() {
         this.readOnlyProperty = [0, 0, 3, 3];
