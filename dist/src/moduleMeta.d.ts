@@ -1,6 +1,7 @@
 /**
  * @this
  * @metaOf rulerDecorators
+ * @setting
  */
 /**
  * take it if u need, it might be useful \
@@ -18,4 +19,4 @@ export declare const __Setting: {
     readOnlyPropertyWarningEnabled: boolean;
     readOnlyPropertyWarningType: "Warning" | "Error";
 };
-export declare const version = "1.0.0";
+export declare const version: "1.0.0";

@@ -2,7 +2,7 @@
  * @this
  * @extraModule
  * @namespace valueRecorder
- * @exported src\rulerDecorators.ts 577
+ * @exported src\rulerDecorators.ts ~577
  */
 ("use strict");
 

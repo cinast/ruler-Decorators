@@ -72,7 +72,7 @@ class SecureData {
 
 ## ⚠️ 注意事项
 
--   ⚠️**仅娱乐**⚠️ ，不要用于生成环境中  
+-   ⚠️**仅娱乐**⚠️ ，不要用于生产环境中  
      `setterHandlers`、`getterHandlers` 目前是什么东西都有权更改，关于他的管理权我还没做好
 -   ℹ️ **必须启用**`experimentalDecorators`
 -   ℹ️ 需要 TypeScript 5.2+

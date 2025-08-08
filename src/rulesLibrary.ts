@@ -1,6 +1,3 @@
-import { $setter, $conditionalWrite, $conditionalRead } from "./rulerDecorators";
-("use strict");
-
 //     -------- Rules --------
 
 /**
@@ -21,8 +18,12 @@ import { $setter, $conditionalWrite, $conditionalRead } from "./rulerDecorators"
  */
 
 /**
+ * @this
  * @namespace rulerDecorators
  */
+
+import { $setter, $conditionalWrite, $conditionalRead } from "./rulerDecorators";
+
 ("use strict");
 
 //     -------- math toy --------
@@ -145,6 +146,9 @@ export const stringRequires = (...patten: (RegExp | string)[]) =>
  */
 
 /**
+ * @Warning But that only make sense where sub class defined \
+ * 但是作用只对子类有用
+ *
  * Restrict property read access to only specified class instances
  * 限制属性读取权限，仅允许指定类的实例访问
  * @param thisClass - Class constructor to check against
@@ -156,9 +160,12 @@ export const stringRequires = (...patten: (RegExp | string)[]) =>
  * @overload Auto-accessor decorator
  */
 export const onlyTheClassCanRead = (thisClass: new (...args: any[]) => any) =>
-    $conditionalRead((thisArg) => thisArg instanceof thisClass);
+    $conditionalRead((thisArg) => thisArg instanceof thisClass && Object.getPrototypeOf(thisArg) === thisClass.prototype);
 
 /**
+ * @Warning But that only make sense where sub class defined \
+ * 但是作用只对子类有用
+ *
  * Restrict property write access to only specified class instances
  * 限制属性写入权限，仅允许指定类的实例修改
  * @param thisClass - Class constructor to check against
@@ -170,9 +177,13 @@ export const onlyTheClassCanRead = (thisClass: new (...args: any[]) => any) =>
  * @overload Auto-accessor decorator
  */
 export const onlyTheClassCanWrite = (thisClass: new (...args: any[]) => any) =>
-    $conditionalWrite((thisArg) => thisArg instanceof thisClass);
+    $conditionalWrite((thisArg) => thisArg instanceof thisClass && Object.getPrototypeOf(thisArg) === thisClass.prototype);
 
 /**
+ * @deprecated
+ * @Warning But limited by skill and no sense at there \
+ * 但是受限于技术，没效果啊！
+ *
  * Restrict property write access to specified class and its subclasses
  * 限制属性写入权限，允许指定类及其子类的实例修改
  * @param thisClass - Base class constructor to check against
@@ -187,6 +198,10 @@ export const onlyTheClassAndSubCanWrite = (thisClass: new (...args: any[]) => an
     $conditionalWrite((thisArg) => thisArg instanceof thisClass);
 
 /**
+ * @deprecated
+ * @Warning But limited by skill and no sense at there \
+ * 但是受限于技术，没效果啊！
+ *
  * Restrict property read access to specified class and its subclasses
  * 限制属性读取权限，允许指定类及其子类的实例访问
  * @param thisClass - Base class constructor to check against

@@ -1,6 +1,7 @@
 /**
  * @this
  * @metaOf rulerDecorators
+ * @setting
  */
 
 ("use strict");
@@ -26,4 +27,4 @@ export const __Setting: {
     readOnlyPropertyWarningType: "Warning",
 };
 
-export const version = "1.0.0";
+export const version = "1.0.0" as const;
