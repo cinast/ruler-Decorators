@@ -22,7 +22,10 @@
 "use strict";
 
 import { rulerDecorators } from "./rulesLibrary";
+import { getDecoratorType } from "./utils";
 export * from "./rulesLibrary";
+export * from "./valueRecorder";
+export * from "./utils";
 
 /**
  *           ———————— 注意事项 Notice ————————
@@ -496,20 +499,6 @@ export function $debugger(
     };
 }
 
-/** Identifies decorator type from arguments */
-function getDecoratorType(args: any[]): string {
-    switch (args.length) {
-        case 1:
-            return "CLASS";
-        case 2:
-            return "PROPERTY";
-        case 3:
-            return typeof args[2] === "number" ? "PARAMETER" : "METHOD";
-        default:
-            return "UNKNOWN";
-    }
-}
-
 //     -------- 神器 wonderful tools --------
 
 /**
@@ -587,13 +576,3 @@ export const $conditionalRead = (...conditionHandles: (boolean | ((thisArg: any,
         }
     });
 };
-
-/**
- * Intercept when it gonna change, do sth or process input than cover the value
- * So is why it called `Watch`
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
- * @param T Input type, or let it infer by itself
- */
-export const watchSet = <T>(handle: (thisArg: any, attr: string | symbol, value: T) => T) => $setter<T>(handle);
