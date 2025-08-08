@@ -35,14 +35,251 @@
  *          世纪笑话↑
  */
 
-// Use a WeakMap to store the property values to avoid infinite recursion
-// (property definition) a:number = 0 ⇒
-// a:number;
-// constructor(...) {
-// this.a = 0
-// 0 portaled into this ↓
-const storage = new WeakMap<any, any>();
-// 耻辱 ↑
+// 存储实际值和包装函数
+const instanceStorage = new WeakMap<object, Record<string | symbol, any>>();
+const wrapperCache = new WeakMap<object, Record<string | symbol, Function>>();
+
+// 存储每个属性的句柄链
+const setterHandlers = new WeakMap<object, Map<string | symbol, rd_SetterHandle[]>>();
+const getterHandlers = new WeakMap<object, Map<string | symbol, rd_GetterHandle[]>>();
+
+export type rd_SetterHandle = <T = any>(
+    target: any,
+    attr: string | symbol,
+    value: any,
+    lastResult: unknown,
+    index: number,
+    handlers: rd_SetterHandle[],
+    ...args: any[]
+) => any;
+
+export type rd_GetterHandle = <T = any>(
+    target: any,
+    attr: string | symbol,
+    lastResult: unknown,
+    index: number,
+    handlers: rd_GetterHandle[],
+    ...args: any[]
+) => any;
+
+/**
+ * 添加 setter 句柄到指定属性
+ * @param target 类原型或构造函数
+ * @param propertyKey 属性名
+ * @param handler 要添加的 setter 句柄
+ */
+export function addSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): void {
+    let handlersMap = setterHandlers.get(target);
+    if (!handlersMap) {
+        handlersMap = new Map();
+        setterHandlers.set(target, handlersMap);
+    }
+
+    let handlers = handlersMap.get(propertyKey);
+    if (!handlers) {
+        handlers = [];
+        handlersMap.set(propertyKey, handlers);
+    }
+
+    handlers.push(handler);
+}
+
+/**
+ * 从指定属性移除 setter 句柄
+ * @param target 类原型或构造函数
+ * @param propertyKey 属性名
+ * @param handler 要移除的 setter 句柄
+ */
+export function removeSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): boolean {
+    const handlersMap = setterHandlers.get(target);
+    if (!handlersMap) return false;
+
+    const handlers = handlersMap.get(propertyKey);
+    if (!handlers) return false;
+
+    const index = handlers.indexOf(handler);
+    if (index === -1) return false;
+
+    handlers.splice(index, 1);
+    return true;
+}
+
+/**
+ * 添加 getter 句柄到指定属性
+ * @param target 类原型或构造函数
+ * @param propertyKey 属性名
+ * @param handler 要添加的 getter 句柄
+ */
+export function addGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): void {
+    let handlersMap = getterHandlers.get(target);
+    if (!handlersMap) {
+        handlersMap = new Map();
+        getterHandlers.set(target, handlersMap);
+    }
+
+    let handlers = handlersMap.get(propertyKey);
+    if (!handlers) {
+        handlers = [];
+        handlersMap.set(propertyKey, handlers);
+    }
+
+    handlers.push(handler);
+}
+
+/**
+ * 从指定属性移除 getter 句柄
+ * @param target 类原型或构造函数
+ * @param propertyKey 属性名
+ * @param handler 要移除的 getter 句柄
+ */
+export function removeGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): boolean {
+    const handlersMap = getterHandlers.get(target);
+    if (!handlersMap) return false;
+
+    const handlers = handlersMap.get(propertyKey);
+    if (!handlers) return false;
+
+    const index = handlers.indexOf(handler);
+    if (index === -1) return false;
+
+    handlers.splice(index, 1);
+    return true;
+}
+
+/**
+ * 装饰器工厂：创建自适应装饰器
+ * @param initialSetters 初始 setter 句柄数组
+ * @param initialGetters 初始 getter 句柄数组
+ * @returns 自适应装饰器函数
+ */
+export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: rd_GetterHandle[] = []) => {
+    return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
+        // === 类装饰器处理 ===
+        if (typeof propertyKey === "undefined") {
+            return class extends target {
+                constructor(...args: any[]) {
+                    super(...args);
+                    instanceStorage.set(this, {});
+                }
+            };
+        }
+
+        const key = propertyKey as string | symbol;
+        const targetObj = target; // 保存目标对象（类原型或构造函数）
+
+        // === 初始化句柄存储 ===
+        // 初始化 setter 句柄
+        let settersMap = setterHandlers.get(targetObj);
+        if (!settersMap) {
+            settersMap = new Map();
+            setterHandlers.set(targetObj, settersMap);
+        }
+
+        if (!settersMap.has(key)) {
+            settersMap.set(key, [...initialSetters]);
+        }
+
+        // 初始化 getter 句柄
+        let gettersMap = getterHandlers.get(targetObj);
+        if (!gettersMap) {
+            gettersMap = new Map();
+            getterHandlers.set(targetObj, gettersMap);
+        }
+
+        if (!gettersMap.has(key)) {
+            gettersMap.set(key, [...initialGetters]);
+        }
+
+        // === 属性/方法/访问器装饰器处理 ===
+        // 存储原始值或描述符
+        if (!instanceStorage.has(targetObj)) {
+            instanceStorage.set(targetObj, {});
+        }
+        const protoStore = instanceStorage.get(targetObj)!;
+
+        if (descriptor) {
+            if ("value" in descriptor) {
+                // 方法装饰器
+                protoStore[key] = descriptor.value;
+            } else if ("get" in descriptor || "set" in descriptor) {
+                // 访问器装饰器
+                protoStore[key] = descriptor;
+            }
+        }
+
+        return {
+            configurable: true,
+            enumerable: descriptor ? descriptor.enumerable : true,
+
+            // 统一的 setter 处理
+            set(this: any, value: any) {
+                let objStore = instanceStorage.get(this);
+                if (!objStore) {
+                    objStore = {};
+                    instanceStorage.set(this, objStore);
+                }
+
+                // 获取当前 setter 句柄链
+                const setters = setterHandlers.get(targetObj)?.get(key) || [];
+
+                // 执行句柄链
+                const result = setters.reduce((prev, handler, idx, arr) => handler(this, key, value, prev, idx, arr), undefined);
+
+                // 存储处理结果
+                objStore[key] = result;
+
+                // 清除包装缓存
+                const wrapperMap = wrapperCache.get(this);
+                if (wrapperMap) {
+                    delete wrapperMap[key];
+                }
+            },
+
+            // 统一的 getter 处理
+            get(this: any) {
+                // 获取当前 getter 句柄链
+                const getters = getterHandlers.get(targetObj)?.get(key) || [];
+
+                // 解析基础值
+                let baseValue: any;
+                const objStore = instanceStorage.get(this) || {};
+
+                if (key in objStore) {
+                    // 实例自有值
+                    baseValue = objStore[key];
+                } else {
+                    // 原型链上的值（方法/访问器）
+                    const protoStore = instanceStorage.get(targetObj) || {};
+                    baseValue = protoStore[key];
+                }
+
+                // 特殊处理：方法装饰器
+                if (typeof baseValue === "function") {
+                    let wrapperMap = wrapperCache.get(this);
+                    if (!wrapperMap) {
+                        wrapperMap = {};
+                        wrapperCache.set(this, wrapperMap);
+                    }
+
+                    // 使用缓存或创建新包装
+                    if (!wrapperMap[key]) {
+                        wrapperMap[key] = function (this: any, ...args: any[]) {
+                            let result = baseValue.apply(this, args);
+
+                            // 应用 getter 链（对返回值处理）
+                            return getters.reduce((prev, handler, idx, arr) => handler(this, key, prev, idx, arr), result);
+                        };
+                    }
+                    return wrapperMap[key];
+                }
+
+                // 常规属性处理
+                return getters.reduce((prev, handler, idx, arr) => handler(this, key, prev, idx, arr), baseValue);
+            },
+        };
+    };
+};
+
 /**
  * Setter decorator Factory.
  * @factory
@@ -57,49 +294,20 @@ const storage = new WeakMap<any, any>();
  * @param handle - Function to define the setter behavior
  * @returns An auto-accessor decorator
  */
-export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): PropertyDecorator;
-export function $setter<T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T): MethodDecorator;
+export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): PropertyDecorator;
+export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): MethodDecorator;
 export function $setter<T>(
-    handle: (thisArg: any, propertyKey: string | symbol, value: T, ...arg: any[]) => T
+    handle: (thisArg: any, attr: string | symbol, value: T, ...arg: any[]) => T
 ): PropertyDecorator | MethodDecorator {
-    return function (target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
-        /**
-         * 防重复调用
-         */
-        let trigged = false; //直接在这闭包
+    return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
+        if (!instanceStorage.has(target)) $$init()(target);
+
+        addSetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
+            return handle(thisArg, key, value);
+        });
 
         if (descriptor) {
-            // Method decorator (for set accessor)
-            const originalSet = descriptor.set;
-            if (originalSet) {
-                descriptor.set = function (this: any, value: T) {
-                    const processedValue = handle(this, propertyKey, value);
-                    originalSet.call(this, processedValue);
-                };
-            }
             return descriptor;
-        } else {
-            // 属性装饰器
-            Object.defineProperty(target, propertyKey, {
-                set(value: T) {
-                    if (trigged) {
-                        trigged = false;
-                        return;
-                    }
-
-                    trigged = true;
-                    // Use the handle function to process the value and store it in the WeakMap
-                    const processedValue = handle(this, propertyKey, value);
-                    storage.set(this, processedValue);
-                    trigged = false;
-                },
-                get() {
-                    // Retrieve the value from the WeakMap
-                    return storage.get(this);
-                },
-                enumerable: true,
-                configurable: true,
-            });
         }
     };
 }
@@ -118,44 +326,20 @@ export function $setter<T>(
  * @param handle - Function to define the getter behavior
  * @returns An auto-accessor decorator
  */
-export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
-export function $getter(handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
+export function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
+export function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
 export function $getter(
-    handle: (thisArg: any, propertyKey: string | symbol, ...arg: any[]) => unknown
+    handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown
 ): PropertyDecorator | MethodDecorator {
-    // 棘手玩意
+    return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
+        if (!instanceStorage.has(target)) $$init()(target);
 
-    return function (target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
-        let trigged = false; //直接在这闭包
+        addGetterHandler(target, attr, function (thisArg, key, lastResult, index, handlers) {
+            return handle(thisArg, key);
+        });
 
         if (descriptor) {
-            // Method decorator (for get accessor)
-            const originalGet = descriptor.get;
-            if (originalGet) {
-                descriptor.get = function (this: any) {
-                    return handle(this, propertyKey, originalGet.call(this));
-                };
-            }
             return descriptor;
-        } else {
-            // 属性装饰器
-            Object.defineProperty(target, propertyKey, {
-                set(value) {
-                    if (trigged) {
-                        trigged = false;
-                        return;
-                    }
-
-                    trigged = true;
-                    storage.set(this, value);
-                    trigged = false;
-                },
-                get(): any {
-                    return handle(this, propertyKey);
-                },
-                enumerable: true,
-                configurable: true,
-            });
         }
     };
 }
@@ -166,8 +350,8 @@ export function $getter(
  * @returns
  */
 export function $defineProperty<T>(...props: any[]): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
-        Object.defineProperty(target, propertyKey, props);
+    return function (target: any, attr: string | symbol) {
+        Object.defineProperty(target, attr, props);
     };
 }
 
@@ -225,20 +409,16 @@ export function $debugger(
     logArgs: boolean = false,
     ...debuggers: (string | ((...args: any[]) => any))[]
 ): ClassDecorator & MethodDecorator & PropertyDecorator & ParameterDecorator {
-    // Handle parameter variations
     const shouldLogArgs = typeof logArgs === "boolean" ? logArgs : false;
     const debugHandlers = typeof logArgs === "boolean" ? debuggers : [logArgs, ...debuggers].filter(Boolean);
 
     return function (...args: any[]) {
-        // Log arguments if requested
         if (shouldLogArgs) {
             console.log(`🚨 ${getDecoratorType(args)} decorator arguments:`);
             console.log(args);
         }
-        // Execute debugger statement
         debugger;
 
-        // Process additional debug handlers
         debugHandlers.forEach((debug, i) => {
             try {
                 if (typeof debug === "string") console.log(`📢 ${debug}`);
@@ -254,12 +434,11 @@ export function $debugger(
             }
         });
 
-        // Handle different decorator types
         switch (args.length) {
             case 1: // Class decorator: [constructor]
                 return class extends args[0] {};
 
-            case 2: // Property decorator: [target, propertyKey]
+            case 2: // Property decorator: [target, attr]
                 return;
 
             case 3:
@@ -378,7 +557,7 @@ export const $conditionalRead = (...conditionHandles: (boolean | ((thisArg: any,
  * @overload Auto-accessor decorator
  * @param T Input type, or let it infer by itself
  */
-export const watchSet = <T>(handle: (thisArg: any, propertyKey: string | symbol, value: T) => T) => $setter<T>(handle);
+export const watchSet = <T>(handle: (thisArg: any, attr: string | symbol, value: T) => T) => $setter<T>(handle);
 
 //     -------- Rules --------
 
@@ -463,6 +642,21 @@ export namespace rulerDecorators {
             typeof v === "bigint" ? (v < max ? v : BigInt(max)) : Math.min(Number(max), v)
         );
 
+    //     -------- String  toy --------
+    export const stringExcludes = (...patten: (RegExp | string)[]) =>
+        $conditionalWrite(
+            (_, __, value) =>
+                typeof value == "string" &&
+                !patten.every((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value)))
+        );
+
+    export const stringRequires = (...patten: (RegExp | string)[]) =>
+        $conditionalWrite(
+            (_, __, value) =>
+                typeof value == "string" &&
+                patten.every((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value)))
+        );
+
     //     -------- authority like --------
 
     /**
@@ -538,5 +732,5 @@ export namespace rulerDecorators {
     export const onlyTheClassAndSubCanRead = (thisClass: new (...args: any[]) => any) =>
         $conditionalRead((thisArg) => thisArg instanceof thisClass);
 
-    export function egg() {}
+    // export function egg() {}
 }
