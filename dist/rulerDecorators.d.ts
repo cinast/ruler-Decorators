@@ -1,50 +1,72 @@
+/**
+ * Type definition for setter handler
+ * setter句柄类型定义
+ */
 export type rd_SetterHandle = <T = any>(target: any, attr: string | symbol, value: any, lastResult: unknown, index: number, handlers: rd_SetterHandle[], ...args: any[]) => any;
+/**
+ * Type definition for getter handler
+ * getter句柄类型定义
+ */
 export type rd_GetterHandle = <T = any>(target: any, attr: string | symbol, lastResult: unknown, index: number, handlers: rd_GetterHandle[], ...args: any[]) => any;
 /**
+ * Add setter handler to specified property
  * 添加 setter 句柄到指定属性
- * @param target 类原型或构造函数
- * @param propertyKey 属性名
- * @param handler 要添加的 setter 句柄
+ * @param target - Class prototype or constructor
+ *               类原型或构造函数
+ * @param propertyKey - Property name
+ *                    属性名
+ * @param handler - Setter handler to add
+ *                要添加的 setter 句柄
  */
 export declare function addSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): void;
 /**
- * 从指定属性移除 setter 句柄
- * @param target 类原型或构造函数
- * @param propertyKey 属性名
- * @param handler 要移除的 setter 句柄
- */
-export declare function removeSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): boolean;
-/**
+ * Add getter handler to specified property
  * 添加 getter 句柄到指定属性
- * @param target 类原型或构造函数
- * @param propertyKey 属性名
- * @param handler 要添加的 getter 句柄
+ * @param target - Class prototype or constructor
+ *               类原型或构造函数
+ * @param propertyKey - Property name
+ *                    属性名
+ * @param handler - Getter handler to add
+ *                要添加的 getter 句柄
  */
 export declare function addGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): void;
 /**
+ * Remove setter handler from specified property
+ * 从指定属性移除 setter 句柄
+ * @param target - Class prototype or constructor
+ *               类原型或构造函数
+ * @param propertyKey - Property name
+ *                    属性名
+ * @param handler - Getter handler to remove
+ *                要移除的 setter 句柄
+ * @returns Whether the handler was removed
+ *         是否成功移除句柄
+ */
+export declare function removeSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): boolean;
+/**
+ * Remove getter handler from specified property
  * 从指定属性移除 getter 句柄
- * @param target 类原型或构造函数
- * @param propertyKey 属性名
- * @param handler 要移除的 getter 句柄
+ * @param target - Class prototype or constructor
+ *               类原型或构造函数
+ * @param propertyKey - Property name
+ *                    属性名
+ * @param handler - Getter handler to remove
+ *                要移除的 getter 句柄
+ * @returns Whether the handler was removed
+ *         是否成功移除句柄
  */
 export declare function removeGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): boolean;
 /**
+ * Decorator factory: creates adaptive decorator
  * 装饰器工厂：创建自适应装饰器
- * @param initialSetters 初始 setter 句柄数组
- * @param initialGetters 初始 getter 句柄数组
- * @returns 自适应装饰器函数
+ * @param initialSetters - Initial setter handlers array
+ *                       初始 setter 句柄数组
+ * @param initialGetters - Initial getter handlers array
+ *                       初始 getter 句柄数组
+ * @returns Adaptive decorator function
+ *         自适应装饰器函数
  */
-export declare const $$init: (initialSetters?: rd_SetterHandle[], initialGetters?: rd_GetterHandle[]) => (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => {
-    new (...args: any[]): {
-        [x: string]: any;
-    };
-    [x: string]: any;
-} | {
-    configurable: boolean;
-    enumerable: boolean | undefined;
-    set(this: any, value: any): void;
-    get(this: any): any;
-};
+export declare const $$init: (initialSetters?: rd_SetterHandle[], initialGetters?: rd_GetterHandle[]) => (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => any;
 /**
  * Setter decorator Factory.
  * @factory
@@ -192,34 +214,60 @@ export declare namespace rulerDecorators {
         readOnlyPropertyWarningType: "Warning" | "Error";
     };
     /**
-     * rejects negative numbers, receives positive one
+     * Ensures property value is always positive
+     * 确保属性值始终为正数
      * @overload Property decorator
      * @overload Method decorator (set accessor)
      * @overload Auto-accessor decorator
      */
     const alwaysPositive: PropertyDecorator;
     /**
-     * rejects positive numbers, receives negative one
+     * Ensures property value is always negative
+     * 确保属性值始终为负数
      * @overload Property decorator
      * @overload Method decorator (set accessor)
      * @overload Auto-accessor decorator
      */
     const alwaysNegative: PropertyDecorator;
     /**
-     * Ensures the property value is never less than zero.
+     * Sets minimum value for property
+     * 设置属性的最小值
+     * @param min - Minimum allowed value (number or bigint)
+     *              允许的最小值(数字或大整数)
      * @overload Property decorator
      * @overload Method decorator (set accessor)
      * @overload Auto-accessor decorator
      */
     const minimum: (min: bigint | number) => PropertyDecorator;
     /**
-     * Ensures the property value is never greater than zero.
+     * Sets maximum value for property
+     * 设置属性的最大值
+     * @param max - Maximum allowed value (number or bigint)
+     *              允许的最大值(数字或大整数)
      * @overload Property decorator
      * @overload Method decorator (set accessor)
      * @overload Auto-accessor decorator
      */
     const maximum: (max: bigint | number) => PropertyDecorator;
+    /**
+     * Rejects strings containing specified patterns
+     * 拒绝包含指定模式的字符串
+     * @param patten - Patterns to exclude (string or RegExp)
+     *                 要排除的模式(字符串或正则表达式)
+     * @overload Property decorator
+     * @overload Method decorator (set accessor)
+     * @overload Auto-accessor decorator
+     */
     const stringExcludes: (...patten: (RegExp | string)[]) => PropertyDecorator;
+    /**
+     * Requires strings to contain specified patterns
+     * 要求字符串包含指定模式
+     * @param patten - Required patterns (string or RegExp)
+     *                 要求的模式(字符串或正则表达式)
+     * @overload Property decorator
+     * @overload Method decorator (set accessor)
+     * @overload Auto-accessor decorator
+     */
     const stringRequires: (...patten: (RegExp | string)[]) => PropertyDecorator;
     /**
      * @tip
@@ -230,39 +278,51 @@ export declare namespace rulerDecorators {
      * [property] a = 0
      */
     /**
-     * `Protect`'s another version, but viewable to outer.
+     * Restrict property read access to only specified class instances
+     * 限制属性读取权限，仅允许指定类的实例访问
+     * @param thisClass - Class constructor to check against
+     *                   用于权限检查的类构造函数
+     * @returns Original value if access allowed, undefined otherwise
+     *          允许访问时返回原值，否则返回undefined
      * @overload Property decorator
      * @overload Method decorator (get accessor)
      * @overload Auto-accessor decorator
-     * @param thisClass Constructor of that class.
-     * @returns `undefined` if you have no right of, otherwise returns value.
      */
     const onlyTheClassCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
     /**
-     * `Protect`'s another version, but viewable to outer.
+     * Restrict property write access to only specified class instances
+     * 限制属性写入权限，仅允许指定类的实例修改
+     * @param thisClass - Class constructor to check against
+     *                   用于权限检查的类构造函数
+     * @returns New value if access allowed, keeps old value otherwise
+     *          允许访问时接受新值，否则保持原值
      * @overload Property decorator
      * @overload Method decorator (set accessor)
      * @overload Auto-accessor decorator
-     * @param thisClass Constructor of that class.
-     * @returns Keep still if you have no right of, otherwise receive changes.
      */
     const onlyTheClassCanWrite: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
     /**
-     * `Protect`'s another version, but viewable to outer.
+     * Restrict property write access to specified class and its subclasses
+     * 限制属性写入权限，允许指定类及其子类的实例修改
+     * @param thisClass - Base class constructor to check against
+     *                   用于权限检查的基类构造函数
+     * @returns New value if access allowed, keeps old value otherwise
+     *          允许访问时接受新值，否则保持原值
      * @overload Property decorator
      * @overload Method decorator (set accessor)
      * @overload Auto-accessor decorator
-     * @param thisClass Constructor of that class.
-     * @returns Keep still if you have no right of, otherwise receive changes.
      */
     const onlyTheClassAndSubCanWrite: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
     /**
-     * `Protect`'s another version, but viewable to outer.
+     * Restrict property read access to specified class and its subclasses
+     * 限制属性读取权限，允许指定类及其子类的实例访问
+     * @param thisClass - Base class constructor to check against
+     *                   用于权限检查的基类构造函数
+     * @returns Original value if access allowed, undefined otherwise
+     *          允许访问时返回原值，否则返回undefined
      * @overload Property decorator
      * @overload Method decorator (get accessor)
      * @overload Auto-accessor decorator
-     * @param thisClass Constructor of that class.
-     * @returns `undefined` if you have no right of, otherwise returns value.
      */
     const onlyTheClassAndSubCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
 }
