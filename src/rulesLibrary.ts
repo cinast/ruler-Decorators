@@ -44,7 +44,12 @@ export const Int = <T extends number | bigint = number>(force?: (v: number) => T
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const alwaysPositive = $conditionalWrite<bigint | number>([(thisArg, key, v: bigint | number) => v > 0]);
+export const alwaysPositive = $conditionalWrite<bigint | number>([
+    (thisArg, key, v: bigint | number) => {
+        console.log("alwaysPositive validator called with:", v);
+        return v > 0;
+    },
+]);
 
 /**
  * Ensures property value is always negative

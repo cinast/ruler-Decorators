@@ -53,15 +53,19 @@ import { getDecoratorType } from "./utils";
  * Storage for actual values and wrapper functions
  * 存储实际值和包装函数
  */
-const instanceStorage = new WeakMap<object, Record<string | symbol, any>>();
-const wrapperCache = new WeakMap<object, Record<string | symbol, Function>>();
+interface InstanceStorageValue {
+    [key: string | symbol]: any;
+}
+
+export const instanceStorage = new WeakMap<object, InstanceStorageValue>();
+export const wrapperCache = new WeakMap<object, Record<string | symbol, Function>>();
 
 /**
  * Storage for property handler chains
  * 存储每个属性的句柄链
  */
-const setterHandlers = new WeakMap<object, Map<string | symbol, rd_SetterHandle[]>>();
-const getterHandlers = new WeakMap<object, Map<string | symbol, rd_GetterHandle[]>>();
+export const setterHandlers = new WeakMap<object, Map<string | symbol, rd_SetterHandle[]>>();
+export const getterHandlers = new WeakMap<object, Map<string | symbol, rd_GetterHandle[]>>();
 
 /**
  * Type definition for setter handler
@@ -100,7 +104,7 @@ export type rd_GetterHandle = (
  * @param handler - Setter handler to add
  *                要添加的 setter 句柄
  */
-export function addSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): void {
+export function $addSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): void {
     let handlersMap = setterHandlers.get(target);
     if (!handlersMap) {
         handlersMap = new Map();
@@ -126,7 +130,7 @@ export function addSetterHandler(target: object, propertyKey: string | symbol, h
  * @param handler - Getter handler to add
  *                要添加的 getter 句柄
  */
-export function addGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): void {
+export function $addGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): void {
     let handlersMap = getterHandlers.get(target);
     if (!handlersMap) {
         handlersMap = new Map();
@@ -180,7 +184,7 @@ export function $removeSetterHandler(target: object, propertyKey: string | symbo
  * @returns Whether the handler was removed
  *         是否成功移除句柄
  */
-export function removeGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): boolean {
+export function $removeGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): boolean {
     const handlersMap = getterHandlers.get(target);
     if (!handlersMap) return false;
 
@@ -206,6 +210,32 @@ export function removeGetterHandler(target: object, propertyKey: string | symbol
  */
 export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: rd_GetterHandle[] = []) => {
     return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
+        console.log("$$init decorator applied to:", target?.name || target, propertyKey, descriptor);
+
+        // 确保instanceStorage初始化
+        if (!instanceStorage.has(target)) {
+            console.log("Initializing instanceStorage for target");
+            instanceStorage.set(target, {});
+        }
+        if (typeof target === "function" && target.prototype && !instanceStorage.has(target.prototype)) {
+            console.log("Initializing instanceStorage for prototype");
+            instanceStorage.set(target.prototype, {});
+        }
+
+        // 初始化setterHandlers和getterHandlers
+        if (!setterHandlers.has(target)) {
+            setterHandlers.set(target, new Map());
+        }
+        if (typeof target === "function" && target.prototype && !setterHandlers.has(target.prototype)) {
+            setterHandlers.set(target.prototype, new Map());
+        }
+        if (!getterHandlers.has(target)) {
+            getterHandlers.set(target, new Map());
+        }
+        if (typeof target === "function" && target.prototype && !getterHandlers.has(target.prototype)) {
+            getterHandlers.set(target.prototype, new Map());
+        }
+
         // === 类装饰器处理 ===
         if (typeof propertyKey === "undefined") {
             // 检查target是否为可继承的类
@@ -213,7 +243,29 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
                 return class extends target {
                     constructor(...args: any[]) {
                         super(...args);
-                        instanceStorage.set(this, {});
+                        console.log("Decorated class constructor called");
+
+                        // 初始化实例存储
+                        const instance: InstanceStorageValue = {};
+                        instanceStorage.set(this, instance);
+
+                        // 处理所有装饰属性初始值
+                        const settersMap = setterHandlers.get(target.prototype) || new Map();
+                        for (const [key, handlers] of settersMap.entries()) {
+                            const initialValue = this[key];
+                            console.log(`Processing decorated property ${String(key)} with initial value:`, initialValue);
+
+                            const processed = handlers.reduce((val: any, handler: rd_SetterHandle) => {
+                                const result = handler(this, key, val, val, 0, handlers);
+                                console.log(`Handler for ${String(key)} processed value:`, val, "=>", result);
+                                return result;
+                            }, initialValue);
+
+                            instance[key] = processed;
+                            console.log(`Final value for ${String(key)}:`, processed);
+                        }
+
+                        console.log("Instance fully initialized with decorated values:", instance);
                     }
                 };
             }
@@ -270,6 +322,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
 
             // 统一的 setter 处理
             set(this: any, value: any) {
+                console.log("Setter triggered for", key, "with value", value);
                 let objStore = instanceStorage.get(this);
                 if (!objStore) {
                     objStore = {};
@@ -281,12 +334,17 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
 
                 // 执行句柄链
                 const result = setters.reduce(
-                    (prev, handler, idx, arr) => handler(this, key, value, prev, idx, [...arr]),
-                    undefined
+                    (prev, handler, idx, arr) => {
+                        const newVal = handler(this, key, value, prev, idx, [...arr]);
+                        console.log(`Handler ${idx} processed value:`, newVal);
+                        return newVal;
+                    },
+                    value // 初始值使用传入的value
                 );
 
                 // 存储处理结果
                 objStore[key] = result;
+                console.log("Final stored value:", result);
 
                 // 清除包装缓存
                 const wrapperMap = wrapperCache.get(this);
@@ -365,7 +423,7 @@ export function $setter<T>(
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
         if (!instanceStorage.has(target)) $$init()(target);
 
-        addSetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
+        $addSetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
             return handle(thisArg, key, value, lastResult, index, handlers);
         });
 
@@ -398,7 +456,7 @@ export function $getter(
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
         if (!instanceStorage.has(target)) $$init()(target);
 
-        addGetterHandler(target, attr, function (thisArg, key, lastResult, index, handlers) {
+        $addGetterHandler(target, attr, function (thisArg, key, lastResult, index, handlers) {
             return handle(thisArg, key, lastResult, index, handlers);
         });
 
@@ -522,14 +580,14 @@ export const $conditionalWrite = <T = any>(
     reject?: (thisArg: any, key: any, v: T) => any
 ) => {
     return $setter<T>((thisArg, key, newVal: T) => {
-        // console.log("$conditionalWrite run");
-        // console.log(
-        //     thisArg,
-        //     key,
-        //     newVal,
-        //     conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))
-        // );
-        // console.log("——————");
+        console.log("$conditionalWrite run");
+        console.log(
+            thisArg,
+            key,
+            newVal,
+            conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))
+        );
+        console.log("——————");
 
         if (conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))) {
             return newVal;

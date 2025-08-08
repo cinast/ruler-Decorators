@@ -1,14 +1,24 @@
-import { rulerDecorators } from "../src/rulerDecorators";
+import { instanceStorage, rulerDecorators, setterHandlers, wrapperCache } from "../src/rulerDecorators";
 
 class test {
     @rulerDecorators.alwaysPositive
-    num = -1;
+    num;
     @rulerDecorators.Int()
-    int = 0.2;
+    int;
+    constructor() {
+        this.num = -1;
+        this.int = 0.2;
+    }
 }
-console.log(new test());
-
-// class TestClass {
+let t = new test();
+console.log(t);
+t.num = -1;
+t.int = 0.2;
+console.log(t);
+console.log("Setter handlers:", setterHandlers.get(test.prototype));
+console.log("instanceStorage handlers:", instanceStorage.get(test.prototype));
+console.log("wrapperCache handlers:", wrapperCache.get(test.prototype));
+// // class TestClass {
 //     // Simplified approach: Use onlyTheClassCanWrite for write protection
 
 //     @rulerDecorators.onlyTheClassCanRead(TestClass)

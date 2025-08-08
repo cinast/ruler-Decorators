@@ -1,4 +1,38 @@
 /**
+ *           ———————— 注意事项 Notice ————————
+ */
+/**
+ * @WARNING @DEBUGGING
+ * 警告：调试相关
+ */
+/**
+ * @WARNING
+ * @Mind the order of the decorators, as they are applied in the order they are defined.
+ * 注意：装饰器按定义顺序应用
+ * @Mind the getter and setter will might call each other INFINITY
+ * 注意：getter和setter可能会无限互相调用
+ *
+ *          setter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → ...
+ *          setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → ...
+ *
+ *          世纪笑话↑
+ */
+/**
+ * Storage for actual values and wrapper functions
+ * 存储实际值和包装函数
+ */
+interface InstanceStorageValue {
+    [key: string | symbol]: any;
+}
+export declare const instanceStorage: WeakMap<object, InstanceStorageValue>;
+export declare const wrapperCache: WeakMap<object, Record<string | symbol, Function>>;
+/**
+ * Storage for property handler chains
+ * 存储每个属性的句柄链
+ */
+export declare const setterHandlers: WeakMap<object, Map<string | symbol, rd_SetterHandle[]>>;
+export declare const getterHandlers: WeakMap<object, Map<string | symbol, rd_GetterHandle[]>>;
+/**
  * Type definition for setter handler
  * setter句柄类型定义
  */
@@ -18,7 +52,7 @@ export type rd_GetterHandle = (target: any, attr: string | symbol, lastResult: u
  * @param handler - Setter handler to add
  *                要添加的 setter 句柄
  */
-export declare function addSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): void;
+export declare function $addSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): void;
 /**
  * Add getter handler to specified property
  * 添加 getter 句柄到指定属性
@@ -29,7 +63,7 @@ export declare function addSetterHandler(target: object, propertyKey: string | s
  * @param handler - Getter handler to add
  *                要添加的 getter 句柄
  */
-export declare function addGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): void;
+export declare function $addGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): void;
 /**
  * Remove setter handler from specified property
  * 从指定属性移除 setter 句柄
@@ -55,7 +89,7 @@ export declare function $removeSetterHandler(target: object, propertyKey: string
  * @returns Whether the handler was removed
  *         是否成功移除句柄
  */
-export declare function removeGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): boolean;
+export declare function $removeGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): boolean;
 /**
  * Decorator factory: creates adaptive decorator
  * 装饰器工厂：创建自适应装饰器

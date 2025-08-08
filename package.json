@@ -1,6 +1,6 @@
 {
     "name": "ruler-decorators",
-    "version": "1.0.0",
+    "version": "0.0.0",
     "description": "TypeScript decorators library for property access control and validation",
     "keywords": [
         "typescript",
@@ -32,7 +32,8 @@
         "LICENSE"
     ],
     "scripts": {
-        "test": "npx tsc && node .\\dist\\test\\example.js"
+        "test": "npx tsc && node .\\dist\\test\\example.js",
+        "run": "npx tsc"
     },
     "devDependencies": {
         "typescript": "^5.2.0"
