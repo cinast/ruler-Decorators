@@ -136,22 +136,42 @@ export declare function $defineProperty<T>(...props: any[]): PropertyDecorator;
 export declare function $debugger(logArgs?: boolean, ...debuggers: (string | ((...args: any[]) => any))[]): ClassDecorator & MethodDecorator & PropertyDecorator & ParameterDecorator;
 /**
  * Conditional write decorator
+ * 条件写入限制器
+ *
+ * Do nothing and keep still if handles didn't approach that input
+ * Once approached, write new value on
+ * 条件不通过就保持原样，反之覆写
+ *
+ * @param conditionHandles - Conditions to check
+ * 条件句柄
+ * @param reject - do sth after been not approached
+ * 回绝句柄
+ * @returns Decorator function
+ *
  * @overload Property decorator
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
- * @param conditionHandles - Conditions to check
- * @returns Decorator function
  */
-export declare const $conditionalWrite: <T = any>(...conditionHandles: (boolean | ((thisArg: any, key: any, v: T) => boolean))[]) => PropertyDecorator;
+export declare const $conditionalWrite: <T = any>(conditionHandles: (boolean | ((thisArg: any, key: any, v: T) => boolean))[], reject?: (thisArg: any, key: any, v: T) => any) => PropertyDecorator;
 /**
  * Conditional read decorator
+ * 条件读取限制器
+ *
+ * return nothing and keep still if handles didn't approach you
+ * Once approached, get what you want
+ * 条件不通过就得到无，反之得到值
+ *
+ * @param conditionHandles - Conditions to check
+ * 条件句柄
+ * @param reject - do sth after been not approached
+ * 回绝句柄
+ * @returns Decorator function
+ *
  * @overload Property decorator
  * @overload Method decorator (get accessor)
  * @overload Auto-accessor decorator
- * @param conditionHandles - Conditions to check
- * @returns Decorator function
  */
-export declare const $conditionalRead: (...conditionHandles: (boolean | ((thisArg: any, key: any, value: any) => boolean))[]) => PropertyDecorator;
+export declare const $conditionalRead: (conditionHandles: (boolean | ((thisArg: any, key: any, value: any) => boolean))[], reject?: (thisArg: any, key: any) => any) => PropertyDecorator;
 export * as rulerDecorators from "./rulesLibrary";
 export * as valueRecorder from "./valueRecorder";
 export * from "./utils";

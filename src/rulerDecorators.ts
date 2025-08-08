@@ -501,13 +501,26 @@ export function $debugger(
 
 /**
  * Conditional write decorator
+ * 条件写入限制器
+ *
+ * Do nothing and keep still if handles didn't approach that input
+ * Once approached, write new value on
+ * 条件不通过就保持原样，反之覆写
+ *
+ * @param conditionHandles - Conditions to check
+ * 条件句柄
+ * @param reject - do sth after been not approached
+ * 回绝句柄
+ * @returns Decorator function
+ *
  * @overload Property decorator
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
- * @param conditionHandles - Conditions to check
- * @returns Decorator function
  */
-export const $conditionalWrite = <T = any>(...conditionHandles: (boolean | ((thisArg: any, key: any, v: T) => boolean))[]) => {
+export const $conditionalWrite = <T = any>(
+    conditionHandles: (boolean | ((thisArg: any, key: any, v: T) => boolean))[],
+    reject?: (thisArg: any, key: any, v: T) => any
+) => {
     return $setter<T>((thisArg, key, newVal: T) => {
         // console.log("$conditionalWrite run");
         // console.log(
@@ -521,6 +534,8 @@ export const $conditionalWrite = <T = any>(...conditionHandles: (boolean | ((thi
         if (conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))) {
             return newVal;
         } else {
+            if (reject) return reject(thisArg, key, newVal);
+
             if (__Setting.readOnlyPropertyWarningEnabled) {
                 console.warn(` ${conditionHandles.map((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))}`);
                 console.warn(`${conditionHandles}`);
@@ -539,13 +554,26 @@ export const $conditionalWrite = <T = any>(...conditionHandles: (boolean | ((thi
 
 /**
  * Conditional read decorator
+ * 条件读取限制器
+ *
+ * return nothing and keep still if handles didn't approach you
+ * Once approached, get what you want
+ * 条件不通过就得到无，反之得到值
+ *
+ * @param conditionHandles - Conditions to check
+ * 条件句柄
+ * @param reject - do sth after been not approached
+ * 回绝句柄
+ * @returns Decorator function
+ *
  * @overload Property decorator
  * @overload Method decorator (get accessor)
  * @overload Auto-accessor decorator
- * @param conditionHandles - Conditions to check
- * @returns Decorator function
  */
-export const $conditionalRead = (...conditionHandles: (boolean | ((thisArg: any, key: any, value: any) => boolean))[]) => {
+export const $conditionalRead = (
+    conditionHandles: (boolean | ((thisArg: any, key: any, value: any) => boolean))[],
+    reject?: (thisArg: any, key: any) => any
+) => {
     return $getter((thisArg, key, value) => {
         // console.log("$conditionalRead run");
         // console.log(
@@ -559,6 +587,7 @@ export const $conditionalRead = (...conditionHandles: (boolean | ((thisArg: any,
         if (conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))) {
             return value;
         } else {
+            if (reject) return reject(thisArg, key);
             if (__Setting.readOnlyPropertyWarningEnabled) {
                 console.warn(` ${conditionHandles.map((h) => (typeof h === "function" ? h(thisArg, key, value) : h))}`);
                 console.warn(`${conditionHandles}`);

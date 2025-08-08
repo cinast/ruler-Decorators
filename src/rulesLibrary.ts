@@ -29,13 +29,13 @@ import { $setter, $conditionalWrite, $conditionalRead } from "./rulerDecorators"
 //     -------- math toy --------
 
 /**
- * 形式Int，实际number，记得打jsdoc@Int
  * 限制整数
  * @overload Property decorator
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const Int = () => {};
+export const Int = <T extends number | bigint = number>(force?: (v: number) => T) =>
+    $conditionalWrite<number>([(_, __, v) => !v.toString().includes(".")], force ? (_, __, v) => force(v) : undefined);
 
 /**
  * Ensures property value is always positive
@@ -44,9 +44,7 @@ export const Int = () => {};
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const alwaysPositive = $conditionalWrite<bigint | number>((thisArg, key, v: bigint | number) =>
-    typeof v === "bigint" ? (v > 0 ? v : thisArg[key]) : Math.max(v, thisArg[key])
-);
+export const alwaysPositive = $conditionalWrite<bigint | number>([(thisArg, key, v: bigint | number) => v > 0]);
 
 /**
  * Ensures property value is always negative
@@ -55,9 +53,7 @@ export const alwaysPositive = $conditionalWrite<bigint | number>((thisArg, key, 
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const alwaysNegative = $conditionalWrite<bigint | number>((thisArg, key, v: bigint | number) =>
-    typeof v === "bigint" ? (v < 0 ? v : thisArg[key]) : Math.min(v, thisArg[key])
-);
+export const alwaysNegative = $conditionalWrite<bigint | number>([(thisArg, key, v: bigint | number) => v < 0]);
 
 /**
  * Sets minimum value for property
@@ -68,16 +64,17 @@ export const alwaysNegative = $conditionalWrite<bigint | number>((thisArg, key, 
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const minimum = (min: bigint | number, allowEqual: boolean) =>
-    $conditionalWrite<number | bigint>((_, __, v) =>
-        allowEqual
-            ? typeof v == "number"
-                ? Math.min(v, Number(min)) == min
-                : v >= min
-            : typeof v == "number"
-            ? Math.min(v, Number(min)) == min && v !== Number(min)
-            : v > min
-    );
+export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
+    $conditionalWrite<number | bigint>([
+        (_, __, v) =>
+            allowEqual
+                ? typeof v == "number"
+                    ? Math.min(v, Number(min)) == min
+                    : v >= min
+                : typeof v == "number"
+                ? Math.min(v, Number(min)) == min && v !== Number(min)
+                : v > min,
+    ]);
 
 // coming-soon
 // export const interval = (min: bigint | number, max: bigint | number, leftEqual: boolean = true, rightEqual: boolean = true) =>
@@ -92,16 +89,17 @@ export const minimum = (min: bigint | number, allowEqual: boolean) =>
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const maximum = (max: bigint | number, allowEqual: boolean) =>
-    $conditionalWrite<number | bigint>((_, __, v) =>
-        allowEqual
-            ? typeof v == "number"
-                ? Math.max(v, Number(max)) == max
-                : v <= max
-            : typeof v == "number"
-            ? Math.max(v, Number(max)) == max && v !== Number(max)
-            : v < max
-    );
+export const maximum = (max: bigint | number, allowEqual: boolean = true) =>
+    $conditionalWrite<number | bigint>([
+        (_, __, v) =>
+            allowEqual
+                ? typeof v == "number"
+                    ? Math.max(v, Number(max)) == max
+                    : v <= max
+                : typeof v == "number"
+                ? Math.max(v, Number(max)) == max && v !== Number(max)
+                : v < max,
+    ]);
 
 //     -------- String  toy --------
 /**
@@ -114,10 +112,10 @@ export const maximum = (max: bigint | number, allowEqual: boolean) =>
  * @overload Auto-accessor decorator
  */
 export const stringExcludes = (...patten: (RegExp | string)[]) =>
-    $conditionalWrite(
+    $conditionalWrite([
         (_, __, value) =>
-            typeof value == "string" && !patten.every((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value)))
-    );
+            typeof value == "string" && !patten.every((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value))),
+    ]);
 
 /**
  * Requires strings to contain specified patterns
@@ -129,10 +127,10 @@ export const stringExcludes = (...patten: (RegExp | string)[]) =>
  * @overload Auto-accessor decorator
  */
 export const stringRequires = (...patten: (RegExp | string)[]) =>
-    $conditionalWrite(
+    $conditionalWrite([
         (_, __, value) =>
-            typeof value == "string" && patten.every((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value)))
-    );
+            typeof value == "string" && patten.every((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value))),
+    ]);
 
 //     -------- authority like --------
 
@@ -160,7 +158,7 @@ export const stringRequires = (...patten: (RegExp | string)[]) =>
  * @overload Auto-accessor decorator
  */
 export const onlyTheClassCanRead = (thisClass: new (...args: any[]) => any) =>
-    $conditionalRead((thisArg) => thisArg instanceof thisClass && Object.getPrototypeOf(thisArg) === thisClass.prototype);
+    $conditionalRead([(thisArg) => thisArg instanceof thisClass && Object.getPrototypeOf(thisArg) === thisClass.prototype]);
 
 /**
  * @Warning But that only make sense where sub class defined \
@@ -177,7 +175,7 @@ export const onlyTheClassCanRead = (thisClass: new (...args: any[]) => any) =>
  * @overload Auto-accessor decorator
  */
 export const onlyTheClassCanWrite = (thisClass: new (...args: any[]) => any) =>
-    $conditionalWrite((thisArg) => thisArg instanceof thisClass && Object.getPrototypeOf(thisArg) === thisClass.prototype);
+    $conditionalWrite([(thisArg) => thisArg instanceof thisClass && Object.getPrototypeOf(thisArg) === thisClass.prototype]);
 
 /**
  * @deprecated
@@ -195,7 +193,7 @@ export const onlyTheClassCanWrite = (thisClass: new (...args: any[]) => any) =>
  * @overload Auto-accessor decorator
  */
 export const onlyTheClassAndSubCanWrite = (thisClass: new (...args: any[]) => any) =>
-    $conditionalWrite((thisArg) => thisArg instanceof thisClass);
+    $conditionalWrite([(thisArg) => thisArg instanceof thisClass]);
 
 /**
  * @deprecated
@@ -213,6 +211,6 @@ export const onlyTheClassAndSubCanWrite = (thisClass: new (...args: any[]) => an
  * @overload Auto-accessor decorator
  */
 export const onlyTheClassAndSubCanRead = (thisClass: new (...args: any[]) => any) =>
-    $conditionalRead((thisArg) => thisArg instanceof thisClass);
+    $conditionalRead([(thisArg) => thisArg instanceof thisClass]);
 
 // export function egg() {}

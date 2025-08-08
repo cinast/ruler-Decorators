@@ -1,11 +1,10 @@
 /**
- * 形式Int，实际number，记得打jsdoc@Int
  * 限制整数
  * @overload Property decorator
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export declare const Int: () => void;
+export declare const Int: <T extends number | bigint = number>(force?: (v: number) => T) => PropertyDecorator;
 /**
  * Ensures property value is always positive
  * 确保属性值始终为正数
@@ -31,7 +30,7 @@ export declare const alwaysNegative: PropertyDecorator;
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export declare const minimum: (min: bigint | number, allowEqual: boolean) => PropertyDecorator;
+export declare const minimum: (min: bigint | number, allowEqual?: boolean) => PropertyDecorator;
 /**
  * Sets maximum value for property
  * 设置属性的最大值
@@ -41,7 +40,7 @@ export declare const minimum: (min: bigint | number, allowEqual: boolean) => Pro
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export declare const maximum: (max: bigint | number, allowEqual: boolean) => PropertyDecorator;
+export declare const maximum: (max: bigint | number, allowEqual?: boolean) => PropertyDecorator;
 /**
  * Rejects strings containing specified patterns
  * 拒绝包含指定模式的字符串
@@ -71,6 +70,9 @@ export declare const stringRequires: (...patten: (RegExp | string)[]) => Propert
  * [property] a = 0
  */
 /**
+ * @Warning But that only make sense where sub class defined \
+ * 但是作用只对子类有用
+ *
  * Restrict property read access to only specified class instances
  * 限制属性读取权限，仅允许指定类的实例访问
  * @param thisClass - Class constructor to check against
@@ -83,6 +85,9 @@ export declare const stringRequires: (...patten: (RegExp | string)[]) => Propert
  */
 export declare const onlyTheClassCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
 /**
+ * @Warning But that only make sense where sub class defined \
+ * 但是作用只对子类有用
+ *
  * Restrict property write access to only specified class instances
  * 限制属性写入权限，仅允许指定类的实例修改
  * @param thisClass - Class constructor to check against
@@ -95,6 +100,10 @@ export declare const onlyTheClassCanRead: (thisClass: new (...args: any[]) => an
  */
 export declare const onlyTheClassCanWrite: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
 /**
+ * @deprecated
+ * @Warning But limited by skill and no sense at there \
+ * 但是受限于技术，没效果啊！
+ *
  * Restrict property write access to specified class and its subclasses
  * 限制属性写入权限，允许指定类及其子类的实例修改
  * @param thisClass - Base class constructor to check against
@@ -107,6 +116,10 @@ export declare const onlyTheClassCanWrite: (thisClass: new (...args: any[]) => a
  */
 export declare const onlyTheClassAndSubCanWrite: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
 /**
+ * @deprecated
+ * @Warning But limited by skill and no sense at there \
+ * 但是受限于技术，没效果啊！
+ *
  * Restrict property read access to specified class and its subclasses
  * 限制属性读取权限，允许指定类及其子类的实例访问
  * @param thisClass - Base class constructor to check against
