@@ -69,7 +69,7 @@ const getterHandlers = new WeakMap<object, Map<string | symbol, rd_GetterHandle[
  * Type definition for setter handler
  * setter句柄类型定义
  */
-export type rd_SetterHandle = <T = any>(
+export type rd_SetterHandle = (
     target: any,
     attr: string | symbol,
     value: any,
@@ -83,7 +83,7 @@ export type rd_SetterHandle = <T = any>(
  * Type definition for getter handler
  * getter句柄类型定义
  */
-export type rd_GetterHandle = <T = any>(
+export type rd_GetterHandle = (
     target: any,
     attr: string | symbol,
     lastResult: unknown,
