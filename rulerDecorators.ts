@@ -223,7 +223,10 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
                 const setters = setterHandlers.get(targetObj)?.get(key) || [];
 
                 // 执行句柄链
-                const result = setters.reduce((prev, handler, idx, arr) => handler(this, key, value, prev, idx, arr), undefined);
+                const result = setters.reduce(
+                    (prev, handler, idx, arr) => handler(this, key, value, prev, idx, [...arr]),
+                    undefined
+                );
 
                 // 存储处理结果
                 objStore[key] = result;
@@ -267,14 +270,14 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
                             let result = baseValue.apply(this, args);
 
                             // 应用 getter 链（对返回值处理）
-                            return getters.reduce((prev, handler, idx, arr) => handler(this, key, prev, idx, arr), result);
+                            return getters.reduce((prev, handler, idx, arr) => handler(this, key, prev, idx, [...arr]), result);
                         };
                     }
                     return wrapperMap[key];
                 }
 
                 // 常规属性处理
-                return getters.reduce((prev, handler, idx, arr) => handler(this, key, prev, idx, arr), baseValue);
+                return getters.reduce((prev, handler, idx, arr) => handler(this, key, prev, idx, [...arr]), baseValue);
             },
         };
     };
@@ -303,7 +306,7 @@ export function $setter<T>(
         if (!instanceStorage.has(target)) $$init()(target);
 
         addSetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
-            return handle(thisArg, key, value);
+            return handle(thisArg, key, value, lastResult, index, handlers);
         });
 
         if (descriptor) {
@@ -335,7 +338,7 @@ export function $getter(
         if (!instanceStorage.has(target)) $$init()(target);
 
         addGetterHandler(target, attr, function (thisArg, key, lastResult, index, handlers) {
-            return handle(thisArg, key);
+            return handle(thisArg, key, lastResult, index, handlers);
         });
 
         if (descriptor) {
