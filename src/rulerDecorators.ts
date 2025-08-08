@@ -419,30 +419,6 @@ export function $defineProperty<T>(...props: any[]): PropertyDecorator {
 }
 
 /**
- * Debugger decorator factory that pauses execution during decorator application.
- * Supports all decorator types: class, method, property, and parameter decorators.
- *
- * @param logArgs - Whether to log the decorator arguments to console (default: false)
- * @param debuggers - Additional debug handlers: strings (logged) or functions (executed with decorator args)
- *
- * @example
- * // Class decorator
- * @$debugger(true, "Debugging class")
- * class MyClass {
- *
- *   // Property decorator
- *   @$debugger(true, (target, key) => `Debugging property: ${String(key)}`)
- *   myProperty = "";
- *
- *   // Method decorator
- *   @$debugger()
- *   myMethod(
- *     // Parameter decorator
- *     @$debugger(true) param: string
- *   ) {}
- * }
- */
-/**
  * 在装饰器上加debugger
  *
  * Debugger decorator factory that pauses execution during decorator application.
