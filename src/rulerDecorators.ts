@@ -1,6 +1,8 @@
 /**
- * Code candies library for property decoration
- * 属性装饰的代码糖果库
+ * @this
+ * @core
+ * Code candies library for property decoration CORE
+ * 属性装饰的代码糖果库的底层核心
  *
  * @author cinast
  * @since 2022-11-29
@@ -19,13 +21,9 @@
  * @tip tsc needs 5.2+
  * 提示：需要TypeScript 5.2+版本
  */
-"use strict";
-
-import { rulerDecorators } from "./rulesLibrary";
+("use strict");
+import { __Setting } from "./moduleMeta";
 import { getDecoratorType } from "./utils";
-export * from "./rulesLibrary";
-export * from "./valueRecorder";
-export * from "./utils";
 
 /**
  *           ———————— 注意事项 Notice ————————
@@ -156,7 +154,7 @@ export function addGetterHandler(target: object, propertyKey: string | symbol, h
  * @returns Whether the handler was removed
  *         是否成功移除句柄
  */
-export function removeSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): boolean {
+export function $removeSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): boolean {
     const handlersMap = setterHandlers.get(target);
     if (!handlersMap) return false;
 
@@ -523,10 +521,10 @@ export const $conditionalWrite = <T = any>(...conditionHandles: (boolean | ((thi
         if (conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))) {
             return newVal;
         } else {
-            if (rulerDecorators.__Setting.readOnlyPropertyWarningEnabled) {
+            if (__Setting.readOnlyPropertyWarningEnabled) {
                 console.warn(` ${conditionHandles.map((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))}`);
                 console.warn(`${conditionHandles}`);
-                switch (rulerDecorators.__Setting.readOnlyPropertyWarningType) {
+                switch (__Setting.readOnlyPropertyWarningType) {
                     case "Warning":
                         console.warn(`⚠️ Attempted to write to read-only property '${String(key)}'`);
                         break;
@@ -561,10 +559,10 @@ export const $conditionalRead = (...conditionHandles: (boolean | ((thisArg: any,
         if (conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))) {
             return value;
         } else {
-            if (rulerDecorators.__Setting.readOnlyPropertyWarningEnabled) {
+            if (__Setting.readOnlyPropertyWarningEnabled) {
                 console.warn(` ${conditionHandles.map((h) => (typeof h === "function" ? h(thisArg, key, value) : h))}`);
                 console.warn(`${conditionHandles}`);
-                switch (rulerDecorators.__Setting.readOnlyPropertyWarningType) {
+                switch (__Setting.readOnlyPropertyWarningType) {
                     case "Warning":
                         console.warn(`⚠️ Cannot read this properties under unsatisfied conditions '${String(key)}'`);
                         break;
@@ -576,3 +574,7 @@ export const $conditionalRead = (...conditionHandles: (boolean | ((thisArg: any,
         }
     });
 };
+
+export * as rulerDecorators from "./rulesLibrary";
+export * as valueRecorder from "./valueRecorder";
+export * from "./utils";

@@ -1,13 +1,22 @@
-import { $setter, rulerDecorators } from "./rulerDecorators";
+/**
+ * @this
+ * @extraModule
+ * @namespace valueRecorder
+ * @exported src\rulerDecorators.ts 577
+ */
+("use strict");
+
+import { thisSymbols } from "./moduleMeta";
+import { $setter } from "./rulerDecorators";
 
 export const $recordThis = (maxSteps: number = 10) => {
     return $setter((thisArg, key: keyof typeof thisArg, value) => {
         // 初始化历史记录存储
-        if (!thisArg[rulerDecorators.thisSymbols]) {
-            thisArg[rulerDecorators.thisSymbols] = {};
+        if (!thisArg[thisSymbols]) {
+            thisArg[thisSymbols] = {};
         }
 
-        const storage = thisArg[rulerDecorators.thisSymbols];
+        const storage = thisArg[thisSymbols];
         const recordKey = `${String(key)}_history`;
 
         // 初始化历史记录列表
@@ -36,11 +45,9 @@ export const $recordThis = (maxSteps: number = 10) => {
     });
 };
 
-export const thisSymbols: unique symbol = Symbol("rulerDecorators");
-
 // 撤销操作
 export function undo<T>(target: T, key: keyof T): boolean {
-    const symbol = rulerDecorators.thisSymbols;
+    const symbol = thisSymbols;
     const storage = (target as any)[symbol];
 
     if (!storage) return false;
@@ -63,7 +70,7 @@ export function undo<T>(target: T, key: keyof T): boolean {
 
 // 重做操作
 export function redo<T>(target: T, key: keyof T): boolean {
-    const symbol = rulerDecorators.thisSymbols;
+    const symbol = thisSymbols;
     const storage = (target as any)[symbol];
 
     if (!storage) return false;

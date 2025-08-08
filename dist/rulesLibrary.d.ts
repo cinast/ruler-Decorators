@@ -1,32 +1,3 @@
-import { $setter, $conditionalWrite, $conditionalRead } from "./rulerDecorators";
-("use strict");
-
-//     -------- Rules --------
-
-/**
- * \*code candies\* \
- * Make u easier decorate ur properties \
- * soo trash it to add additional get or set,
- *
- * @author cinast
- * @since 2022-11-29
- * @update 2025-8-8
- * @version 1.0.0
- *
- * **@notice** Decorators type: experimental **stage 2**
- *
- * **@warning** tsconfg `experimentalDecorators` must be `true` \
- * **@tip** tsconfg.json with that should be placed at ts files' Parent or sibling folders \
- * **@tip** tsc need 5.2+
- */
-
-/**
- * @namespace rulerDecorators
- */
-("use strict");
-
-//     -------- math toy --------
-
 /**
  * 形式Int，实际number，记得打jsdoc@Int
  * 限制整数
@@ -34,8 +5,7 @@ import { $setter, $conditionalWrite, $conditionalRead } from "./rulerDecorators"
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const Int = () => {};
-
+export declare const Int: () => void;
 /**
  * Ensures property value is always positive
  * 确保属性值始终为正数
@@ -43,10 +13,7 @@ export const Int = () => {};
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const alwaysPositive = $conditionalWrite<bigint | number>((thisArg, key, v: bigint | number) =>
-    typeof v === "bigint" ? (v > 0 ? v : thisArg[key]) : Math.max(v, thisArg[key])
-);
-
+export declare const alwaysPositive: PropertyDecorator;
 /**
  * Ensures property value is always negative
  * 确保属性值始终为负数
@@ -54,10 +21,7 @@ export const alwaysPositive = $conditionalWrite<bigint | number>((thisArg, key, 
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const alwaysNegative = $conditionalWrite<bigint | number>((thisArg, key, v: bigint | number) =>
-    typeof v === "bigint" ? (v < 0 ? v : thisArg[key]) : Math.min(v, thisArg[key])
-);
-
+export declare const alwaysNegative: PropertyDecorator;
 /**
  * Sets minimum value for property
  * 设置属性的最小值
@@ -67,21 +31,7 @@ export const alwaysNegative = $conditionalWrite<bigint | number>((thisArg, key, 
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const minimum = (min: bigint | number, allowEqual: boolean) =>
-    $conditionalWrite<number | bigint>((_, __, v) =>
-        allowEqual
-            ? typeof v == "number"
-                ? Math.min(v, Number(min)) == min
-                : v >= min
-            : typeof v == "number"
-            ? Math.min(v, Number(min)) == min && v !== Number(min)
-            : v > min
-    );
-
-// coming-soon
-// export const interval = (min: bigint | number, max: bigint | number, leftEqual: boolean = true, rightEqual: boolean = true) =>
-//     $conditionalWrite<number | bigint>((_, __, v) => {});
-
+export declare const minimum: (min: bigint | number, allowEqual: boolean) => PropertyDecorator;
 /**
  * Sets maximum value for property
  * 设置属性的最大值
@@ -91,18 +41,7 @@ export const minimum = (min: bigint | number, allowEqual: boolean) =>
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const maximum = (max: bigint | number, allowEqual: boolean) =>
-    $conditionalWrite<number | bigint>((_, __, v) =>
-        allowEqual
-            ? typeof v == "number"
-                ? Math.max(v, Number(max)) == max
-                : v <= max
-            : typeof v == "number"
-            ? Math.max(v, Number(max)) == max && v !== Number(max)
-            : v < max
-    );
-
-//     -------- String  toy --------
+export declare const maximum: (max: bigint | number, allowEqual: boolean) => PropertyDecorator;
 /**
  * Rejects strings containing specified patterns
  * 拒绝包含指定模式的字符串
@@ -112,12 +51,7 @@ export const maximum = (max: bigint | number, allowEqual: boolean) =>
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const stringExcludes = (...patten: (RegExp | string)[]) =>
-    $conditionalWrite(
-        (_, __, value) =>
-            typeof value == "string" && !patten.every((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value)))
-    );
-
+export declare const stringExcludes: (...patten: (RegExp | string)[]) => PropertyDecorator;
 /**
  * Requires strings to contain specified patterns
  * 要求字符串包含指定模式
@@ -127,14 +61,7 @@ export const stringExcludes = (...patten: (RegExp | string)[]) =>
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const stringRequires = (...patten: (RegExp | string)[]) =>
-    $conditionalWrite(
-        (_, __, value) =>
-            typeof value == "string" && patten.every((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value)))
-    );
-
-//     -------- authority like --------
-
+export declare const stringRequires: (...patten: (RegExp | string)[]) => PropertyDecorator;
 /**
  * @tip
  * 作为表达式调用时，无法解析属性修饰器的签名。
@@ -143,7 +70,6 @@ export const stringRequires = (...patten: (RegExp | string)[]) =>
  * @onlyTheClassXXX ←忘记加括号，可以指定类，可以this可以其他
  * [property] a = 0
  */
-
 /**
  * Restrict property read access to only specified class instances
  * 限制属性读取权限，仅允许指定类的实例访问
@@ -155,9 +81,7 @@ export const stringRequires = (...patten: (RegExp | string)[]) =>
  * @overload Method decorator (get accessor)
  * @overload Auto-accessor decorator
  */
-export const onlyTheClassCanRead = (thisClass: new (...args: any[]) => any) =>
-    $conditionalRead((thisArg) => thisArg instanceof thisClass);
-
+export declare const onlyTheClassCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
 /**
  * Restrict property write access to only specified class instances
  * 限制属性写入权限，仅允许指定类的实例修改
@@ -169,9 +93,7 @@ export const onlyTheClassCanRead = (thisClass: new (...args: any[]) => any) =>
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const onlyTheClassCanWrite = (thisClass: new (...args: any[]) => any) =>
-    $conditionalWrite((thisArg) => thisArg instanceof thisClass);
-
+export declare const onlyTheClassCanWrite: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
 /**
  * Restrict property write access to specified class and its subclasses
  * 限制属性写入权限，允许指定类及其子类的实例修改
@@ -183,9 +105,7 @@ export const onlyTheClassCanWrite = (thisClass: new (...args: any[]) => any) =>
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const onlyTheClassAndSubCanWrite = (thisClass: new (...args: any[]) => any) =>
-    $conditionalWrite((thisArg) => thisArg instanceof thisClass);
-
+export declare const onlyTheClassAndSubCanWrite: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
 /**
  * Restrict property read access to specified class and its subclasses
  * 限制属性读取权限，允许指定类及其子类的实例访问
@@ -197,7 +117,4 @@ export const onlyTheClassAndSubCanWrite = (thisClass: new (...args: any[]) => an
  * @overload Method decorator (get accessor)
  * @overload Auto-accessor decorator
  */
-export const onlyTheClassAndSubCanRead = (thisClass: new (...args: any[]) => any) =>
-    $conditionalRead((thisArg) => thisArg instanceof thisClass);
-
-// export function egg() {}
+export declare const onlyTheClassAndSubCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator;

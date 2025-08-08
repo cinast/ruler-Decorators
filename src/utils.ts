@@ -1,4 +1,5 @@
 import { $setter } from "./rulerDecorators";
+("use strict");
 
 /**
  * Intercept when it gonna change, do sth or process input than cover the value
