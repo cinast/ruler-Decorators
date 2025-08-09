@@ -1,3 +1,4 @@
+import { rejectionHandler } from "./type.handles";
 /**
  *           ———————— 注意事项 Notice ————————
  */
@@ -24,6 +25,7 @@
 interface InstanceStorageValue {
     [key: string | symbol]: any;
 }
+import { ConditionHandler, rd_GetterHandle, rd_SetterHandle } from "./type.handles";
 export declare const instanceStorage: WeakMap<object, InstanceStorageValue>;
 export declare const wrapperCache: WeakMap<object, Record<string | symbol, Function>>;
 /**
@@ -32,16 +34,6 @@ export declare const wrapperCache: WeakMap<object, Record<string | symbol, Funct
  */
 export declare const setterHandlers: WeakMap<object, Map<string | symbol, rd_SetterHandle[]>>;
 export declare const getterHandlers: WeakMap<object, Map<string | symbol, rd_GetterHandle[]>>;
-/**
- * Type definition for setter handler
- * setter句柄类型定义
- */
-export type rd_SetterHandle = (target: any, attr: string | symbol, value: any, lastResult: unknown, index: number, handlers: rd_SetterHandle[], ...args: any[]) => any;
-/**
- * Type definition for getter handler
- * getter句柄类型定义
- */
-export type rd_GetterHandle = (target: any, attr: string | symbol, lastResult: unknown, index: number, handlers: rd_GetterHandle[], ...args: any[]) => any;
 /**
  * Add setter handler to specified property
  * 添加 setter 句柄到指定属性
@@ -169,24 +161,40 @@ export declare function $defineProperty<T>(...props: any[]): PropertyDecorator;
  */
 export declare function $debugger(logArgs?: boolean, ...debuggers: (string | ((...args: any[]) => any))[]): ClassDecorator & MethodDecorator & PropertyDecorator & ParameterDecorator;
 /**
- * Conditional write decorator
- * 条件写入限制器
+ * Conditional write decorator with chainable handlers
+ * 带链式处理的条件写入装饰器
  *
- * Do nothing and keep still if handles didn't approach that input
- * Once approached, write new value on
- * 条件不通过就保持原样，反之覆写
+ * @template T - Property value type
  *
- * @param conditionHandles - Conditions to check
- * 条件句柄
- * @param reject - do sth after been not approached
- * 回绝句柄
- * @returns Decorator function
+ * @param conditionHandles - Array of conditions to check. Can be:
+ *  - Boolean values
+ *  - Functions with signature:
+ *    `(thisArg, key, value, prevResult, currentIndex, handlers) => boolean`
+ *  条件检查数组，可以是：
+ *  - 布尔值
+ *  - 函数签名：`(thisArg, key, value, prevResult, currentIndex, handlers) => boolean`
  *
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
+ * @param [rejectHandlers] - Optional array of rejection handlers with signature:
+ *  `(thisArg, key, value, prevResult, currentIndex, handlers) => T`
+ *  可选的拒绝处理数组，函数签名：
+ *  `(thisArg, key, value, prevResult, currentIndex, handlers) => T`
+ *
+ * @returns Property/Method/Auto-accessor decorator
+ * 返回属性/方法/自动访问器装饰器
+ *
+ * @behavior
+ * - Returns `newValue` if all conditions pass
+ * - Returns `rejectHandler` result if any condition fails
+ * - Returns original value if no rejectHandler provided
+ * - Can warn/throw based on __Setting configuration
+ *
+ * 行为：
+ * - 所有条件通过时返回新值
+ * - 任一条件失败时返回rejectHandler结果
+ * - 未提供rejectHandler时返回原值
+ * - 根据__Setting配置发出警告/抛出错误
  */
-export declare const $conditionalWrite: <T = any>(conditionHandles: (boolean | ((thisArg: any, key: any, v: T) => boolean))[], reject?: (thisArg: any, key: any, v: T) => any) => PropertyDecorator;
+export declare const $conditionalWrite: <T = any>(conditionHandles: ConditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator;
 /**
  * Conditional read decorator
  * 条件读取限制器
@@ -199,7 +207,13 @@ export declare const $conditionalWrite: <T = any>(conditionHandles: (boolean | (
  * 条件句柄
  * @param reject - do sth after been not approached
  * 回绝句柄
+ *
  * @returns Decorator function
+ * @returns @returns
+ * `original` on test approached \
+ * `rejectReturn` on rejected \
+ * `void undefined` on rejected & no reject handle \
+ * `warning` `throw error` see __Setting.readOnlyPropertyWarningEnabled __Setting.readOnlyPropertyWarningType
  *
  * @overload Property decorator
  * @overload Method decorator (get accessor)

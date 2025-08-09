@@ -4,7 +4,7 @@
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export declare const Int: <T extends number | bigint = number>(force?: (v: number) => T) => PropertyDecorator;
+export declare const Int: <T extends number | bigint = number>(error?: (v: number, o?: unknown) => T) => PropertyDecorator;
 /**
  * Ensures property value is always positive
  * 确保属性值始终为正数

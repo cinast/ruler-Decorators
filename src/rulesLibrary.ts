@@ -34,8 +34,11 @@ import { $setter, $conditionalWrite, $conditionalRead } from "./rulerDecorators"
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const Int = <T extends number | bigint = number>(force?: (v: number) => T) =>
-    $conditionalWrite<number>([(_, __, v) => !v.toString().includes(".")], force ? (_, __, v) => force(v) : undefined);
+export const Int = <T extends number | bigint = number>(error?: (v: number, o?: unknown) => T) =>
+    $conditionalWrite<number>(
+        [(_, __, v) => !v.toString().includes(".")],
+        [(_, __, v, o) => (error ? { approached: false, output: error(v, o) } : false)]
+    );
 
 /**
  * Ensures property value is always positive
@@ -79,6 +82,13 @@ export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
                 : typeof v == "number"
                 ? Math.min(v, Number(min)) == min && v !== Number(min)
                 : v > min,
+        (_, __, v, r) => {
+            console.log(v, r);
+            return {
+                approached: true,
+                output: r.approached ? r.output : min,
+            };
+        },
     ]);
 
 // coming-soon

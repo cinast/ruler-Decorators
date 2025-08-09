@@ -1,23 +1,33 @@
-import { instanceStorage, rulerDecorators, setterHandlers, wrapperCache } from "../src/rulerDecorators";
+import { $$init, instanceStorage, rulerDecorators, setterHandlers, wrapperCache } from "../src/rulerDecorators";
 
 class test {
-    @rulerDecorators.alwaysPositive
-    num;
-    @rulerDecorators.Int()
-    int;
+    // @$$init()
+    // proxyed = 0;
+    @$$init()
+    @rulerDecorators.minimum(0)
+    num = -10;
+    // @rulerDecorators.Int()
+    // int;
     constructor() {
+        // this.proxyed = 5;
         this.num = -1;
-        this.int = 0.2;
+        // this.int = 0.2;
     }
 }
 let t = new test();
 console.log(t);
-t.num = -1;
-t.int = 0.2;
+// t.proxyed = 10;
+t.num = -5;
+// t.int = 0.2;
 console.log(t);
+console.log(t.num, Object.getOwnPropertyDescriptor(t, "num"));
+// console.log(t.int, Object.getOwnPropertyDescriptor(t, "int"));
+// console.log(t.proxyed);
+
 console.log("Setter handlers:", setterHandlers.get(test.prototype));
 console.log("instanceStorage handlers:", instanceStorage.get(test.prototype));
 console.log("wrapperCache handlers:", wrapperCache.get(test.prototype));
+
 // // class TestClass {
 //     // Simplified approach: Use onlyTheClassCanWrite for write protection
 

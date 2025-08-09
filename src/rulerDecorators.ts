@@ -1,3 +1,4 @@
+import { rejectionHandler } from "./type.handles";
 /**
  * @this
  * @core
@@ -57,6 +58,7 @@ interface InstanceStorageValue {
     [key: string | symbol]: any;
 }
 
+import { ConditionHandler, rd_GetterHandle, rd_SetterHandle } from "./type.handles";
 export const instanceStorage = new WeakMap<object, InstanceStorageValue>();
 export const wrapperCache = new WeakMap<object, Record<string | symbol, Function>>();
 
@@ -66,33 +68,6 @@ export const wrapperCache = new WeakMap<object, Record<string | symbol, Function
  */
 export const setterHandlers = new WeakMap<object, Map<string | symbol, rd_SetterHandle[]>>();
 export const getterHandlers = new WeakMap<object, Map<string | symbol, rd_GetterHandle[]>>();
-
-/**
- * Type definition for setter handler
- * setter句柄类型定义
- */
-export type rd_SetterHandle = (
-    target: any,
-    attr: string | symbol,
-    value: any,
-    lastResult: unknown,
-    index: number,
-    handlers: rd_SetterHandle[],
-    ...args: any[]
-) => any;
-
-/**
- * Type definition for getter handler
- * getter句柄类型定义
- */
-export type rd_GetterHandle = (
-    target: any,
-    attr: string | symbol,
-    lastResult: unknown,
-    index: number,
-    handlers: rd_GetterHandle[],
-    ...args: any[]
-) => any;
 
 /**
  * Add setter handler to specified property
@@ -212,28 +187,20 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
     return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
         console.log("$$init decorator applied to:", target?.name || target, propertyKey, descriptor);
 
-        // 确保instanceStorage初始化
-        if (!instanceStorage.has(target)) {
-            console.log("Initializing instanceStorage for target");
-            instanceStorage.set(target, {});
-        }
-        if (typeof target === "function" && target.prototype && !instanceStorage.has(target.prototype)) {
-            console.log("Initializing instanceStorage for prototype");
-            instanceStorage.set(target.prototype, {});
+        // 初始化instanceStorage
+        const initStorage = (t: any) => !instanceStorage.has(t) && instanceStorage.set(t, {});
+        initStorage(target);
+        if (typeof target === "function" && target.prototype) {
+            initStorage(target.prototype);
         }
 
-        // 初始化setterHandlers和getterHandlers
-        if (!setterHandlers.has(target)) {
-            setterHandlers.set(target, new Map());
-        }
-        if (typeof target === "function" && target.prototype && !setterHandlers.has(target.prototype)) {
-            setterHandlers.set(target.prototype, new Map());
-        }
-        if (!getterHandlers.has(target)) {
-            getterHandlers.set(target, new Map());
-        }
-        if (typeof target === "function" && target.prototype && !getterHandlers.has(target.prototype)) {
-            getterHandlers.set(target.prototype, new Map());
+        // 初始化handlers
+        const initHandlers = (map: WeakMap<any, any>, t: any) => !map.has(t) && map.set(t, new Map());
+        initHandlers(setterHandlers, target);
+        initHandlers(getterHandlers, target);
+        if (typeof target === "function" && target.prototype) {
+            initHandlers(setterHandlers, target.prototype);
+            initHandlers(getterHandlers, target.prototype);
         }
 
         // === 类装饰器处理 ===
@@ -284,9 +251,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
             setterHandlers.set(targetObj, settersMap);
         }
 
-        if (!settersMap.has(key)) {
-            settersMap.set(key, [...initialSetters]);
-        }
+        if (!settersMap.has(key)) settersMap.set(key, [...initialSetters]);
 
         // 初始化 getter 句柄
         let gettersMap = getterHandlers.get(targetObj);
@@ -295,9 +260,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
             getterHandlers.set(targetObj, gettersMap);
         }
 
-        if (!gettersMap.has(key)) {
-            gettersMap.set(key, [...initialGetters]);
-        }
+        if (!gettersMap.has(key)) gettersMap.set(key, [...initialGetters]);
 
         // === 属性/方法/访问器装饰器处理 ===
         // 存储原始值或描述符
@@ -345,6 +308,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
                 // 存储处理结果
                 objStore[key] = result;
                 console.log("Final stored value:", result);
+                console.log("Stored in value:", instanceStorage.get(this));
 
                 // 清除包装缓存
                 const wrapperMap = wrapperCache.get(this);
@@ -421,15 +385,17 @@ export function $setter<T>(
     handle: (thisArg: any, attr: string | symbol, value: T, ...arg: any[]) => T
 ): PropertyDecorator | MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
-        if (!instanceStorage.has(target)) $$init()(target);
+        // if (!instanceStorage.has(target)) $$init()(target, attr, descriptor);
+        // console.log("Property descriptor:", Object.getOwnPropertyDescriptor(target, attr) || "Property not defined or inherited");
 
         $addSetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
             return handle(thisArg, key, value, lastResult, index, handlers);
         });
+        console.log("Property descriptor:", Object.getOwnPropertyDescriptor(target, attr) || "Property not defined or inherited");
 
-        if (descriptor) {
-            return descriptor;
-        }
+        // if (descriptor) {
+        //     return descriptor;
+        // }
     };
 }
 
@@ -454,15 +420,15 @@ export function $getter(
     handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown
 ): PropertyDecorator | MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
-        if (!instanceStorage.has(target)) $$init()(target);
+        if (!instanceStorage.has(target)) $$init()(target, attr, descriptor);
 
         $addGetterHandler(target, attr, function (thisArg, key, lastResult, index, handlers) {
             return handle(thisArg, key, lastResult, index, handlers);
         });
 
-        if (descriptor) {
-            return descriptor;
-        }
+        // if (descriptor) {
+        //     return descriptor;
+        // }
     };
 }
 
@@ -558,54 +524,91 @@ export function $debugger(
 //     -------- 神器 wonderful tools --------
 
 /**
- * Conditional write decorator
- * 条件写入限制器
+ * Conditional write decorator with chainable handlers
+ * 带链式处理的条件写入装饰器
  *
- * Do nothing and keep still if handles didn't approach that input
- * Once approached, write new value on
- * 条件不通过就保持原样，反之覆写
+ * @template T - Property value type
  *
- * @param conditionHandles - Conditions to check
- * 条件句柄
- * @param reject - do sth after been not approached
- * 回绝句柄
- * @returns Decorator function
+ * @param conditionHandles - Array of conditions to check. Can be:
+ *  - Boolean values
+ *  - Functions with signature:
+ *    `(thisArg, key, value, prevResult, currentIndex, handlers) => boolean`
+ *  条件检查数组，可以是：
+ *  - 布尔值
+ *  - 函数签名：`(thisArg, key, value, prevResult, currentIndex, handlers) => boolean`
  *
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
+ * @param [rejectHandlers] - Optional array of rejection handlers with signature:
+ *  `(thisArg, key, value, prevResult, currentIndex, handlers) => T`
+ *  可选的拒绝处理数组，函数签名：
+ *  `(thisArg, key, value, prevResult, currentIndex, handlers) => T`
+ *
+ * @returns Property/Method/Auto-accessor decorator
+ * 返回属性/方法/自动访问器装饰器
+ *
+ * @behavior
+ * - Returns `newValue` if all conditions pass
+ * - Returns `rejectHandler` result if any condition fails
+ * - Returns original value if no rejectHandler provided
+ * - Can warn/throw based on __Setting configuration
+ *
+ * 行为：
+ * - 所有条件通过时返回新值
+ * - 任一条件失败时返回rejectHandler结果
+ * - 未提供rejectHandler时返回原值
+ * - 根据__Setting配置发出警告/抛出错误
  */
-export const $conditionalWrite = <T = any>(
-    conditionHandles: (boolean | ((thisArg: any, key: any, v: T) => boolean))[],
-    reject?: (thisArg: any, key: any, v: T) => any
-) => {
-    return $setter<T>((thisArg, key, newVal: T) => {
-        console.log("$conditionalWrite run");
-        console.log(
-            thisArg,
-            key,
-            newVal,
-            conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))
+export const $conditionalWrite = <T = any>(conditionHandles: ConditionHandler[], rejectHandlers?: rejectionHandler[]) => {
+    return $setter<T>((thisArg, key, newVal) => {
+        const callResult = conditionHandles.reduce(
+            (lastProcess, handler, idx, arr) => {
+                const r = handler(thisArg, key, newVal, lastProcess, idx, arr);
+                return typeof r == "boolean"
+                    ? {
+                          approached: r,
+                          output: lastProcess.output,
+                      }
+                    : r;
+            },
+            {
+                approached: true,
+                output: newVal,
+            }
         );
-        console.log("——————");
+        console.log("EEEE", callResult);
 
-        if (conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))) {
-            return newVal;
-        } else {
-            if (reject) return reject(thisArg, key, newVal);
+        if (callResult.approached) return callResult.output;
 
+        if (rejectHandlers?.length) {
+            const rejectResult = rejectHandlers.reduce(
+                (lastProcess, handler, idx, arr) => {
+                    const r = handler(thisArg, key, newVal, callResult, lastProcess, idx, arr);
+                    return typeof r == "boolean"
+                        ? {
+                              approached: r,
+                              output: lastProcess,
+                          }
+                        : r;
+                },
+                {
+                    approached: true,
+                    output: newVal,
+                }
+            );
+            if (rejectResult.approached) return rejectResult.output;
+            // 默认拒绝行为
             if (__Setting.readOnlyPropertyWarningEnabled) {
-                console.warn(` ${conditionHandles.map((h) => (typeof h === "function" ? h(thisArg, key, newVal) : h))}`);
-                console.warn(`${conditionHandles}`);
+                const warningMsg = `Property '${String(key)}' write rejected. Final output: ${JSON.stringify(
+                    rejectResult.output
+                )}`;
                 switch (__Setting.readOnlyPropertyWarningType) {
                     case "Warning":
-                        console.warn(`⚠️ Attempted to write to read-only property '${String(key)}'`);
+                        console.warn(`⚠️ ${warningMsg}`);
                         break;
                     case "Error":
-                        throw new Error(`🚫 Attempted to write to read-only property '${String(key)}`);
+                        throw new Error(`🚫 ${warningMsg}`);
                 }
             }
-            return thisArg[key];
+            return thisArg[key]; // Fallback to original value
         }
     });
 };
@@ -622,7 +625,13 @@ export const $conditionalWrite = <T = any>(
  * 条件句柄
  * @param reject - do sth after been not approached
  * 回绝句柄
+ *
  * @returns Decorator function
+ * @returns @returns
+ * `original` on test approached \
+ * `rejectReturn` on rejected \
+ * `void undefined` on rejected & no reject handle \
+ * `warning` `throw error` see __Setting.readOnlyPropertyWarningEnabled __Setting.readOnlyPropertyWarningType
  *
  * @overload Property decorator
  * @overload Method decorator (get accessor)
