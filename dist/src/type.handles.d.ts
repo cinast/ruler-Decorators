@@ -15,6 +15,10 @@ export type rd_GetterHandle = (target: any, attr: string | symbol, lastResult: u
 /**
  * @handle_II
  * Handle definition for factoryII
+ * @Waring
+ * 如果conditionalHandler最终驳回了读取或者修改 \
+ * 但是你设置了reject但不在reject里面进行处理，缺而直接返回了true或者 approach = true \
+ * 会直接覆写那个值 或者 条件不符就得到那个值
  */
 export type conditionHandler = (thisArg: any, key: string | symbol, value: any, prevResult: {
     approached: boolean;
@@ -26,6 +30,10 @@ export type conditionHandler = (thisArg: any, key: string | symbol, value: any, 
 /**
  * @handle_II
  * Handle definition for factoryII
+ * @Waring
+ * 如果conditionalHandler最终驳回了读取或者修改 \
+ * 但是你设置了reject但不在reject里面进行处理，缺而直接返回了true或者 approach = true \
+ * 会直接覆写那个值 或者 条件不符就得到那个值
  */
 export type rejectionHandler = (thisArg: any, key: string | symbol, value: any, conditionHandleLastOutput: any, prevResult: {
     approached: boolean;

@@ -1,6 +1,7 @@
 /**
  * @this
  * @extraModule
+ * @deprecated
  * @namespace valueRecorder
  * @exported src\rulerDecorators.ts ~577
  */

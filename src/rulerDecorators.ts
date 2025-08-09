@@ -32,7 +32,7 @@ import { getDecoratorType } from "./utils";
 
 /**
  * @WARNING @DEBUGGING
- * 警告：调试相关
+ * 警告：还在制作
  */
 
 /**
@@ -46,6 +46,7 @@ import { getDecoratorType } from "./utils";
  *          setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → ...
  *
  *          世纪笑话↑
+ * 这个版本少见了
  */
 
 //     -------- 核心 core --------
@@ -588,7 +589,7 @@ export const $conditionalWrite = <T = any>(conditionHandles: conditionHandler[],
                 }
             );
             if (rejectResult.approached) return rejectResult.output;
-            // 默认拒绝行为
+
             if (__Setting.readOnlyPropertyWarningEnabled) {
                 const warningMsg = `Property '${String(key)}' write rejected. Final output: ${JSON.stringify(
                     rejectResult.output

@@ -63,6 +63,10 @@ export declare const stringExcludes: (...patten: (RegExp | string)[]) => Propert
  */
 export declare const stringRequires: (...patten: (RegExp | string)[]) => PropertyDecorator;
 /**
+ *
+ */
+/**
+ * @deprecated
  * @tip
  * 作为表达式调用时，无法解析属性修饰器的签名。
  * 运行时将使用 2 个自变量调用修饰器，但修饰器需要 1 个。ts(1240)
@@ -86,6 +90,7 @@ export declare const stringRequires: (...patten: (RegExp | string)[]) => Propert
  */
 export declare const onlyTheClassCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
 /**
+ * @deprecated
  * @Warning But that only make sense where sub class defined \
  * 但是作用只对子类有用
  *
@@ -132,3 +137,4 @@ export declare const onlyTheClassAndSubCanWrite: (thisClass: new (...args: any[]
  * @overload Auto-accessor decorator
  */
 export declare const onlyTheClassAndSubCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
+export declare const triggeredOnSomeDay: (date: Date | number) => PropertyDecorator;

@@ -3,7 +3,7 @@
  */
 /**
  * @WARNING @DEBUGGING
- * 警告：调试相关
+ * 警告：还在制作
  */
 /**
  * @WARNING
@@ -16,6 +16,7 @@
  *          setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → ...
  *
  *          世纪笑话↑
+ * 这个版本少见了
  */
 /**
  * Storage for actual values and wrapper functions

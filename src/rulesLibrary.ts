@@ -1,13 +1,16 @@
 //     -------- Rules --------
 
 /**
+ * @this
+ * @functional
+ * @extendable
  * \*code candies\* \
  * Make u easier decorate ur properties \
  * soo trash it to add additional get or set,
  *
  * @author cinast
  * @since 2022-11-29
- * @update 2025-8-8
+ * @update 2025-8-9
  * @version 1.0.0
  *
  * **@notice** Decorators type: experimental **stage 2**
@@ -177,9 +180,19 @@ export const stringRequires = (...patten: (RegExp | string)[]) =>
             typeof value == "string" && patten.every((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value))),
     ]);
 
+//     -------- unnamed --------
+
+// export const ;
+// 没灵感了
+// 有意者请见github.com/cinast/ruler-Decorators
+// 展示结束
+/**
+ *
+ */
 //     -------- authority like --------
 
 /**
+ * @deprecated
  * @tip
  * 作为表达式调用时，无法解析属性修饰器的签名。
  * 运行时将使用 2 个自变量调用修饰器，但修饰器需要 1 个。ts(1240)
@@ -206,6 +219,7 @@ export const onlyTheClassCanRead = (thisClass: new (...args: any[]) => any) =>
     $conditionalRead([(thisArg) => thisArg instanceof thisClass && Object.getPrototypeOf(thisArg) === thisClass.prototype]);
 
 /**
+ * @deprecated
  * @Warning But that only make sense where sub class defined \
  * 但是作用只对子类有用
  *
@@ -257,5 +271,15 @@ export const onlyTheClassAndSubCanWrite = (thisClass: new (...args: any[]) => an
  */
 export const onlyTheClassAndSubCanRead = (thisClass: new (...args: any[]) => any) =>
     $conditionalRead([(thisArg) => thisArg instanceof thisClass]);
+
+//     -------- strange --------
+
+/**
+ * @deprecated 😂➡️demo used and even failed
+ * @param date
+ * @returns
+ */
+export const triggeredOnSomeDay = (date: Date | number) =>
+    $conditionalRead([() => Date.now() == (typeof date == "number" ? date : date.getMilliseconds())]);
 
 // export function egg() {}
