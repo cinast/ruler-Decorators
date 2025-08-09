@@ -108,7 +108,7 @@ export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
             () => {
                 return {
                     approached: true,
-                    output: 0,
+                    output: min,
                 };
             },
         ]

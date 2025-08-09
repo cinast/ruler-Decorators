@@ -32,6 +32,10 @@ export type rd_GetterHandle = (
 /**
  * @handle_II
  * Handle definition for factoryII
+ * @Waring
+ * 如果conditionalHandler最终驳回了读取或者修改 \
+ * 但是你设置了reject但不在reject里面进行处理，缺而直接返回了true或者 approach = true \
+ * 会直接覆写那个值 或者 条件不符就得到那个值
  */
 export type conditionHandler = (
     thisArg: any,
@@ -50,6 +54,10 @@ export type conditionHandler = (
 /**
  * @handle_II
  * Handle definition for factoryII
+ * @Waring
+ * 如果conditionalHandler最终驳回了读取或者修改 \
+ * 但是你设置了reject但不在reject里面进行处理，缺而直接返回了true或者 approach = true \
+ * 会直接覆写那个值 或者 条件不符就得到那个值
  */
 export type rejectionHandler = (
     thisArg: any,

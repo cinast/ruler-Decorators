@@ -9,6 +9,7 @@
  * @update 2025-8-8
  * @version 1.0.0
  *
+ *
  * @notice Decorators type: experimental stage 2
  * 注意：装饰器类型为实验性stage 2
  *

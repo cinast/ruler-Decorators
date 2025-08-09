@@ -4,7 +4,7 @@ class test {
     // @$$init()
     // proxyed = 0;
     @$$init()
-    @rulerDecorators.minimum(0)
+    @rulerDecorators.minimum(100)
     num = -10;
     @$$init()
     @rulerDecorators.Int()
@@ -30,6 +30,11 @@ console.log(t);
 console.log("Setter handlers:", setterHandlers.get(test.prototype));
 console.log("instanceStorage handlers:", instanceStorage.get(test.prototype));
 console.log("wrapperCache handlers:", wrapperCache.get(test.prototype));
+
+console.log("______________");
+console.log(t.int);
+console.log(t.str);
+console.log(t.num);
 
 // // class TestClass {
 //     // Simplified approach: Use onlyTheClassCanWrite for write protection
