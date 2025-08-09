@@ -30,14 +30,34 @@ import { $setter, $conditionalWrite, $conditionalRead } from "./rulerDecorators"
 
 /**
  * 限制整数
+ * @Warning 定义的时候就不通过，也不给onerror附上默认值，那就是undefined
  * @overload Property decorator
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const Int = <T extends number | bigint = number>(error?: (v: number, o?: unknown) => T) =>
+export const Int = <T extends number | bigint = number>(
+    onError?: ((v: number, o?: unknown) => T) | "ceil" | "floor" | "round" | number
+) =>
     $conditionalWrite<number>(
         [(_, __, v) => !v.toString().includes(".")],
-        [(_, __, v, o) => (error ? { approached: false, output: error(v, o) } : false)]
+        [
+            (_, __, v: number, o) =>
+                onError
+                    ? {
+                          approached: true,
+                          output:
+                              typeof onError == "function"
+                                  ? onError(v, o)
+                                  : typeof onError == "number"
+                                  ? onError
+                                  : {
+                                        ceil: Math.ceil(v),
+                                        floor: Math.floor(v),
+                                        round: Math.round(v),
+                                    }[onError],
+                      }
+                    : false,
+        ]
     );
 
 /**
@@ -130,10 +150,17 @@ export const maximum = (max: bigint | number, allowEqual: boolean = true) =>
  * @overload Auto-accessor decorator
  */
 export const stringExcludes = (...patten: (RegExp | string)[]) =>
-    $conditionalWrite([
-        (_, __, value) =>
-            typeof value == "string" && !patten.every((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value))),
-    ]);
+    $conditionalWrite(
+        [
+            (_, __, value) =>
+                typeof value == "string" &&
+                !patten.every((pat) => (typeof pat === "string" ? value.includes(pat) : pat.test(value))),
+        ],
+        [
+            (_, __, value) => false,
+            //忘了
+        ]
+    );
 
 /**
  * Requires strings to contain specified patterns

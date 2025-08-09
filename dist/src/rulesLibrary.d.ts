@@ -1,10 +1,11 @@
 /**
  * 限制整数
+ * @Warning 定义的时候就不通过，也不给onerror附上默认值，那就是undefined
  * @overload Property decorator
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export declare const Int: <T extends number | bigint = number>(error?: (v: number, o?: unknown) => T) => PropertyDecorator;
+export declare const Int: <T extends number | bigint = number>(onError?: ((v: number, o?: unknown) => T) | "ceil" | "floor" | "round" | number) => PropertyDecorator;
 /**
  * Ensures property value is always positive
  * 确保属性值始终为正数

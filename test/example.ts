@@ -8,11 +8,15 @@ class test {
     num = -10;
     @$$init()
     @rulerDecorators.Int()
-    int;
+    int = -22;
+    @$$init()
+    @rulerDecorators.stringExcludes("250")
+    str = "default";
     constructor() {
         // this.proxyed = 5;
         this.num = -1;
         this.int = 0.2;
+        this.str = "250250";
     }
 }
 let t = new test();
