@@ -16,10 +16,10 @@ export type rd_GetterHandle = (target: any, attr: string | symbol, lastResult: u
  * @handle_II
  * Handle definition for factoryII
  */
-export type ConditionHandler = (thisArg: any, key: string | symbol, value: any, prevResult: {
+export type conditionHandler = (thisArg: any, key: string | symbol, value: any, prevResult: {
     approached: boolean;
     output: any;
-}, currentIndex: number, handlers: ConditionHandler[]) => {
+}, currentIndex: number, handlers: conditionHandler[]) => {
     approached: boolean;
     output: any;
 } | boolean;

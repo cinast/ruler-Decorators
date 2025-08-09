@@ -1,4 +1,3 @@
-import { rejectionHandler } from "./type.handles";
 /**
  * @this
  * @core
@@ -58,7 +57,7 @@ interface InstanceStorageValue {
     [key: string | symbol]: any;
 }
 
-import { ConditionHandler, rd_GetterHandle, rd_SetterHandle } from "./type.handles";
+import { rd_GetterHandle, rd_SetterHandle } from "./type.handles";
 export const instanceStorage = new WeakMap<object, InstanceStorageValue>();
 export const wrapperCache = new WeakMap<object, Record<string | symbol, Function>>();
 
@@ -176,6 +175,8 @@ export function $removeGetterHandler(target: object, propertyKey: string | symbo
 /**
  * Decorator factory: creates adaptive decorator
  * 装饰器工厂：创建自适应装饰器
+ * @Required_at_use 目前没法隐式自动调用
+ *
  * @param initialSetters - Initial setter handlers array
  *                       初始 setter 句柄数组
  * @param initialGetters - Initial getter handlers array
@@ -386,16 +387,10 @@ export function $setter<T>(
 ): PropertyDecorator | MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
         // if (!instanceStorage.has(target)) $$init()(target, attr, descriptor);
-        // console.log("Property descriptor:", Object.getOwnPropertyDescriptor(target, attr) || "Property not defined or inherited");
 
         $addSetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
             return handle(thisArg, key, value, lastResult, index, handlers);
         });
-        console.log("Property descriptor:", Object.getOwnPropertyDescriptor(target, attr) || "Property not defined or inherited");
-
-        // if (descriptor) {
-        //     return descriptor;
-        // }
     };
 }
 
@@ -420,15 +415,11 @@ export function $getter(
     handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown
 ): PropertyDecorator | MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
-        if (!instanceStorage.has(target)) $$init()(target, attr, descriptor);
+        // if (!instanceStorage.has(target)) $$init()(target, attr, descriptor);
 
         $addGetterHandler(target, attr, function (thisArg, key, lastResult, index, handlers) {
             return handle(thisArg, key, lastResult, index, handlers);
         });
-
-        // if (descriptor) {
-        //     return descriptor;
-        // }
     };
 }
 
@@ -523,6 +514,8 @@ export function $debugger(
 
 //     -------- 神器 wonderful tools --------
 
+import { conditionHandler, rejectionHandler } from "./type.handles";
+
 /**
  * Conditional write decorator with chainable handlers
  * 带链式处理的条件写入装饰器
@@ -557,7 +550,7 @@ export function $debugger(
  * - 未提供rejectHandler时返回原值
  * - 根据__Setting配置发出警告/抛出错误
  */
-export const $conditionalWrite = <T = any>(conditionHandles: ConditionHandler[], rejectHandlers?: rejectionHandler[]) => {
+export const $conditionalWrite = <T = any>(conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => {
     return $setter<T>((thisArg, key, newVal) => {
         const callResult = conditionHandles.reduce(
             (lastProcess, handler, idx, arr) => {
@@ -574,7 +567,6 @@ export const $conditionalWrite = <T = any>(conditionHandles: ConditionHandler[],
                 output: newVal,
             }
         );
-        console.log("EEEE", callResult);
 
         if (callResult.approached) return callResult.output;
 
@@ -637,40 +629,60 @@ export const $conditionalWrite = <T = any>(conditionHandles: ConditionHandler[],
  * @overload Method decorator (get accessor)
  * @overload Auto-accessor decorator
  */
-export const $conditionalRead = (
-    conditionHandles: (boolean | ((thisArg: any, key: any, value: any) => boolean))[],
-    reject?: (thisArg: any, key: any) => any
-) => {
+export const $conditionalRead = <T = any>(conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => {
     return $getter((thisArg, key, value) => {
-        // console.log("$conditionalRead run");
-        // console.log(
-        //     thisArg,
-        //     key,
-        //     value,
-        //     conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))
-        // );
-        // console.log("——————");
+        const callResult = conditionHandles.reduce(
+            (lastProcess, handler, idx, arr) => {
+                const r = handler(thisArg, key, value, lastProcess, idx, arr);
+                return typeof r == "boolean"
+                    ? {
+                          approached: r,
+                          output: lastProcess.output,
+                      }
+                    : r;
+            },
+            {
+                approached: true,
+                output: value,
+            }
+        );
 
-        if (conditionHandles.every((h) => (typeof h === "function" ? h(thisArg, key, value) : h))) {
-            return value;
-        } else {
-            if (reject) return reject(thisArg, key);
+        if (callResult.approached) return callResult.output;
+
+        if (rejectHandlers?.length) {
+            const rejectResult = rejectHandlers.reduce(
+                (lastProcess, handler, idx, arr) => {
+                    const r = handler(thisArg, key, value, callResult, lastProcess, idx, arr);
+                    return typeof r == "boolean"
+                        ? {
+                              approached: r,
+                              output: lastProcess,
+                          }
+                        : r;
+                },
+                {
+                    approached: true,
+                    output: value,
+                }
+            );
+            if (rejectResult.approached) return rejectResult.output;
+            // 默认拒绝行为
             if (__Setting.readOnlyPropertyWarningEnabled) {
-                console.warn(` ${conditionHandles.map((h) => (typeof h === "function" ? h(thisArg, key, value) : h))}`);
-                console.warn(`${conditionHandles}`);
+                const warningMsg = `Property '${String(key)}' read rejected. Final output: ${JSON.stringify(
+                    rejectResult.output
+                )}`;
                 switch (__Setting.readOnlyPropertyWarningType) {
                     case "Warning":
-                        console.warn(`⚠️ Cannot read this properties under unsatisfied conditions '${String(key)}'`);
+                        console.warn(`⚠️ ${warningMsg}`);
                         break;
                     case "Error":
-                        throw new Error(`🚫 Cannot read this properties under unsatisfied conditions '${String(key)}`);
+                        throw new Error(`🚫 ${warningMsg}`);
                 }
             }
-            return void 0;
+            return void 0; // Fallback to void
         }
     });
 };
-
 export * as rulerDecorators from "./rulesLibrary";
 export * as valueRecorder from "./valueRecorder";
 export * from "./utils";

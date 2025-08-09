@@ -73,23 +73,26 @@ export const alwaysNegative = $conditionalWrite<bigint | number>([(thisArg, key,
  * @overload Auto-accessor decorator
  */
 export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
-    $conditionalWrite<number | bigint>([
-        (_, __, v) =>
-            allowEqual
-                ? typeof v == "number"
-                    ? Math.min(v, Number(min)) == min
-                    : v >= min
-                : typeof v == "number"
-                ? Math.min(v, Number(min)) == min && v !== Number(min)
-                : v > min,
-        (_, __, v, r) => {
-            console.log(v, r);
-            return {
-                approached: true,
-                output: r.approached ? r.output : min,
-            };
-        },
-    ]);
+    $conditionalWrite<number | bigint>(
+        [
+            (_, __, v) =>
+                allowEqual
+                    ? typeof v == "number"
+                        ? Math.min(v, Number(min)) == min
+                        : v >= min
+                    : typeof v == "number"
+                    ? Math.min(v, Number(min)) == min && v !== Number(min)
+                    : v > min,
+        ],
+        [
+            () => {
+                return {
+                    approached: true,
+                    output: 0,
+                };
+            },
+        ]
+    );
 
 // coming-soon
 // export const interval = (min: bigint | number, max: bigint | number, leftEqual: boolean = true, rightEqual: boolean = true) =>

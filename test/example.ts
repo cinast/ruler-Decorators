@@ -6,22 +6,21 @@ class test {
     @$$init()
     @rulerDecorators.minimum(0)
     num = -10;
-    // @rulerDecorators.Int()
-    // int;
+    @$$init()
+    @rulerDecorators.Int()
+    int;
     constructor() {
         // this.proxyed = 5;
         this.num = -1;
-        // this.int = 0.2;
+        this.int = 0.2;
     }
 }
 let t = new test();
 console.log(t);
 // t.proxyed = 10;
 t.num = -5;
-// t.int = 0.2;
+t.int = 0.2;
 console.log(t);
-console.log(t.num, Object.getOwnPropertyDescriptor(t, "num"));
-// console.log(t.int, Object.getOwnPropertyDescriptor(t, "int"));
 // console.log(t.proxyed);
 
 console.log("Setter handlers:", setterHandlers.get(test.prototype));
