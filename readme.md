@@ -14,13 +14,15 @@
 
 # **装饰器神教 _ruler-DECORATORS_**（实验性阶段）
 
-## ~~📦 安装~~
+## 📦 ~~安装~~
 
 ```bash
 npm install ruler-decorators
 ```
 
-## 🛠️ ~~完整~~ API
+快了快了
+
+## 🛠️ 完整 API
 
 ### 核心装饰器
 
@@ -31,20 +33,20 @@ npm install ruler-decorators
 
 ### 实用工具
 
--   ~~`$conditionalWrite`~~: 条件写入
--   ~~`$conditionalRead`~~: 条件读取
--   ~~`watchSet`~~: 值变化监听
+-   `$conditionalWrite`: 条件写入
+-   `$conditionalRead`: 条件读取
+-   `watchSet`: 值变化监听
 
 ### 预设规则
 
--   ~~`alwaysPositive`: 只接受正数~~
--   ~~`alwaysNegative`: 只接受负数~~
--   ~~`minimum`: 最小值限制~~
--   ~~`maximum`: 最大值限制~~
--   ~~`onlyTheClassCanRead`: 类访问控制~~
--   ~~`onlyTheClassCanWrite`: 类写入控制~~
--   ~~`onlyTheClassAndSubCanRead`: 类访问控制~~
--   ~~`onlyTheClassAndSubCanWrite`: 类写入控制~~
+-   `alwaysPositive`: 只接受正数
+-   `alwaysNegative`: 只接受负数
+-   `minimum`: 最小值限制
+-   `maximum`: 最大值限制
+-   `onlyTheClassCanRead`: 类访问控制
+-   `onlyTheClassCanWrite`: 类写入控制
+-   `onlyTheClassAndSubCanRead`: 类访问控制
+-   `onlyTheClassAndSubCanWrite`: 类写入控制
 
 ![alt text](doc/img/balbalbalbla.gif)
 
