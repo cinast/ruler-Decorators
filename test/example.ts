@@ -12,9 +12,6 @@ class test {
     @$$init()
     @rulerDecorators.stringExcludes("250")
     str = "default";
-    @$$init()
-    @rulerDecorators.triggeredOnSomeDay(1754735909825 + 3 * 60 * 1000)
-    surprise = () => console.log("no egg");
     constructor() {
         // this.proxyed = 5;
         this.num = -1;

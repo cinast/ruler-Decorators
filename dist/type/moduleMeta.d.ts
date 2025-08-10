@@ -20,3 +20,4 @@ export declare const __Setting: {
     readOnlyPropertyWarningType: "Warning" | "Error";
 };
 export declare const version: "1.0.0";
+//# sourceMappingURL=moduleMeta.d.ts.map

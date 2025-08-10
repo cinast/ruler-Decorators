@@ -137,4 +137,10 @@ export declare const onlyTheClassAndSubCanWrite: (thisClass: new (...args: any[]
  * @overload Auto-accessor decorator
  */
 export declare const onlyTheClassAndSubCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
+/**
+ * @deprecated 😂➡️demo used and even failed
+ * @param date
+ * @returns
+ */
 export declare const triggeredOnSomeDay: (date: Date | number) => PropertyDecorator;
+//# sourceMappingURL=rulesLibrary.d.ts.map

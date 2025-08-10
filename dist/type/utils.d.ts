@@ -9,3 +9,4 @@
 export declare const watchSet: <T>(handle: (thisArg: any, attr: string | symbol, value: T) => T) => PropertyDecorator;
 /** Identifies decorator type from arguments */
 export declare function getDecoratorType(args: any[]): string;
+//# sourceMappingURL=utils.d.ts.map

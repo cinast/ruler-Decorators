@@ -1,6 +1,6 @@
 {
     "name": "ruler-decorators",
-    "version": "0.0.0",
+    "version": "0.0.0-preview-test",
     "description": "TypeScript decorators library for property access control and validation",
     "keywords": [
         "typescript",
@@ -21,8 +21,14 @@
     "license": "MIT",
     "author": "cinast",
     "type": "commonjs",
-    "main": "./dist/src/rulerDecorators.js",
-    "types": "./dist/src/rulerDecorators.d.ts",
+    "main": "./dist/rulerDecorators.js",
+    "types": "./dist/rulerDecorators.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/rulerDecorators.mjs",
+            "require": "./dist/rulerDecorators.js"
+        }
+    },
     "directories": {
         "doc": "doc"
     },
@@ -32,10 +38,16 @@
         "LICENSE"
     ],
     "scripts": {
-        "test": "npx tsc && node .\\dist\\test\\example.js",
-        "run": "npx tsc"
+        "build": "npx tsc",
+        "build:watch": "npx tsc -w",
+        "prepublishOnly": "npm run build && npm test",
+        "test": "npx tsc -p test/test.tsconfig.json && node test/dist/test/example.js",
+        "[pwsh]clear-dist": "Remove-Item -Path './dist/**', './test/dist' -Force"
     },
     "devDependencies": {
         "typescript": "^5.2.0"
+    },
+    "peerDependencies": {
+        "typescript": ">=4.3.0"
     }
 }

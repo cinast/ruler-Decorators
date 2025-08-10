@@ -42,3 +42,4 @@ export type rejectionHandler = (thisArg: any, key: string | symbol, value: any, 
     approached: boolean;
     output: any;
 } | boolean;
+//# sourceMappingURL=type.handles.d.ts.map
