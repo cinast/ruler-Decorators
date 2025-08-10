@@ -368,7 +368,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
 //     -------- 调用接口 api functions --------
 
 /**
- * Str句柄注入器 装饰器工厂
+ * Str句柄注册器 装饰器工厂
  * Setter injector decorator Factory.
  * @factory
  * @param handle - Function to define the setter behavior.
@@ -384,9 +384,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
  */
 export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): PropertyDecorator;
 export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): MethodDecorator;
-export function $setter<T>(
-    handle: (thisArg: any, attr: string | symbol, value: T, ...arg: any[]) => T
-): PropertyDecorator | MethodDecorator {
+export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T, ...arg: any[]) => T) {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
         // if (!instanceStorage.has(target)) $$init()(target, attr, descriptor);
 
@@ -397,7 +395,7 @@ export function $setter<T>(
 }
 
 /**
- * Gtr句柄注入器 装饰器工厂
+ * Gtr句柄注册器 装饰器工厂
  * Getter injector decorator Factory.
  * @factory
  * @param handle - Function to define the getter behavior.
@@ -413,9 +411,7 @@ export function $setter<T>(
  */
 export function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
 export function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
-export function $getter(
-    handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown
-): PropertyDecorator | MethodDecorator {
+export function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown) {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
         // if (!instanceStorage.has(target)) $$init()(target, attr, descriptor);
 

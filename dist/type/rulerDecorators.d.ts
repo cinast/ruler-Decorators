@@ -94,9 +94,12 @@ export declare function $removeGetterHandler(target: object, propertyKey: string
  * @returns Adaptive decorator function
  *         自适应装饰器函数
  */
-export declare const $$init: (initialSetters?: rd_SetterHandle[], initialGetters?: rd_GetterHandle[]) => (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => any;
+export declare const $$init: (
+    initialSetters?: rd_SetterHandle[],
+    initialGetters?: rd_GetterHandle[]
+) => (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => any;
 /**
- * Str句柄注入器 装饰器工厂
+ * Str句柄注册器 装饰器工厂
  * Setter injector decorator Factory.
  * @factory
  * @param handle - Function to define the setter behavior.
@@ -113,7 +116,7 @@ export declare const $$init: (initialSetters?: rd_SetterHandle[], initialGetters
 export declare function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): PropertyDecorator;
 export declare function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): MethodDecorator;
 /**
- * Gtr句柄注入器 装饰器工厂
+ * Gtr句柄注册器 装饰器工厂
  * Getter injector decorator Factory.
  * @factory
  * @param handle - Function to define the getter behavior.
@@ -161,7 +164,10 @@ export declare function $defineProperty<T>(...props: any[]): PropertyDecorator;
  *   ) {}
  * }
  */
-export declare function $debugger(logArgs?: boolean, ...debuggers: (string | ((...args: any[]) => any))[]): ClassDecorator & MethodDecorator & PropertyDecorator & ParameterDecorator;
+export declare function $debugger(
+    logArgs?: boolean,
+    ...debuggers: (string | ((...args: any[]) => any))[]
+): ClassDecorator & MethodDecorator & PropertyDecorator & ParameterDecorator;
 import { conditionHandler, rejectionHandler } from "./type.handles";
 /**
  * Conditional write decorator with chainable handlers
@@ -197,7 +203,10 @@ import { conditionHandler, rejectionHandler } from "./type.handles";
  * - 未提供rejectHandler时返回原值
  * - 根据__Setting配置发出警告/抛出错误
  */
-export declare const $conditionalWrite: <T = any>(conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator;
+export declare const $conditionalWrite: <T = any>(
+    conditionHandles: conditionHandler[],
+    rejectHandlers?: rejectionHandler[]
+) => PropertyDecorator;
 /**
  * Conditional read decorator
  * 条件读取限制器
@@ -222,7 +231,10 @@ export declare const $conditionalWrite: <T = any>(conditionHandles: conditionHan
  * @overload Method decorator (get accessor)
  * @overload Auto-accessor decorator
  */
-export declare const $conditionalRead: <T = any>(conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator;
+export declare const $conditionalRead: <T = any>(
+    conditionHandles: conditionHandler[],
+    rejectHandlers?: rejectionHandler[]
+) => PropertyDecorator;
 export * as rulerDecorators from "./rulesLibrary";
 export * as valueRecorder from "./valueRecorder";
 export * from "./utils";

@@ -27,8 +27,8 @@ npm install ruler-decorators
 ### 核心装饰器
 
 -   **`$$init`**: **万恶之源**
--   `$setter`: 创建并注入 setter 句柄的装饰器
--   `$getter`: 创建并注入 getter 句柄的装饰器
+-   `$setter`: 创建并注册 setter 句柄的装饰器
+-   `$getter`: 创建并注册 getter 句柄的装饰器
 -   `$debugger`: 调试装饰器（装饰器形态的断点）
 
 ### 实用工具

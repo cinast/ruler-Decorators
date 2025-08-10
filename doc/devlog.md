@@ -27,7 +27,7 @@ _8 月_
 自以为是的以为定义了 gtr 和 str 就万事大吉了  
 _node：你不能有二缺一_
 
-装饰器是注入器  
+装饰器是注册器  
 gtr/str 负责驱动这一切  
 工厂只是调整句柄的调用
 
@@ -196,7 +196,7 @@ gtr/str 负责驱动这一切
 
     -   **重构了** 28-282 行的核心装饰器逻辑
     -   保留了旧的一阶工厂$setter/$getter 逻辑但标记为过时
-    -   改为使用 addGetterHandler/addSetterHandler 注入新的句柄
+    -   改为使用 addGetterHandler/addSetterHandler 注册新的句柄
 
 1.  **注释标准化**
 
