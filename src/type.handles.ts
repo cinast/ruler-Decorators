@@ -1,8 +1,12 @@
 /**
  * @handle_I
- * Handle definition for factoryI
- * Type definition for basic foundation of setter handler
- * setter句柄类型定义
+ * Core setter handler type for factoryI (base level)
+ * 一阶工厂基础setter句柄类型
+ *
+ * @core_concept Chainable unit in WeakMap-stored handler chain
+ * @core_concept WeakMap存储的句柄链中的可链式调用单元
+ * @chainable Processed via Array.reduce() in execution flow
+ * @chainable 通过Array.reduce()实现链式执行
  */
 export type rd_SetterHandle = (
     target: any,
@@ -16,9 +20,13 @@ export type rd_SetterHandle = (
 
 /**
  * @handle_I
- * Handle definition for factoryI
- * Type definition for basic foundation of getter handler
- * getter句柄类型定义
+ * Core getter handler type for factoryI (base level)
+ * 一阶工厂基础getter句柄类型
+ *
+ * @core_concept Chainable unit in WeakMap-stored handler chain
+ * @core_concept WeakMap存储的句柄链中的可链式调用单元
+ * @chainable Processed via Array.reduce() in execution flow
+ * @chainable 通过Array.reduce()实现链式执行
  */
 export type rd_GetterHandle = (
     target: any,
@@ -31,11 +39,13 @@ export type rd_GetterHandle = (
 
 /**
  * @handle_II
- * Handle definition for factoryII
- * @Waring
- * 如果conditionalHandler最终驳回了读取或者修改 \
- * 但是你设置了reject但不在reject里面进行处理，缺而直接返回了true或者 approach = true \
- * 会直接覆写那个值 或者 条件不符就得到那个值
+ * Condition handler type for factoryII (conditional level)
+ * 二阶工厂条件判断句柄类型
+ *
+ * @core_concept Used in $conditionalWrite/$conditionalRead decorators
+ * @core_concept 用于条件写入/读取装饰器的条件判断
+ * @Waring Returns true/approached without processing will override value
+ * @Waring 如果返回true/approached但未处理值，将直接覆盖原值
  */
 export type conditionHandler = (
     thisArg: any,
@@ -53,11 +63,13 @@ export type conditionHandler = (
 
 /**
  * @handle_II
- * Handle definition for factoryII
- * @Waring
- * 如果conditionalHandler最终驳回了读取或者修改 \
- * 但是你设置了reject但不在reject里面进行处理，缺而直接返回了true或者 approach = true \
- * 会直接覆写那个值 或者 条件不符就得到那个值
+ * Rejection handler type for factoryII (conditional level)
+ * 二阶工厂拒绝处理句柄类型
+ *
+ * @core_concept Used when conditions fail in $conditionalWrite/$conditionalRead
+ * @core_concept 用于条件写入/读取装饰器中条件失败时的处理
+ * @Waring Returns true/approached without processing will keep original value
+ * @Waring 如果返回true/approached但未处理值，将保持原值
  */
 export type rejectionHandler = (
     thisArg: any,

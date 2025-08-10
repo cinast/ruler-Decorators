@@ -368,19 +368,29 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
 //     -------- 调用接口 api functions --------
 
 /**
- * Str句柄注册器 装饰器工厂
- * Setter injector decorator Factory.
- * @factory
- * @param handle - Function to define the setter behavior.
- * @returns A property decorator.
+ * Setter handler decorator factory
+ * Setter句柄装饰器工厂
  *
+ * @factory Core decorator factory for property setters
+ * @factory 属性setter的核心装饰器工厂
+ * @core_concept Wraps property setters with custom logic
+ * @core_concept 用自定义逻辑包装属性setter
+ *
+ * @param handle - Setter handler function with signature:
+ *                setter句柄函数签名:
+ *                (thisArg, attr, value, lastResult, index, handlers) => newValue
+ * @returns Property/Method/Auto-accessor decorator
+ *          返回属性/方法/自动访问器装饰器
+ *
+ * @overload Property decorator
  * @overload Method decorator (for set accessors)
- * @param handle - Function to define the setter behavior
- * @returns A method decorator for set accessors
- *
  * @overload Auto-accessor decorator
- * @param handle - Function to define the setter behavior
- * @returns An auto-accessor decorator
+ *
+ * @example
+ * class MyClass {
+ *   @$setter((_, __, v) => v * 2)
+ *   num = 1; // Will be doubled on set
+ * }
  */
 export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): PropertyDecorator;
 export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): MethodDecorator;
@@ -395,19 +405,29 @@ export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: 
 }
 
 /**
- * Gtr句柄注册器 装饰器工厂
- * Getter injector decorator Factory.
- * @factory
- * @param handle - Function to define the getter behavior.
- * @returns A property decorator.
+ * Getter handler decorator factory
+ * Getter句柄装饰器工厂
  *
+ * @factory Core decorator factory for property getters
+ * @factory 属性getter的核心装饰器工厂
+ * @core_concept Wraps property getters with custom logic
+ * @core_concept 用自定义逻辑包装属性getter
+ *
+ * @param handle - Getter handler function with signature:
+ *                getter句柄函数签名:
+ *                (thisArg, attr, lastResult, index, handlers) => newValue
+ * @returns Property/Method/Auto-accessor decorator
+ *          返回属性/方法/自动访问器装饰器
+ *
+ * @overload Property decorator
  * @overload Method decorator (for get accessors)
- * @param handle - Function to define the getter behavior
- * @returns A method decorator for get accessors
- *
  * @overload Auto-accessor decorator
- * @param handle - Function to define the getter behavior
- * @returns An auto-accessor decorator
+ *
+ * @example
+ * class MyClass {
+ *   @$getter((_, __, v) => v + 100)
+ *   num = 1; // Will add 100 when get
+ * }
  */
 export function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
 export function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
@@ -515,38 +535,57 @@ export function $debugger(
 import { conditionHandler, rejectionHandler } from "./type.handles";
 
 /**
- * Conditional write decorator with chainable handlers
- * 带链式处理的条件写入装饰器
+ * Conditional write decorator factory
+ * 条件写入装饰器工厂
+ *
+ * @factory Core decorator for conditional property writes
+ * @factory 属性条件写入的核心装饰器
+ * @core_concept Implements conditional logic chain for property setters
+ * @core_concept 为属性setter实现条件逻辑链
  *
  * @template T - Property value type
+ *               属性值类型
  *
- * @param conditionHandles - Array of conditions to check. Can be:
- *  - Boolean values
- *  - Functions with signature:
- *    `(thisArg, key, value, prevResult, currentIndex, handlers) => boolean`
- *  条件检查数组，可以是：
- *  - 布尔值
- *  - 函数签名：`(thisArg, key, value, prevResult, currentIndex, handlers) => boolean`
- *
- * @param [rejectHandlers] - Optional array of rejection handlers with signature:
- *  `(thisArg, key, value, prevResult, currentIndex, handlers) => T`
- *  可选的拒绝处理数组，函数签名：
- *  `(thisArg, key, value, prevResult, currentIndex, handlers) => T`
+ * @param conditionHandles - Array of conditions to check:
+ *                条件检查数组:
+ *                - Boolean values
+ *                - Functions with signature:
+ *                  (thisArg, key, value, prevResult, currentIndex, handlers) => boolean|{approached,output}
+ * @param [rejectHandlers] - Optional rejection handlers with signature:
+ *                可选的拒绝处理函数:
+ *                (thisArg, key, value, conditionResult, prevResult, currentIndex, handlers) => T|{approached,output}
  *
  * @returns Property/Method/Auto-accessor decorator
- * 返回属性/方法/自动访问器装饰器
+ *          返回属性/方法/自动访问器装饰器
+ *
+ * @overload Property decorator
+ * @overload Method decorator (set accessor)
+ * @overload Auto-accessor decorator
+ *
+ * @example
+ * class MyClass {
+ *   @$conditionalWrite(
+ *     [(_, __, v) => v > 0], // Only allow positive numbers
+ *     [(_, __, v) => Math.abs(v)] // If negative, use absolute value
+ *   )
+ *   num = 1;
+ * }
  *
  * @behavior
- * - Returns `newValue` if all conditions pass
- * - Returns `rejectHandler` result if any condition fails
- * - Returns original value if no rejectHandler provided
- * - Can warn/throw based on __Setting configuration
+ * 1. Processes conditions in chain using Array.reduce()
+ * 2. If all conditions pass (approached=true), returns new value
+ * 3. If any condition fails:
+ *    - Applies reject handlers if provided
+ *    - Returns original value if no reject handlers
+ *    - Can warn/throw based on __Setting configuration
  *
  * 行为：
- * - 所有条件通过时返回新值
- * - 任一条件失败时返回rejectHandler结果
- * - 未提供rejectHandler时返回原值
- * - 根据__Setting配置发出警告/抛出错误
+ * 1. 使用Array.reduce()链式处理条件
+ * 2. 所有条件通过时(approached=true)返回新值
+ * 3. 任一条件失败时:
+ *    - 应用拒绝处理函数(如果提供)
+ *    - 未提供拒绝处理时返回原值
+ *    - 根据__Setting配置发出警告/抛出错误
  */
 export const $conditionalWrite = <T = any>(conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => {
     return $setter<T>((thisArg, key, newVal) => {
@@ -604,28 +643,57 @@ export const $conditionalWrite = <T = any>(conditionHandles: conditionHandler[],
 };
 
 /**
- * Conditional read decorator
- * 条件读取限制器
+ * Conditional read decorator factory
+ * 条件读取装饰器工厂
  *
- * return nothing and keep still if handles didn't approach you
- * Once approached, get what you want
- * 条件不通过就得到无，反之得到值
+ * @factory Core decorator for conditional property reads
+ * @factory 属性条件读取的核心装饰器
+ * @core_concept Implements conditional logic chain for property getters
+ * @core_concept 为属性getter实现条件逻辑链
  *
- * @param conditionHandles - Conditions to check
- * 条件句柄
- * @param reject - do sth after been not approached
- * 回绝句柄
+ * @template T - Property value type
+ *               属性值类型
  *
- * @returns Decorator function
- * @returns @returns
- * `original` on test approached \
- * `rejectReturn` on rejected \
- * `void undefined` on rejected & no reject handle \
- * `warning` `throw error` see __Setting.readOnlyPropertyWarningEnabled __Setting.readOnlyPropertyWarningType
+ * @param conditionHandles - Array of conditions to check:
+ *                条件检查数组:
+ *                - Boolean values
+ *                - Functions with signature:
+ *                  (thisArg, key, value, prevResult, currentIndex, handlers) => boolean|{approached,output}
+ * @param [rejectHandlers] - Optional rejection handlers with signature:
+ *                可选的拒绝处理函数:
+ *                (thisArg, key, value, conditionResult, prevResult, currentIndex, handlers) => T|{approached,output}
+ *
+ * @returns Property/Method/Auto-accessor decorator
+ *          返回属性/方法/自动访问器装饰器
  *
  * @overload Property decorator
  * @overload Method decorator (get accessor)
  * @overload Auto-accessor decorator
+ *
+ * @example
+ * class MyClass {
+ *   @$conditionalRead(
+ *     [(_, __, v) => v !== undefined], // Only allow defined values
+ *     [() => 'default'] // Return 'default' if undefined
+ *   )
+ *   data?: string;
+ * }
+ *
+ * @behavior
+ * 1. Processes conditions in chain using Array.reduce()
+ * 2. If all conditions pass (approached=true), returns original value
+ * 3. If any condition fails:
+ *    - Applies reject handlers if provided
+ *    - Returns undefined if no reject handlers
+ *    - Can warn/throw based on __Setting configuration
+ *
+ * 行为：
+ * 1. 使用Array.reduce()链式处理条件
+ * 2. 所有条件通过时(approached=true)返回原值
+ * 3. 任一条件失败时:
+ *    - 应用拒绝处理函数(如果提供)
+ *    - 未提供拒绝处理时返回undefined
+ *    - 根据__Setting配置发出警告/抛出错误
  */
 export const $conditionalRead = <T = any>(conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => {
     return $getter((thisArg, key, value) => {
