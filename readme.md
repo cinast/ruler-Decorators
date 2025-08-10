@@ -1,4 +1,4 @@
-# 前情提要
+i# 前情提要
 
 😈 恶魔选项 😈
 
@@ -209,8 +209,5 @@ class SecureData {
 
 ---
 
-![cinast](https://avatars.githubusercontent.com/u/126345646?v=4){:height="20px" width="20px" border-radius="50%"}@cinast did that doc
-
-```
-
-```
+<img src= "https://avatars.githubusercontent.com/u/126345646?v=4" style ="height:1rem; width:1rem; border-radius:50%;background:center,center">
+@cinast did that doc
