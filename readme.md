@@ -132,7 +132,7 @@ class SecureData {
 
 2.  必须一句话解决
 
-    1.  柔性类型限制
+3.  柔性类型限制
 
     ```ts
     class UserForm {
@@ -207,5 +207,17 @@ class SecureData {
 <br>
 
 ---
+
+<style>
+    img {
+    position: absolute;
+    border: 1px solid gold;
+    border-radius: 50%;
+    box-shadow: 5px 3px 10px rgb(255, 231, 94);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    }
+</style>
 
 <img src= "https://avatars.githubusercontent.com/u/126345646?v=4" style ="height:1rem; width:1rem; border-radius:50%;background:center,center"> @cinast did that doc
