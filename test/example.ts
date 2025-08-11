@@ -1,5 +1,6 @@
-import { $$init, instanceStorage, rulerDecorators, setterHandlers, wrapperCache } from "../src/rulerDecorators";
+import { $$init, rulerDecorators } from "../src/rulerDecorators";
 
+rulerDecorators.__Setting.dev();
 class test {
     // @$$init()
     // proxyed = 0;

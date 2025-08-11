@@ -32,8 +32,9 @@
  * @namespace rulerDecorators
  */
 
-import { $setter, $conditionalWrite, $conditionalRead } from "./rulerDecorators";
-
+import { $conditionalWrite, $conditionalRead } from "./rulerDecorators";
+import { __Setting } from "./moduleMeta";
+export { __Setting };
 ("use strict");
 
 //     -------- math toy --------

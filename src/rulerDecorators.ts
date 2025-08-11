@@ -24,7 +24,6 @@
  */
 ("use strict");
 import { __Setting } from "./moduleMeta";
-import { getDecoratorType } from "./utils";
 
 /**
  *           ———————— 注意事项 Notice ————————
@@ -666,6 +665,12 @@ export const $conditionalRead = <T = any>(
         return void 0; // Fallback to void
     });
 };
+
+/**
+ * rulers & libSetting
+ */
 export * as rulerDecorators from "./rulesLibrary";
-export * as valueRecorder from "./valueRecorder";
-export * from "./utils";
+/**
+ * extra lib (optional)
+ */
+export * from "./valueRecorder";
