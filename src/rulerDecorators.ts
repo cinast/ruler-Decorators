@@ -60,15 +60,15 @@ interface InstanceStorageValue {
 }
 
 import { rd_GetterHandle, rd_SetterHandle } from "./type.handles";
-export const instanceStorage = new WeakMap<object, InstanceStorageValue>();
-export const wrapperCache = new WeakMap<object, Record<string | symbol, Function>>();
+const instanceStorage = new WeakMap<object, InstanceStorageValue>();
+const wrapperCache = new WeakMap<object, Record<string | symbol, Function>>();
 
 /**
  * Storage for property handler chains
  * 存储每个属性的句柄链
  */
-export const setterHandlers = new WeakMap<object, Map<string | symbol, rd_SetterHandle[]>>();
-export const getterHandlers = new WeakMap<object, Map<string | symbol, rd_GetterHandle[]>>();
+const setterHandlers = new WeakMap<object, Map<string | symbol, rd_SetterHandle[]>>();
+const getterHandlers = new WeakMap<object, Map<string | symbol, rd_GetterHandle[]>>();
 
 /**
  * Add setter handler to specified property
