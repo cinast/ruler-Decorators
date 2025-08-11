@@ -20,8 +20,8 @@ _8 月_
 ## 起源——2022-11-29 ~~v.original~~
 
 好像没图了（雾）
-![alt text](img/_devlog/2025.6/$str&$gtr.png)
-![alt text](img/_devlog/2025.6/propRules.png)
+![alt text](https://cdn.jsdelivr.net/gh/cinast/cinast.imgsStore/com.gh.rulerDecorators/devlog/$str&$gtr.png)
+![alt text](https://cdn.jsdelivr.net/gh/cinast/cinast.imgsStore/com.gh.rulerDecorators/devlog/propRules.png)
 
 两个单纯的装饰器，  
 自以为是的以为定义了 gtr 和 str 就万事大吉了  

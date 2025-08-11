@@ -1,4 +1,4 @@
-i# 前情提要
+# 前情提要
 
 😈 恶魔选项 😈
 
@@ -10,7 +10,7 @@ i# 前情提要
 
 ---
 
-![wallpaper](doc/img/gitbub_main/wallpaper.png)
+![wallpaper](https://cdn.jsdelivr.net/gh/cinast/cinast.imgsStore/com.gh.rulerDecorators/readme.img/wallpaper.png)
 
 # **装饰器神教 _ruler-DECORATORS_**（实验性阶段）
 
@@ -48,7 +48,7 @@ npm install ruler-decorators
 -   ~~`onlyTheClassAndSubCanRead`~~: 类访问控制
 -   ~~`onlyTheClassAndSubCanWrite`~~: 类写入控制
 
-![alt text](doc/img/balbalbalbla.gif)
+![alt text](https://cdn.jsdelivr.net/gh/cinast/cinast.imgsStore/public-emoji/balbalbalbla.gif)
 
 ## 使用指导
 

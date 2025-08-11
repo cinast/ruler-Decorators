@@ -310,7 +310,7 @@ class cls {
 
 图：_写$conditionalWrite()时返回内容不对或者忘记了写报的令人一头雾水的错_
 
-> _哦，我我忘记写 return 了_ ![alt text](img/devGuide/err_conditionalWrite.png)
+> _哦，我我忘记写 return 了_ ![alt text](https://cdn.jsdelivr.net/gh/cinast/cinast.imgsStore/com.gh.rulerDecorators/err_conditionalWrite.png)
 
 ——@cinast
 2025/8/10
