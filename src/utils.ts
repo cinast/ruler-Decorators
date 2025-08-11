@@ -31,7 +31,7 @@ export function getDecoratorType(args: any[]): string {
  * @param props
  * @returns
  */
-export function $defineProperty<T>(...props: any[]): PropertyDecorator {
+export function $defineProperty(...props: any[]): PropertyDecorator {
     return function (target: any, attr: string | symbol) {
         Object.defineProperty(target, attr, props);
     };

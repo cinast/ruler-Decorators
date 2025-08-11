@@ -1,4 +1,4 @@
-import { $$init, rulerDecorators } from "../src/rulerDecorators";
+import { $$init, $conditionalRead, $conditionalWrite, rulerDecorators } from "../src/rulerDecorators";
 
 rulerDecorators.__Setting.dev();
 class test {
@@ -13,6 +13,31 @@ class test {
     @$$init()
     @rulerDecorators.stringExcludes("250")
     str = "default";
+    @$$init()
+    @$conditionalWrite<number, number>("ignore", [
+        // () => {
+        //     return {
+        //         approached: true,
+        //         output: "33333", // 现在这里会报错：不能将string分配给number
+        //     };
+        // },
+        (thisArg, key, value, prevResult) => {
+            // value 是 number 类型
+            // prevResult.output 是 number 类型
+            return {
+                approached: true,
+                output: value * 2, // 正确：返回number
+            };
+        },
+        () => {
+            return {
+                approached: true,
+                output: 0, // 正确
+            };
+        },
+    ])
+    a: number = 0;
+
     constructor() {
         // this.proxyed = 5;
         this.num = -1;
@@ -36,6 +61,7 @@ console.log("______________");
 console.log(t.int);
 console.log(t.str);
 console.log(t.num);
+console.log(t.a);
 
 // // class TestClass {
 //     // Simplified approach: Use onlyTheClassCanWrite for write protection

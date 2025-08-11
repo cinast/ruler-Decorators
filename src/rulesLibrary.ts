@@ -197,29 +197,10 @@ export const maximum = (max: bigint | number, allowEqual: boolean = true) =>
  * @overload Auto-accessor decorator
  */
 export const stringExcludes = (...patten: (RegExp | string)[]) =>
-    $conditionalWrite(
-        "Warn",
-        [
-            (_, __, value) =>
-                typeof value == "string" &&
-                !patten.some((pat) => (typeof pat === "string" ? value.includes(pat) : pat.test(value))),
-        ],
-        [
-            (_, __, value) => false,
-            (_, __, value, c, p) => {
-                console.log(2902929, p);
-                return false;
-            },
-            (_, __, value, c, p) => {
-                console.log(2902929, p);
-                return false;
-            },
-            (_, __, value, c, p) => {
-                console.log(2902929, p);
-                return false;
-            },
-        ]
-    );
+    $conditionalWrite<string>("Warn", [
+        (_, __, value) =>
+            typeof value == "string" && !patten.some((pat) => (typeof pat === "string" ? value.includes(pat) : pat.test(value))),
+    ]);
 
 /**
  * Requires strings to contain specified patterns
@@ -231,17 +212,52 @@ export const stringExcludes = (...patten: (RegExp | string)[]) =>
  * @overload Auto-accessor decorator
  */
 export const stringRequires = (...patten: (RegExp | string)[]) =>
-    $conditionalWrite("Warn", [
+    $conditionalWrite<string>("Warn", [
         (_, __, value) =>
             typeof value == "string" && patten.some((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value))),
     ]);
 
-//     -------- unnamed --------
+export const trimBlank = $conditionalWrite<string>("ignore", [
+    (_, __, value) => {
+        const sanitized = value.trim();
+        return {
+            approached: true,
+            output: sanitized,
+        };
+    },
+]);
 
-// export const ;
-// 没灵感了
-// 有意者请见github.com/cinast/ruler-Decorators
-// 展示结束
+/**
+ * 根据长度规则验证并调整字符串
+ * @param length 目标长度
+ * @param tail 可选操作符和文本：
+ *   - `+文本`：如果不足长度则追加
+ *   - `-文本`：如果超出长度则替换末尾
+ */
+export const validateLength = (length: number | bigint, tail?: `+${string}` | `-${string}`) =>
+    $conditionalWrite<string>("ignore", [
+        // 处理tail
+        () => ({
+            approached: false,
+            output: tail ? (tail[0] === "+" ? tail.length - 1 : -(tail.length - 1)) : 0,
+        }),
+        (_, __, value, p) => {
+            const len = Number(length) + Number(p.output);
+            if (!tail) return { approached: true, output: value.slice(0, len) };
+
+            const [op, text] = [tail[0], tail.slice(1)];
+            let result = value;
+
+            if (op === "+" && value.length < len) {
+                result = value + text.repeat(Math.ceil((len - value.length) / text.length)).slice(0, len - value.length);
+            } else if (op === "-" && value.length > len) {
+                result = value.slice(0, len - text.length) + text;
+            }
+
+            return { approached: true, output: result.slice(0, len) };
+        },
+    ]);
+
 /**
  *
  */
