@@ -50,6 +50,7 @@ export { __Setting };
  *                - Function: Custom handler (v: number, o?: unknown) => T
  *                - "ceil"|"floor"|"round": Math rounding method
  *                - number: Fixed fallback value
+ *                - none: Wait for warning or error thrown
  * @warning Returns undefined if validation fails and no onError provided
  * @warning 如果验证失败且未提供onError处理，则返回undefined
  * @overload Property decorator

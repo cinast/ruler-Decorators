@@ -8,7 +8,7 @@ class test {
     @rulerDecorators.minimum(100)
     num = -10;
     @$$init()
-    @rulerDecorators.Int()
+    @rulerDecorators.Int("ceil")
     int = -22;
     @$$init()
     @rulerDecorators.stringExcludes("250")

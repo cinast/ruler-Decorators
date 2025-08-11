@@ -1,39 +1,4 @@
-/**
- *           ———————— 注意事项 Notice ————————
- */
-/**
- * @WARNING @DEBUGGING
- * 警告：还在制作
- */
-/**
- * @WARNING
- * @Mind the order of the decorators, as they are applied in the order they are defined.
- * 注意：装饰器按定义顺序应用
- * @Mind the getter and setter will might call each other INFINITY
- * 注意：getter和setter可能会无限互相调用
- *
- *          setter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → ...
- *          setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → ...
- *
- *          世纪笑话↑
- * 这个版本少见了
- */
-/**
- * Storage for actual values and wrapper functions
- * 存储实际值和包装函数
- */
-interface InstanceStorageValue {
-    [key: string | symbol]: any;
-}
 import { rd_GetterHandle, rd_SetterHandle } from "./type.handles";
-export declare const instanceStorage: WeakMap<object, InstanceStorageValue>;
-export declare const wrapperCache: WeakMap<object, Record<string | symbol, Function>>;
-/**
- * Storage for property handler chains
- * 存储每个属性的句柄链
- */
-export declare const setterHandlers: WeakMap<object, Map<string | symbol, rd_SetterHandle[]>>;
-export declare const getterHandlers: WeakMap<object, Map<string | symbol, rd_GetterHandle[]>>;
 /**
  * Add setter handler to specified property
  * 添加 setter 句柄到指定属性
@@ -149,39 +114,6 @@ export declare function $setter<T>(handle: (thisArg: any, attr: string | symbol,
  */
 export declare function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
 export declare function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
-/**
- * and anywise
- * @param props
- * @returns
- */
-export declare function $defineProperty<T>(...props: any[]): PropertyDecorator;
-/**
- * 在装饰器上加debugger
- *
- * Debugger decorator factory that pauses execution during decorator application.
- * Supports all decorator types: class, method, property, and parameter decorators.
- *
- * @param logArgs - Whether to log the decorator arguments to console (default: false)
- * @param debuggers - Additional debug handlers: strings (logged) or functions (executed with decorator args)
- *
- * @example
- * // Class decorator
- * @$debugger(true, "Debugging class")
- * class MyClass {
- *
- *   // Property decorator
- *   @$debugger(true, (target, key) => `Debugging property: ${String(key)}`)
- *   myProperty = "";
- *
- *   // Method decorator
- *   @$debugger()
- *   myMethod(
- *     // Parameter decorator
- *     @$debugger(true) param: string
- *   ) {}
- * }
- */
-export declare function $debugger(logArgs?: boolean, ...debuggers: (string | ((...args: any[]) => any))[]): ClassDecorator & MethodDecorator & PropertyDecorator & ParameterDecorator;
 import { conditionHandler, rejectionHandler } from "./type.handles";
 /**
  * Conditional write decorator factory
@@ -236,7 +168,7 @@ import { conditionHandler, rejectionHandler } from "./type.handles";
  *    - 未提供拒绝处理时返回原值
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export declare const $conditionalWrite: <T = any>(conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator;
+export declare const $conditionalWrite: <T = any>(errorType: "ignore" | "Warn" | "Error", conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator;
 /**
  * Conditional read decorator factory
  * 条件读取装饰器工厂
@@ -290,8 +222,13 @@ export declare const $conditionalWrite: <T = any>(conditionHandles: conditionHan
  *    - 未提供拒绝处理时返回undefined
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export declare const $conditionalRead: <T = any>(conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator;
+export declare const $conditionalRead: <T = any>(errorType: "ignore" | "Warn" | "Error", conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator;
+/**
+ * rulers & libSetting
+ */
 export * as rulerDecorators from "./rulesLibrary";
-export * as valueRecorder from "./valueRecorder";
-export * from "./utils";
+/**
+ * extra lib (optional)
+ */
+export * from "./valueRecorder";
 //# sourceMappingURL=rulerDecorators.d.ts.map

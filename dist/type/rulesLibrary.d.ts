@@ -1,3 +1,5 @@
+import { __Setting } from "./moduleMeta";
+export { __Setting };
 /**
  * Integer value validator decorator
  * 整数值验证装饰器
