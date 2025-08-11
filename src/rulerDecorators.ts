@@ -188,7 +188,7 @@ export function $removeGetterHandler(target: object, propertyKey: string | symbo
  */
 export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: rd_GetterHandle[] = []) => {
     return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
-        console.log("$$init decorator applied to:", target?.name || target, propertyKey, descriptor);
+        debugLogger(console.log, "$$init decorator applied to:", target?.name || target, propertyKey, descriptor);
 
         // 初始化instanceStorage
         const initStorage = (t: any) => !instanceStorage.has(t) && instanceStorage.set(t, {});
@@ -213,7 +213,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
                 return class extends target {
                     constructor(...args: any[]) {
                         super(...args);
-                        console.log("Decorated class constructor called");
+                        debugLogger(console.log, "Decorated class constructor called");
 
                         // 初始化实例存储
                         const instance: InstanceStorageValue = {};
@@ -223,19 +223,23 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
                         const settersMap = setterHandlers.get(target.prototype) || new Map();
                         for (const [key, handlers] of settersMap.entries()) {
                             const initialValue = this[key];
-                            console.log(`Processing decorated property ${String(key)} with initial value:`, initialValue);
+                            debugLogger(
+                                console.log,
+                                `Processing decorated property ${String(key)} with initial value:`,
+                                initialValue
+                            );
 
                             const processed = handlers.reduce((val: any, handler: rd_SetterHandle) => {
                                 const result = handler(this, key, val, val, 0, handlers);
-                                console.log(`Handler for ${String(key)} processed value:`, val, "=>", result);
+                                debugLogger(console.log, `Handler for ${String(key)} processed value:`, val, "=>", result);
                                 return result;
                             }, initialValue);
 
                             instance[key] = processed;
-                            console.log(`Final value for ${String(key)}:`, processed);
+                            debugLogger(console.log, `Final value for ${String(key)}:`, processed);
                         }
 
-                        console.log("Instance fully initialized with decorated values:", instance);
+                        debugLogger(console.log, "Instance fully initialized with decorated values:", instance);
                     }
                 };
             }
@@ -288,7 +292,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
 
             // 统一的 setter 处理
             set(this: any, value: any) {
-                console.log("Setter triggered for", key, "with value", value);
+                debugLogger(console.log, "Setter triggered for", key, "with value", value);
                 let objStore = instanceStorage.get(this);
                 if (!objStore) {
                     objStore = {};
@@ -302,7 +306,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
                 const result = setters.reduce(
                     (prev, handler, idx, arr) => {
                         const newVal = handler(this, key, value, prev, idx, [...arr]);
-                        console.log(`Handler ${idx} processed value:`, newVal);
+                        debugLogger(console.log, `Handler ${idx} processed value:`, newVal);
                         return newVal;
                     },
                     value // 初始值使用传入的value
@@ -310,8 +314,9 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
 
                 // 存储处理结果
                 objStore[key] = result;
-                console.log("Final stored value:", result);
-                console.log("Stored in value:", instanceStorage.get(this));
+
+                debugLogger(console.log, "Final stored value:", result);
+                debugLogger(console.log, "Stored in value:", instanceStorage.get(this));
 
                 // 清除包装缓存
                 const wrapperMap = wrapperCache.get(this);
@@ -441,98 +446,10 @@ export function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: an
     };
 }
 
-/**
- * and anywise
- * @param props
- * @returns
- */
-export function $defineProperty<T>(...props: any[]): PropertyDecorator {
-    return function (target: any, attr: string | symbol) {
-        Object.defineProperty(target, attr, props);
-    };
-}
-
-/**
- * 在装饰器上加debugger
- *
- * Debugger decorator factory that pauses execution during decorator application.
- * Supports all decorator types: class, method, property, and parameter decorators.
- *
- * @param logArgs - Whether to log the decorator arguments to console (default: false)
- * @param debuggers - Additional debug handlers: strings (logged) or functions (executed with decorator args)
- *
- * @example
- * // Class decorator
- * @$debugger(true, "Debugging class")
- * class MyClass {
- *
- *   // Property decorator
- *   @$debugger(true, (target, key) => `Debugging property: ${String(key)}`)
- *   myProperty = "";
- *
- *   // Method decorator
- *   @$debugger()
- *   myMethod(
- *     // Parameter decorator
- *     @$debugger(true) param: string
- *   ) {}
- * }
- */
-export function $debugger(
-    logArgs: boolean = false,
-    ...debuggers: (string | ((...args: any[]) => any))[]
-): ClassDecorator & MethodDecorator & PropertyDecorator & ParameterDecorator {
-    const shouldLogArgs = typeof logArgs === "boolean" ? logArgs : false;
-    const debugHandlers = typeof logArgs === "boolean" ? debuggers : [logArgs, ...debuggers].filter(Boolean);
-
-    return function (...args: any[]) {
-        if (shouldLogArgs) {
-            console.log(`🚨 ${getDecoratorType(args)} decorator arguments:`);
-            console.log(args);
-        }
-        debugger;
-
-        debugHandlers.forEach((debug, i) => {
-            try {
-                if (typeof debug === "string") console.log(`📢 ${debug}`);
-                else if (typeof debug === "function") {
-                    const result = debug(...args);
-                    console.log({
-                        index: `${i}`,
-                        message: `📢 Debugger result: ${result}`,
-                    });
-                }
-            } catch (e) {
-                console.error(`⚠️ Debug handler[${i}] error:`, e);
-            }
-        });
-
-        switch (args.length) {
-            case 1: // Class decorator: [constructor]
-                return class extends args[0] {};
-
-            case 2: // Property decorator: [target, attr]
-                return;
-
-            case 3:
-                if (typeof args[2] === "number") {
-                    // Parameter decorator
-                    return;
-                } else {
-                    // Method decorator
-                    return args[2];
-                }
-
-            default:
-                console.warn("⚠️ Unsupported decorator signature", args);
-                return;
-        }
-    };
-}
-
 //     -------- 神器 wonderful tools --------
 
 import { conditionHandler, rejectionHandler } from "./type.handles";
+import { debugLogger } from "./api.test";
 
 /**
  * Conditional write decorator factory
@@ -587,7 +504,11 @@ import { conditionHandler, rejectionHandler } from "./type.handles";
  *    - 未提供拒绝处理时返回原值
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export const $conditionalWrite = <T = any>(conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => {
+export const $conditionalWrite = <T = any>(
+    errorType: "ignore" | "Warn" | "Error",
+    conditionHandles: conditionHandler[],
+    rejectHandlers?: rejectionHandler[]
+) => {
     return $setter<T>((thisArg, key, newVal) => {
         const callResult = conditionHandles.reduce(
             (lastProcess, handler, idx, arr) => {
@@ -625,20 +546,16 @@ export const $conditionalWrite = <T = any>(conditionHandles: conditionHandler[],
             );
             if (rejectResult.approached) return rejectResult.output;
 
-            if (__Setting.readOnlyPropertyWarningEnabled) {
-                const warningMsg = `Property '${String(key)}' write rejected. Final output: ${JSON.stringify(
-                    rejectResult.output
-                )}`;
-                switch (__Setting.readOnlyPropertyWarningType) {
-                    case "Warning":
-                        console.warn(`⚠️ ${warningMsg}`);
-                        break;
-                    case "Error":
-                        throw new Error(`🚫 ${warningMsg}`);
-                }
+            const warningMsg = `Property '${String(key)}' write rejected. Final output: ${JSON.stringify(rejectResult.output)}`;
+            switch (errorType || __Setting["$conditionalWR.defaultErrorType"]) {
+                case "Warn":
+                    console.warn(`⚠️ ${warningMsg}`);
+                    break;
+                case "Error":
+                    throw new Error(`🚫 ${warningMsg}`);
             }
-            return thisArg[key]; // Fallback to original value
         }
+        return thisArg[key]; // Fallback to original value
     });
 };
 
@@ -695,7 +612,11 @@ export const $conditionalWrite = <T = any>(conditionHandles: conditionHandler[],
  *    - 未提供拒绝处理时返回undefined
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export const $conditionalRead = <T = any>(conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => {
+export const $conditionalRead = <T = any>(
+    errorType: "ignore" | "Warn" | "Error",
+    conditionHandles: conditionHandler[],
+    rejectHandlers?: rejectionHandler[]
+) => {
     return $getter((thisArg, key, value) => {
         const callResult = conditionHandles.reduce(
             (lastProcess, handler, idx, arr) => {
@@ -732,21 +653,17 @@ export const $conditionalRead = <T = any>(conditionHandles: conditionHandler[], 
                 }
             );
             if (rejectResult.approached) return rejectResult.output;
-            // 默认拒绝行为
-            if (__Setting.readOnlyPropertyWarningEnabled) {
-                const warningMsg = `Property '${String(key)}' read rejected. Final output: ${JSON.stringify(
-                    rejectResult.output
-                )}`;
-                switch (__Setting.readOnlyPropertyWarningType) {
-                    case "Warning":
-                        console.warn(`⚠️ ${warningMsg}`);
-                        break;
-                    case "Error":
-                        throw new Error(`🚫 ${warningMsg}`);
-                }
+
+            const warningMsg = `Property '${String(key)}' read rejected. Final output: ${JSON.stringify(rejectResult.output)}`;
+            switch (errorType || __Setting["$conditionalWR.defaultErrorType"]) {
+                case "Warn":
+                    console.warn(`⚠️ ${warningMsg}`);
+                    break;
+                case "Error":
+                    throw new Error(`🚫 ${warningMsg}`);
             }
-            return void 0; // Fallback to void
         }
+        return void 0; // Fallback to void
     });
 };
 export * as rulerDecorators from "./rulesLibrary";

@@ -269,3 +269,11 @@ gtr/str 负责驱动这一切
 -   加开发指导 guide.md
 -   整理思路
 -   使用吞金鲸统一了注释讲解
+
+## 2025-08-11
+
+-   治好了 tsconfg
+-   整理 doc/
+-   移$debugger 至 api.test.ts
+    再加几个配置开关
+-   预备开新坑 extra libs

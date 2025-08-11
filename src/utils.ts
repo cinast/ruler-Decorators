@@ -1,3 +1,4 @@
+import { __Setting } from "./moduleMeta";
 import { $setter } from "./rulerDecorators";
 ("use strict");
 
@@ -23,4 +24,15 @@ export function getDecoratorType(args: any[]): string {
         default:
             return "UNKNOWN";
     }
+}
+
+/**
+ * and anywise
+ * @param props
+ * @returns
+ */
+export function $defineProperty<T>(...props: any[]): PropertyDecorator {
+    return function (target: any, attr: string | symbol) {
+        Object.defineProperty(target, attr, props);
+    };
 }

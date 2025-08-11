@@ -51,8 +51,5 @@
     },
     "peerDependencies": {
         "typescript": ">=4.3.0"
-    },
-    "dependencies": {
-        "jest": "^30.0.5"
     }
 }
