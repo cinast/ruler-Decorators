@@ -38,16 +38,20 @@
         "LICENSE"
     ],
     "scripts": {
-        "build": "npx tsc",
+        "build": "npx tsc -b",
         "build:watch": "npx tsc -w",
-        "prepublishOnly": "npm run build && npm test",
-        "test": "npx tsc -p test/test.tsconfig.json && node test/dist/test/example.js",
-        "[pwsh]clear-dist": "Remove-Item -Path './dist/**', './test/dist' -Force"
+        "build:test": "npx tsc -p test/tsconfig.json",
+        "run:test": "node test/dist/test/example.js",
+        "prepublishOnly": "npx npm run build && npm test",
+        "[pwsh]clear-dist": "Remove-Item -Path './dist/**', './test/dist/**' -Force"
     },
     "devDependencies": {
         "typescript": "^5.2.0"
     },
     "peerDependencies": {
         "typescript": ">=4.3.0"
+    },
+    "dependencies": {
+        "jest": "^30.0.5"
     }
 }

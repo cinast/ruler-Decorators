@@ -1,8 +1,20 @@
 {
-    "extends": "../tsconfig.json",
     "compilerOptions": {
-        "rootDir": ".",
-        "composite": false
+        "target": "es2020",
+        "module": "commonjs",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "allowJs": true,
+        "checkJs": true,
+        "rootDir": "../",
+        "outDir": "./dist",
+        "noEmit": false,
+        "composite": false,
+        "baseUrl": ".",
+        "paths": {
+            "@src/*": ["../src/*"]
+        }
     },
-    "include": ["**/*", "../src/**/*"]
+    "include": ["./*.ts"],
+    "exclude": ["node_modules", "dist"]
 }

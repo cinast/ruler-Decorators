@@ -1,42 +1,80 @@
 /**
- * 限制整数
- * @Warning 定义的时候就不通过，也不给onerror附上默认值，那就是undefined
+ * Integer value validator decorator
+ * 整数值验证装饰器
+ *
+ * @rule Ensures property value is integer
+ * @rule 确保属性值为整数
+ * @param onError - Error handling strategy:
+ *                错误处理策略:
+ *                - Function: Custom handler (v: number, o?: unknown) => T
+ *                - "ceil"|"floor"|"round": Math rounding method
+ *                - number: Fixed fallback value
+ * @warning Returns undefined if validation fails and no onError provided
+ * @warning 如果验证失败且未提供onError处理，则返回undefined
  * @overload Property decorator
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
 export declare const Int: <T extends number | bigint = number>(onError?: ((v: number, o?: unknown) => T) | "ceil" | "floor" | "round" | number) => PropertyDecorator;
 /**
- * Ensures property value is always positive
- * 确保属性值始终为正数
+ * Positive number validator decorator
+ * 正数验证装饰器
+ *
+ * @rule Ensures property value is always positive
+ * @rule 确保属性值始终为正数
+ * @param value - Input value to validate
+ *                待验证的输入值
+ * @returns true if value is positive, false otherwise
+ *          如果值为正数返回true，否则返回false
  * @overload Property decorator
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
 export declare const alwaysPositive: PropertyDecorator;
 /**
- * Ensures property value is always negative
- * 确保属性值始终为负数
+ * Negative number validator decorator
+ * 负数验证装饰器
+ *
+ * @rule Ensures property value is always negative
+ * @rule 确保属性值始终为负数
+ * @param value - Input value to validate
+ *                待验证的输入值
+ * @returns true if value is negative, false otherwise
+ *          如果值为负数返回true，否则返回false
  * @overload Property decorator
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
 export declare const alwaysNegative: PropertyDecorator;
 /**
- * Sets minimum value for property
- * 设置属性的最小值
+ * Minimum value validator decorator
+ * 最小值验证装饰器
+ *
+ * @rule Ensures property value is >= minimum
+ * @rule 确保属性值不小于最小值
  * @param min - Minimum allowed value (number or bigint)
  *              允许的最小值(数字或大整数)
+ * @param allowEqual - Whether to allow equal to minimum (default: true)
+ *                    是否允许等于最小值(默认: true)
+ * @returns New value if below minimum, original value otherwise
+ *          低于最小值时返回新值，否则保持原值
  * @overload Property decorator
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
 export declare const minimum: (min: bigint | number, allowEqual?: boolean) => PropertyDecorator;
 /**
- * Sets maximum value for property
- * 设置属性的最大值
+ * Maximum value validator decorator
+ * 最大值验证装饰器
+ *
+ * @rule Ensures property value is <= maximum
+ * @rule 确保属性值不大于最大值
  * @param max - Maximum allowed value (number or bigint)
  *              允许的最大值(数字或大整数)
+ * @param allowEqual - Whether to allow equal to maximum (default: true)
+ *                    是否允许等于最大值(默认: true)
+ * @returns New value if above maximum, original value otherwise
+ *          超过最大值时返回新值，否则保持原值
  * @overload Property decorator
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator

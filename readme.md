@@ -43,10 +43,10 @@ npm install ruler-decorators
 -   `alwaysNegative`: 只接受负数
 -   `minimum`: 最小值限制
 -   `maximum`: 最大值限制
--   `onlyTheClassCanRead`: 类访问控制
--   `onlyTheClassCanWrite`: 类写入控制
--   `onlyTheClassAndSubCanRead`: 类访问控制
--   `onlyTheClassAndSubCanWrite`: 类写入控制
+-   ~~`onlyTheClassCanRead`~~: 类访问控制
+-   ~~`onlyTheClassCanWrite`~~: 类写入控制
+-   ~~`onlyTheClassAndSubCanRead`~~: 类访问控制
+-   ~~`onlyTheClassAndSubCanWrite`~~: 类写入控制
 
 ![alt text](doc/img/balbalbalbla.gif)
 
@@ -114,7 +114,6 @@ class SecureData {
     class cls {
         #v: string = "";
         public set v(v: string) {
-            if (!this instanceof cls) return;
             if ((thisArg, key, v: string) => badWords.includes(v)) return;
             this.#v = v;
         }
@@ -126,7 +125,7 @@ class SecureData {
 
     ```ts
     class cls {
-        @rulerDecorators.stringExcludes(...badWords)
+        @rulerDecorators.stringExcludes(badWords)
         v: string = "";
     }
     ```
@@ -149,7 +148,7 @@ class SecureData {
     form.age = "25"; // 自动转换为数字25
     ```
 
-    2.  条件太多我 if 也多
+    2.  过分实用
 
     ```ts
     class Product {
