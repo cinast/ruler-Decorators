@@ -1,4 +1,3 @@
 node_modules
 dist/**/*.js
-test/.txt
 test/dist/**/*

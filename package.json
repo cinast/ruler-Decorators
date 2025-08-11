@@ -43,7 +43,8 @@
         "build:test": "npx tsc -p test/tsconfig.json",
         "run:test": "node test/dist/test/example.js",
         "prepublishOnly": "npx npm run build && npm test",
-        "[pwsh]clear-dist": "Remove-Item -Path './dist/**', './test/dist/**' -Force"
+        "[pwsh]clear-dist": "Remove-Item -Path './dist/**', './test/dist/**' -Force",
+        "[pwsh]clear-trash-at-src": "Remove-Item -Path './src/*.js','./src/*.d.ts','./src/*.d.ts.map' -Force"
     },
     "devDependencies": {
         "typescript": "^5.2.0"
