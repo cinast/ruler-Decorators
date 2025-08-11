@@ -201,22 +201,33 @@ class SecureData {
 
 [请见文本 VCR：**`devlog.md`**](doc/devlog.md)
 
-<br>
-<br>
-<br>
+## 画饼时间
+
+0. 补完漏洞
+1. `src\api.test.ts` 测试用的接口
+2. 写点规则
+3. 考虑加上 mjs 版本
+4. npm publish v0.0.0
+
 <br>
 
 ---
 
+[
 <img
-    src="https://avatars.githubusercontent.com/u/126345646?v=4"
-    style="height: 1rem; width: 1rem; border: 1px solid gold; border-radius: 50%; background: center, center"
-    title= "@cinast"
-/>
+src="https://avatars.githubusercontent.com/u/126345646?v=4"
+style="height: 1rem; width: 1rem; border: 1px solid gold; border-radius: 50%; background: center, center"
+title= "@cinast"
+/>,
 <img
-    src="https://cdn.jsdelivr.net/gh/cinast/cinast.imgsStore/strangeStuff/%E5%90%9E%E9%87%91%E9%B2%B8.svg"
-    style="height: 1rem; width: 1rem; border: 1px solid gold; border-radius: 50%; background: center, center"
-    title= "吞金鲸"
+src="https://cdn.jsdelivr.net/gh/cinast/cinast.imgsStore/strangeStuff/%E5%90%9E%E9%87%91%E9%B2%B8.svg"
+style="height: 1rem; width: 1rem; border: 1px solid gold; border-radius: 50%; background: center, center"
+title= "吞金鲸"
 />
+]
 _did that doc and the project_  
-_And maybe one day you will be in the list_
+_And maybe one day you would be in the [ ]_
+
+_脚注：_
+图片图片加载不出来可以访问[_cinast.imgsStore_](https://github.com/cinast/cinast.imgsStore/tree/main/com.gh.rulerDecorators)  
+~~实在实在不行你直接 git clone~~
