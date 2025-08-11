@@ -202,11 +202,22 @@ export const stringExcludes = (...patten: (RegExp | string)[]) =>
         [
             (_, __, value) =>
                 typeof value == "string" &&
-                !patten.every((pat) => (typeof pat === "string" ? value.includes(pat) : pat.test(value))),
+                !patten.some((pat) => (typeof pat === "string" ? value.includes(pat) : pat.test(value))),
         ],
         [
             (_, __, value) => false,
-            //忘了
+            (_, __, value, c, p) => {
+                console.log(2902929, p);
+                return false;
+            },
+            (_, __, value, c, p) => {
+                console.log(2902929, p);
+                return false;
+            },
+            (_, __, value, c, p) => {
+                console.log(2902929, p);
+                return false;
+            },
         ]
     );
 
@@ -222,7 +233,7 @@ export const stringExcludes = (...patten: (RegExp | string)[]) =>
 export const stringRequires = (...patten: (RegExp | string)[]) =>
     $conditionalWrite("Warn", [
         (_, __, value) =>
-            typeof value == "string" && patten.every((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value))),
+            typeof value == "string" && patten.some((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value))),
     ]);
 
 //     -------- unnamed --------
