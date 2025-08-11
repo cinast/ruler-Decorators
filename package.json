@@ -22,7 +22,7 @@
     "author": "cinast",
     "type": "commonjs",
     "main": "./dist/rulerDecorators.js",
-    "types": "./dist/rulerDecorators.d.ts",
+    "types": "./dist/type/rulerDecorators.d.ts",
     "exports": {
         ".": {
             "import": "./dist/rulerDecorators.mjs",
