@@ -28,9 +28,9 @@ t.int = 0.2;
 console.log(t);
 // console.log(t.proxyed);
 
-console.log("Setter handlers:", setterHandlers.get(test.prototype));
-console.log("instanceStorage handlers:", instanceStorage.get(test.prototype));
-console.log("wrapperCache handlers:", wrapperCache.get(test.prototype));
+// console.log("Setter handlers:", setterHandlers.get(test.prototype));
+// console.log("instanceStorage handlers:", instanceStorage.get(test.prototype));
+// console.log("wrapperCache handlers:", wrapperCache.get(test.prototype));
 
 console.log("______________");
 console.log(t.int);
