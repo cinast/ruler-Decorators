@@ -29,6 +29,23 @@ export const __Setting: {
     "$debug.callHandles": boolean;
 
     lock: () => void;
+    /**
+     * @deprecated
+     * my design were no as safety as that required \
+     * 此作品还不够格
+     */
+    pro: () => void;
+    /**
+     * entertaining \
+     * 娱乐就好
+     */
+    dev: () => void;
+    /**
+     * @deprecated
+     * Take your work to ruin \
+     * 作死！
+     */
+    godMod: () => void;
 } = {
     "$conditionalWR.defaultErrorType": "Error",
     "debugLogger.logInnerDetails": false,
@@ -40,6 +57,46 @@ export const __Setting: {
     "$debug.callHandles": true,
     lock() {
         Object.freeze(__Setting);
+    },
+    pro() {
+        Object.assign(this, {
+            "$conditionalWR.defaultErrorType": "Error",
+            "debugLogger.logInnerDetails": false,
+            "$debug.allowUsing": false,
+            "$debug.debugger": false,
+            "$debug.enableLog": false,
+            "$debug.enableWarn": false,
+            "$debug.allowReturn": false,
+            "$debug.callHandles": false,
+        });
+        this.lock();
+    },
+    dev() {
+        Object.assign(this, {
+            "$conditionalWR.defaultErrorType": "Error",
+            "debugLogger.logInnerDetails": false,
+            "$debug.allowUsing": true,
+            "$debug.debugger": false,
+            "$debug.enableLog": true,
+            "$debug.enableWarn": true,
+            "$debug.allowReturn": false,
+            "$debug.callHandles": true,
+        });
+        this.lock();
+    },
+
+    godMod() {
+        Object.assign(this, {
+            "$conditionalWR.defaultErrorType": "Error",
+            "debugLogger.logInnerDetails": true,
+            "$debug.allowUsing": true,
+            "$debug.debugger": true,
+            "$debug.enableLog": true,
+            "$debug.enableWarn": true,
+            "$debug.allowReturn": true,
+            "$debug.callHandles": true,
+        });
+        this.lock();
     },
 };
 
