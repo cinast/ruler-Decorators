@@ -312,7 +312,8 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
                 );
 
                 // 存储处理结果
-                objStore[key] = result;
+                objStore[key] = result satisfies (typeof objStore)[typeof key];
+                // 你说他会有用么
 
                 debugLogger(console.log, "Final stored value:", result);
                 debugLogger(console.log, "Stored in value:", instanceStorage.get(this));
@@ -399,16 +400,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
  *   num = 1; // Will be doubled on set
  * }
  */
-export function $setter<TInput, TOutput = TInput>(
-    handle: (
-        thisArg: any,
-        attr: string | symbol,
-        value: TInput,
-        lastResult: TInput,
-        index: number,
-        handlers: rd_SetterHandle<any, any>[]
-    ) => TOutput
-): PropertyDecorator & MethodDecorator {
+export function $setter<I, R = I>(handle: rd_SetterHandle<I, R>): PropertyDecorator & MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
         $addSetterHandler(target, attr, handle as rd_SetterHandle);
     };
@@ -439,15 +431,8 @@ export function $setter<TInput, TOutput = TInput>(
  *   num = 1; // Will add 100 when get
  * }
  */
-export function $getter<TInput, TOutput = TInput>(
-    handle: (
-        thisArg: any,
-        attr: string | symbol,
-        value: any,
-        lastResult: TInput,
-        index: number,
-        handlers: rd_GetterHandle<any, any>[]
-    ) => TOutput | undefined
+export function $getter<I, R = I>(
+    handle: rd_GetterHandle<I, typeof __Setting.enableChangingType extends false ? R : I>
 ): PropertyDecorator & MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
         $addGetterHandler(target, attr, handle as rd_GetterHandle);
@@ -512,12 +497,12 @@ import { debugLogger } from "./api.test";
  *    - 未提供拒绝处理时返回原值
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export const $conditionalWrite = <TInput = any, TOutput = TInput>(
+export const $conditionalWrite = <I = any, R = I>(
     errorType: "ignore" | "Warn" | "Error",
     conditionHandles: conditionHandler[],
     rejectHandlers?: rejectionHandler[]
 ) => {
-    return $setter<TInput, TOutput>((thisArg, key, newVal, lastResult, index, handlers) => {
+    return $setter<I, R>((thisArg, key, newVal, lastResult, index, handlers) => {
         const handlersArray = [...conditionHandles];
         const callResult = handlersArray.reduce(
             (lastProcess, handler, idx, arr) => {
@@ -622,12 +607,12 @@ export const $conditionalWrite = <TInput = any, TOutput = TInput>(
  *    - 未提供拒绝处理时返回undefined
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export const $conditionalRead = <TInput = any, TOutput = TInput>(
+export const $conditionalRead = <I = any, R = I>(
     errorType: "ignore" | "Warn" | "Error",
     conditionHandles: conditionHandler[],
     rejectHandlers?: rejectionHandler[]
 ) => {
-    return $getter<TInput, TOutput | undefined>((thisArg, key, value, lastResult, index, handlers) => {
+    return $getter<I, R | undefined>((thisArg, key, value, lastResult, index, handlers) => {
         // 类型安全的reduce处理
         const handlersArray = [...conditionHandles];
         const callResult = handlersArray.reduce(

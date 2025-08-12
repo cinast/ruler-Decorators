@@ -17,6 +17,17 @@ export const thisSymbols: unique symbol = Symbol("rulerDecorators");
  */
 export const __Setting: {
     /**
+     * @WARN @DANGEROUS
+     * @NUKE_SWITCH
+     * changeable or unchangeable of `R` in `($setter & $getter)<I,R>`  \
+     * R is I completely or extends **any** you want
+     * @WARN LOCK this before use this lib at somewhere IMPORTANT
+     *
+     * 我脑子抽了要设计这个 \
+     * 算了哪天移到api.test去
+     */
+    enableChangingType: boolean;
+    /**
      * Global switch of warn or ignore when trying to change read-only property
      */
     "$conditionalWR.defaultErrorType": "Warn" | "Error";
@@ -47,6 +58,7 @@ export const __Setting: {
      */
     godMod: () => void;
 } = {
+    enableChangingType: false,
     "$conditionalWR.defaultErrorType": "Error",
     "debugLogger.logInnerDetails": false,
     "$debug.allowUsing": true,
@@ -60,6 +72,7 @@ export const __Setting: {
     },
     pro() {
         Object.assign(this, {
+            enableChangingType: false,
             "$conditionalWR.defaultErrorType": "Error",
             "debugLogger.logInnerDetails": false,
             "$debug.allowUsing": false,
@@ -73,6 +86,7 @@ export const __Setting: {
     },
     dev() {
         Object.assign(this, {
+            enableChangingType: false,
             "$conditionalWR.defaultErrorType": "Error",
             "debugLogger.logInnerDetails": false,
             "$debug.allowUsing": true,
@@ -87,6 +101,7 @@ export const __Setting: {
 
     godMod() {
         Object.assign(this, {
+            enableChangingType: true,
             "$conditionalWR.defaultErrorType": "Error",
             "debugLogger.logInnerDetails": true,
             "$debug.allowUsing": true,

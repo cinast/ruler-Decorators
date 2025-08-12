@@ -7,16 +7,17 @@
  * @core_concept WeakMap存储的句柄链中的可链式调用单元
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
+ * @param
  */
-export type rd_SetterHandle<TInput = any, TOutput = TInput> = (
+export type rd_SetterHandle<I = any, R = I> = (
     target: any,
     attr: string | symbol,
-    value: TInput,
-    lastResult: TInput,
+    value: any,
+    lastResult: I,
     index: number,
     handlers: rd_SetterHandle<any, any>[],
     ...args: any[]
-) => TOutput;
+) => R;
 
 /**
  * @handle_I
@@ -28,15 +29,15 @@ export type rd_SetterHandle<TInput = any, TOutput = TInput> = (
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
  */
-export type rd_GetterHandle<TInput = any, TOutput = TInput> = (
+export type rd_GetterHandle<I = any, R = I> = (
     target: any,
     attr: string | symbol,
     value: any,
-    lastResult: TInput,
+    lastResult: I,
     index: number,
     handlers: rd_GetterHandle<any, any>[],
     ...args: any[]
-) => TOutput;
+) => R | undefined;
 
 /**
  * @handle_II
@@ -71,7 +72,7 @@ export type rejectionHandler = (
     thisArg: any,
     key: string | symbol,
     value: any,
-    conditionHandleLastOutput: { approached: boolean; output: any },
+    conditionHandleLasR: { approached: boolean; output: any },
     prevResult: { approached: boolean; output: any },
     currentIndex: number,
     handlers: rejectionHandler[]
