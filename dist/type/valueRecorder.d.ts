@@ -1,5 +1,5 @@
 export declare namespace valueRecorder {
-    const $recordThis: (maxSteps?: number) => PropertyDecorator;
+    const $recordThis: (maxSteps?: number) => PropertyDecorator & MethodDecorator;
     function undo<T>(target: T, key: keyof T): boolean;
     function redo<T>(target: T, key: keyof T): boolean;
 }

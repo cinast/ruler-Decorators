@@ -11,13 +11,14 @@ export { __Setting };
  *                - Function: Custom handler (v: number, o?: unknown) => T
  *                - "ceil"|"floor"|"round": Math rounding method
  *                - number: Fixed fallback value
+ *                - none: Wait for warning or error thrown
  * @warning Returns undefined if validation fails and no onError provided
  * @warning 如果验证失败且未提供onError处理，则返回undefined
  * @overload Property decorator
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export declare const Int: <T extends number | bigint = number>(onError?: ((v: number, o?: unknown) => T) | "ceil" | "floor" | "round" | number) => PropertyDecorator;
+export declare const Int: (onError?: ((v: number | bigint, o?: unknown) => number) | "ceil" | "floor" | "round" | number) => PropertyDecorator & MethodDecorator;
 /**
  * Positive number validator decorator
  * 正数验证装饰器
@@ -32,7 +33,7 @@ export declare const Int: <T extends number | bigint = number>(onError?: ((v: nu
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export declare const alwaysPositive: PropertyDecorator;
+export declare const alwaysPositive: PropertyDecorator & MethodDecorator;
 /**
  * Negative number validator decorator
  * 负数验证装饰器
@@ -47,7 +48,7 @@ export declare const alwaysPositive: PropertyDecorator;
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export declare const alwaysNegative: PropertyDecorator;
+export declare const alwaysNegative: PropertyDecorator & MethodDecorator;
 /**
  * Minimum value validator decorator
  * 最小值验证装饰器
@@ -64,7 +65,7 @@ export declare const alwaysNegative: PropertyDecorator;
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export declare const minimum: (min: bigint | number, allowEqual?: boolean) => PropertyDecorator;
+export declare const minimum: (min: bigint | number, allowEqual?: boolean) => PropertyDecorator & MethodDecorator;
 /**
  * Maximum value validator decorator
  * 最大值验证装饰器
@@ -81,7 +82,7 @@ export declare const minimum: (min: bigint | number, allowEqual?: boolean) => Pr
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export declare const maximum: (max: bigint | number, allowEqual?: boolean) => PropertyDecorator;
+export declare const maximum: (max: bigint | number, allowEqual?: boolean) => PropertyDecorator & MethodDecorator;
 /**
  * Rejects strings containing specified patterns
  * 拒绝包含指定模式的字符串
@@ -91,7 +92,7 @@ export declare const maximum: (max: bigint | number, allowEqual?: boolean) => Pr
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export declare const stringExcludes: (...patten: (RegExp | string)[]) => PropertyDecorator;
+export declare const stringExcludes: (...patten: (RegExp | string)[]) => PropertyDecorator & MethodDecorator;
 /**
  * Requires strings to contain specified patterns
  * 要求字符串包含指定模式
@@ -101,7 +102,16 @@ export declare const stringExcludes: (...patten: (RegExp | string)[]) => Propert
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export declare const stringRequires: (...patten: (RegExp | string)[]) => PropertyDecorator;
+export declare const stringRequires: (...patten: (RegExp | string)[]) => PropertyDecorator & MethodDecorator;
+export declare const trimBlank: PropertyDecorator & MethodDecorator;
+/**
+ * 根据长度规则验证并调整字符串
+ * @param length 目标长度
+ * @param tail 可选操作符和文本：
+ *   - `+文本`：如果不足长度则追加
+ *   - `-文本`：如果超出长度则替换末尾
+ */
+export declare const validateLength: (length: number | bigint, tail?: `+${string}` | `-${string}`) => PropertyDecorator & MethodDecorator;
 /**
  *
  */
@@ -128,7 +138,7 @@ export declare const stringRequires: (...patten: (RegExp | string)[]) => Propert
  * @overload Method decorator (get accessor)
  * @overload Auto-accessor decorator
  */
-export declare const onlyTheClassCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
+export declare const onlyTheClassCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator & MethodDecorator;
 /**
  * @deprecated
  * @Warning But that only make sense where sub class defined \
@@ -144,7 +154,7 @@ export declare const onlyTheClassCanRead: (thisClass: new (...args: any[]) => an
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export declare const onlyTheClassCanWrite: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
+export declare const onlyTheClassCanWrite: (thisClass: new (...args: any[]) => any) => PropertyDecorator & MethodDecorator;
 /**
  * @deprecated
  * @Warning But limited by skill and no sense at there \
@@ -160,7 +170,7 @@ export declare const onlyTheClassCanWrite: (thisClass: new (...args: any[]) => a
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export declare const onlyTheClassAndSubCanWrite: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
+export declare const onlyTheClassAndSubCanWrite: (thisClass: new (...args: any[]) => any) => PropertyDecorator & MethodDecorator;
 /**
  * @deprecated
  * @Warning But limited by skill and no sense at there \
@@ -176,11 +186,12 @@ export declare const onlyTheClassAndSubCanWrite: (thisClass: new (...args: any[]
  * @overload Method decorator (get accessor)
  * @overload Auto-accessor decorator
  */
-export declare const onlyTheClassAndSubCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator;
+export declare const onlyTheClassAndSubCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator & MethodDecorator;
 /**
  * @deprecated 😂➡️demo used and even failed
  * @param date
  * @returns
  */
-export declare const triggeredOnSomeDay: (date: Date | number) => PropertyDecorator;
+export declare const triggeredOnSomeDay: (date: Date | number) => PropertyDecorator & MethodDecorator;
+export declare const A: PropertyDecorator & MethodDecorator;
 //# sourceMappingURL=rulesLibrary.d.ts.map

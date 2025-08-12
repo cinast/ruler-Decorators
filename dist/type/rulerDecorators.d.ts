@@ -85,8 +85,7 @@ export declare const $$init: (initialSetters?: rd_SetterHandle[], initialGetters
  *   num = 1; // Will be doubled on set
  * }
  */
-export declare function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): PropertyDecorator;
-export declare function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): MethodDecorator;
+export declare function $setter<TInput, TOutput = TInput>(handle: (thisArg: any, attr: string | symbol, value: TInput, lastResult: TInput, index: number, handlers: rd_SetterHandle<any, any>[]) => TOutput): PropertyDecorator & MethodDecorator;
 /**
  * Getter handler decorator factory
  * Getter句柄装饰器工厂
@@ -112,8 +111,7 @@ export declare function $setter<T>(handle: (thisArg: any, attr: string | symbol,
  *   num = 1; // Will add 100 when get
  * }
  */
-export declare function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
-export declare function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
+export declare function $getter<TInput, TOutput = TInput>(handle: (thisArg: any, attr: string | symbol, value: any, lastResult: TInput, index: number, handlers: rd_GetterHandle<any, any>[]) => TOutput | undefined): PropertyDecorator & MethodDecorator;
 import { conditionHandler, rejectionHandler } from "./type.handles";
 /**
  * Conditional write decorator factory
@@ -168,7 +166,7 @@ import { conditionHandler, rejectionHandler } from "./type.handles";
  *    - 未提供拒绝处理时返回原值
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export declare const $conditionalWrite: <T = any>(errorType: "ignore" | "Warn" | "Error", conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator;
+export declare const $conditionalWrite: <TInput = any, TOutput = TInput>(errorType: "ignore" | "Warn" | "Error", conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
 /**
  * Conditional read decorator factory
  * 条件读取装饰器工厂
@@ -222,7 +220,7 @@ export declare const $conditionalWrite: <T = any>(errorType: "ignore" | "Warn" |
  *    - 未提供拒绝处理时返回undefined
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export declare const $conditionalRead: <T = any>(errorType: "ignore" | "Warn" | "Error", conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator;
+export declare const $conditionalRead: <TInput = any, TOutput = TInput>(errorType: "ignore" | "Warn" | "Error", conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
 /**
  * rulers & libSetting
  */

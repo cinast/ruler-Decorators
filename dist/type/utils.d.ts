@@ -6,7 +6,7 @@
  * @overload Auto-accessor decorator
  * @param T Input type, or let it infer by itself
  */
-export declare const watchSet: <T>(handle: (thisArg: any, attr: string | symbol, value: T) => T) => PropertyDecorator;
+export declare const watchSet: <T>(handle: (thisArg: any, attr: string | symbol, value: T) => T) => PropertyDecorator & MethodDecorator;
 /** Identifies decorator type from arguments */
 export declare function getDecoratorType(args: any[]): string;
 /**
@@ -14,5 +14,5 @@ export declare function getDecoratorType(args: any[]): string;
  * @param props
  * @returns
  */
-export declare function $defineProperty<T>(...props: any[]): PropertyDecorator;
+export declare function $defineProperty(...props: any[]): PropertyDecorator;
 //# sourceMappingURL=utils.d.ts.map

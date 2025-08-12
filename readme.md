@@ -79,14 +79,18 @@ class SecureData {
 ## ⚠️ 注意事项
 
 -   ❌ 类型追踪...感觉就是//@ts-nocheck 了  
+    —— **⚠️ℹ️ 建议手动加类型注释，尤其在最后一个 conditionH/rejectH 处，加一个类型检查关口**  
     试了好多次甚至不如他自己推断好
+
 -   ⚠️**仅娱乐**⚠️ ，不要用于生产环境中  
      `setterHandlers`、`getterHandlers` 目前是什么东西都有权更改，关于他的管理权我还没做好
 -   ℹ️ **必须启用**`experimentalDecorators`
 -   ℹ️ 需要 TypeScript 5.2+
 -   ⚠️ **一旦**使用`$$init`，这个属性/方法/类 不得再置新的 gtr/setr  
     会直接破坏这个库的运行
--   ℹ️ 详见[已知问题文档](./doc/known_issues.md)
+-   ℹ️ ~~详见[已知问题文档](./doc/known_issues.md)~~
+
+-   谨慎魔改 [`src/type.handles.ts`](src/type.handles.ts)，当心报错 40+
 
 ## 🤔 为什么选择这个库？
 
