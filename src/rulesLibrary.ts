@@ -57,14 +57,12 @@ export { __Setting };
  * @overload Method decorator (set accessor)
  * @overload Auto-accessor decorator
  */
-export const Int = <T extends number | bigint = number>(
-    onError?: ((v: number, o?: unknown) => T) | "ceil" | "floor" | "round" | number
-) =>
-    $conditionalWrite<number>(
+export const Int = (onError?: ((v: number | bigint, o?: unknown) => number) | "ceil" | "floor" | "round" | number) =>
+    $conditionalWrite<number, number>(
         "Error",
         [(_, __, v) => !v.toString().includes(".")],
         [
-            (_, __, v: number, o) =>
+            (_, __, v, o) =>
                 onError
                     ? {
                           approached: true,

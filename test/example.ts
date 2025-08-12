@@ -1,4 +1,4 @@
-import { $$init, $conditionalRead, $conditionalWrite, rulerDecorators } from "../src/rulerDecorators";
+import { $$init, $conditionalRead, $conditionalWrite, $setter, rulerDecorators } from "../src/rulerDecorators";
 
 rulerDecorators.__Setting.dev();
 class test {
@@ -15,28 +15,21 @@ class test {
     str = "default";
     @$$init()
     @$conditionalWrite<number, number>("ignore", [
-        // () => {
-        //     return {
-        //         approached: true,
-        //         output: "33333", // 现在这里会报错：不能将string分配给number
-        //     };
-        // },
-        (thisArg, key, value, prevResult) => {
-            // value 是 number 类型
-            // prevResult.output 是 number 类型
-            return {
-                approached: true,
-                output: value * 2, // 正确：返回number
-            };
+        (_: any, __: string | symbol, ___: number) => "8809009",
+        (_: any, __: string | symbol, value: number, prevResult: string) => {
+            return value * 2 + Number(prevResult);
         },
-        () => {
+        (_, __, ___, p: number) => {
             return {
                 approached: true,
-                output: 0, // 正确
+                output: p,
             };
         },
     ])
     a: number = 0;
+    @$$init()
+    @$setter((a, b, c, d, e, g) => {})
+    b: number = 0;
 
     constructor() {
         // this.proxyed = 5;
