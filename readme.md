@@ -78,6 +78,8 @@ class SecureData {
 
 ## ⚠️ 注意事项
 
+-   ❌ 类型追踪...感觉就是//@ts-nocheck 了  
+    试了好多次甚至不如他自己推断好
 -   ⚠️**仅娱乐**⚠️ ，不要用于生产环境中  
      `setterHandlers`、`getterHandlers` 目前是什么东西都有权更改，关于他的管理权我还没做好
 -   ℹ️ **必须启用**`experimentalDecorators`
