@@ -7,8 +7,13 @@
  * @core_concept WeakMap存储的句柄链中的可链式调用单元
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
+ * @param
  */
-export type rd_SetterHandle<TInput = any, TOutput = TInput> = (target: any, attr: string | symbol, value: TInput, lastResult: TInput, index: number, handlers: rd_SetterHandle<any, any>[], ...args: any[]) => TOutput;
+export type rd_SetterHandle<I = any, R = I> = (target: any, attr: string | symbol, value: any, lastResult: I, index: number, handlers: rd_SetterHandle<any, any>[], ...args: any[]) => R;
+export interface handlerIIreduceMessage {
+    approached: boolean;
+    output: any;
+}
 /**
  * @handle_I
  * Core getter handler type for factoryI (base level)
@@ -19,7 +24,7 @@ export type rd_SetterHandle<TInput = any, TOutput = TInput> = (target: any, attr
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
  */
-export type rd_GetterHandle<TInput = any, TOutput = TInput> = (target: any, attr: string | symbol, value: any, lastResult: TInput, index: number, handlers: rd_GetterHandle<any, any>[], ...args: any[]) => TOutput;
+export type rd_GetterHandle<I = any, R = I> = (target: any, attr: string | symbol, value: any, lastResult: I, index: number, handlers: rd_GetterHandle[], ...args: any[]) => R | undefined;
 /**
  * @handle_II
  * Condition handler type for factoryII (conditional level)
@@ -44,7 +49,7 @@ export type conditionHandler = (thisArg: any, key: string | symbol, value: any, 
  * @Waring Returns true/approached without processing will keep original value
  * @Waring 如果返回true/approached但未处理值，将保持原值
  */
-export type rejectionHandler = (thisArg: any, key: string | symbol, value: any, conditionHandleLastOutput: {
+export type rejectionHandler = (thisArg: any, key: string | symbol, value: any, conditionHandleLasR: {
     approached: boolean;
     output: any;
 }, prevResult: {

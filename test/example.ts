@@ -4,7 +4,7 @@ rulerDecorators.__Setting.dev();
 class test {
     // @$$init()
     // proxyed = 0;
-    @$$init()
+    @$$init<string>()
     @rulerDecorators.minimum(100)
     num = -10;
     @$$init()

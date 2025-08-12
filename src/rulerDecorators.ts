@@ -58,7 +58,7 @@ interface InstanceStorageValue {
     [key: string | symbol]: any;
 }
 
-import { rd_GetterHandle, rd_SetterHandle } from "./type.handles";
+import { handlerIIreduceMessage, rd_GetterHandle, rd_SetterHandle } from "./type.handles";
 const instanceStorage = new WeakMap<object, InstanceStorageValue>();
 const wrapperCache = new WeakMap<object, Record<string | symbol, Function>>();
 
@@ -311,8 +311,8 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
                     value // 初始值使用传入的value
                 );
 
-                // 存储处理结果
-                objStore[key] = result satisfies (typeof objStore)[typeof key];
+                // 存储处理结果 + “检查”
+                objStore[key] = result;
                 // 你说他会有用么
 
                 debugLogger(console.log, "Final stored value:", result);
@@ -432,7 +432,7 @@ export function $setter<I, R = I>(handle: rd_SetterHandle<I, R>): PropertyDecora
  * }
  */
 export function $getter<I, R = I>(
-    handle: rd_GetterHandle<I, typeof __Setting.enableChangingType extends false ? R : I>
+    handle: rd_GetterHandle<I, typeof __Setting.veryStrict extends false ? R : I>
 ): PropertyDecorator & MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
         $addGetterHandler(target, attr, handle as rd_GetterHandle);
@@ -502,9 +502,9 @@ export const $conditionalWrite = <I = any, R = I>(
     conditionHandles: conditionHandler[],
     rejectHandlers?: rejectionHandler[]
 ) => {
-    return $setter<I, R>((thisArg, key, newVal, lastResult, index, handlers) => {
+    return $setter<I, R>((thisArg, key, newVal, lastResult: I, index, handlers) => {
         const handlersArray = [...conditionHandles];
-        const callResult = handlersArray.reduce(
+        const callResult = handlersArray.reduce<boolean | handlerIIreduceMessage | any>(
             (lastProcess, handler, idx, arr) => {
                 const r = handler(thisArg, key, newVal, lastProcess, idx, conditionHandles);
                 if (typeof r === "boolean") {
@@ -515,8 +515,16 @@ export const $conditionalWrite = <I = any, R = I>(
                 }
                 return { approached: true, output: r };
             },
-            { approached: true, output: lastResult ?? newVal }
-        );
+            { approached: false, output: (lastResult ?? newVal) as unknown as I }
+        ) satisfies
+            | {
+                  approached: true;
+                  output: R;
+              }
+            | {
+                  approached: false;
+                  output: typeof rejectHandlers extends [] | undefined ? never : any;
+              };
 
         if (callResult.approached) return callResult.output;
 
@@ -537,7 +545,19 @@ export const $conditionalWrite = <I = any, R = I>(
                     approached: true,
                     output: newVal,
                 }
-            );
+            ) satisfies
+                | {
+                      approached: true;
+                      output: R;
+                  }
+                | {
+                      approached: false;
+                      output: typeof rejectHandlers extends [] | undefined
+                          ? never
+                          : typeof __Setting.veryStrict extends true /* allow warn? */
+                          ? never
+                          : any;
+                  };
 
             if (rejectResult.approached) return rejectResult.output;
 
@@ -612,8 +632,7 @@ export const $conditionalRead = <I = any, R = I>(
     conditionHandles: conditionHandler[],
     rejectHandlers?: rejectionHandler[]
 ) => {
-    return $getter<I, R | undefined>((thisArg, key, value, lastResult, index, handlers) => {
-        // 类型安全的reduce处理
+    return $getter<I, R | undefined>((thisArg, key, value, lastResult: I, index, handlers) => {
         const handlersArray = [...conditionHandles];
         const callResult = handlersArray.reduce(
             (lastProcess, handler, idx, arr) => {
@@ -627,7 +646,15 @@ export const $conditionalRead = <I = any, R = I>(
                 return { approached: true, output: r };
             },
             { approached: true, output: lastResult ?? value }
-        );
+        ) satisfies
+            | {
+                  approached: true;
+                  output: R;
+              }
+            | {
+                  approached: false;
+                  output: typeof rejectHandlers extends [] | undefined ? never : any;
+              };
 
         if (callResult.approached) return callResult.output;
 
@@ -647,7 +674,19 @@ export const $conditionalRead = <I = any, R = I>(
                 {
                     approached: true,
                     output: value,
-                }
+                } satisfies
+                    | {
+                          approached: true;
+                          output: R;
+                      }
+                    | {
+                          approached: false;
+                          output: typeof rejectHandlers extends [] | undefined
+                              ? never
+                              : typeof __Setting.veryStrict extends true /* allow warn? */
+                              ? never
+                              : any;
+                      }
             );
             if (rejectResult.approached) return rejectResult.output;
 

@@ -104,6 +104,8 @@ class SecureData {
 -   ⚠️ **一旦**使用`$$init`，这个属性/方法/类 不得再置新的 gtr/setr  
     会直接破坏这个库的运行
 -   ℹ️ ~~详见[已知问题文档](./doc/known_issues.md)~~
+-   由于更新频繁，文档跟不上，而且有些是吞金鲸帮我写的
+    以代码为准
 
 -   谨慎魔改 [`src/type.handles.ts`](src/type.handles.ts)，当心报错 40+
 

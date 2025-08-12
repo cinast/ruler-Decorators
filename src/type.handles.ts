@@ -19,6 +19,11 @@ export type rd_SetterHandle<I = any, R = I> = (
     ...args: any[]
 ) => R;
 
+export interface handlerIIreduceMessage {
+    approached: boolean;
+    output: any;
+}
+
 /**
  * @handle_I
  * Core getter handler type for factoryI (base level)
@@ -35,7 +40,7 @@ export type rd_GetterHandle<I = any, R = I> = (
     value: any,
     lastResult: I,
     index: number,
-    handlers: rd_GetterHandle<any, any>[],
+    handlers: rd_GetterHandle[],
     ...args: any[]
 ) => R | undefined;
 

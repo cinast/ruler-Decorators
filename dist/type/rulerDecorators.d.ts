@@ -1,3 +1,4 @@
+import { __Setting } from "./moduleMeta";
 import { rd_GetterHandle, rd_SetterHandle } from "./type.handles";
 /**
  * Add setter handler to specified property
@@ -59,7 +60,7 @@ export declare function $removeGetterHandler(target: object, propertyKey: string
  * @returns Adaptive decorator function
  *         自适应装饰器函数
  */
-export declare const $$init: (initialSetters?: rd_SetterHandle[], initialGetters?: rd_GetterHandle[]) => (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => any;
+export declare const $$init: <T>(initialSetters?: rd_SetterHandle[], initialGetters?: rd_GetterHandle[]) => (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => any;
 /**
  * Setter handler decorator factory
  * Setter句柄装饰器工厂
@@ -85,7 +86,7 @@ export declare const $$init: (initialSetters?: rd_SetterHandle[], initialGetters
  *   num = 1; // Will be doubled on set
  * }
  */
-export declare function $setter<TInput, TOutput = TInput>(handle: (thisArg: any, attr: string | symbol, value: TInput, lastResult: TInput, index: number, handlers: rd_SetterHandle<any, any>[]) => TOutput): PropertyDecorator & MethodDecorator;
+export declare function $setter<I, R = I>(handle: rd_SetterHandle<I, R>): PropertyDecorator & MethodDecorator;
 /**
  * Getter handler decorator factory
  * Getter句柄装饰器工厂
@@ -111,7 +112,7 @@ export declare function $setter<TInput, TOutput = TInput>(handle: (thisArg: any,
  *   num = 1; // Will add 100 when get
  * }
  */
-export declare function $getter<TInput, TOutput = TInput>(handle: (thisArg: any, attr: string | symbol, value: any, lastResult: TInput, index: number, handlers: rd_GetterHandle<any, any>[]) => TOutput | undefined): PropertyDecorator & MethodDecorator;
+export declare function $getter<I, R = I>(handle: rd_GetterHandle<I, typeof __Setting.veryStrict extends false ? R : I>): PropertyDecorator & MethodDecorator;
 import { conditionHandler, rejectionHandler } from "./type.handles";
 /**
  * Conditional write decorator factory
@@ -166,7 +167,7 @@ import { conditionHandler, rejectionHandler } from "./type.handles";
  *    - 未提供拒绝处理时返回原值
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export declare const $conditionalWrite: <TInput = any, TOutput = TInput>(errorType: "ignore" | "Warn" | "Error", conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
+export declare const $conditionalWrite: <I = any, R = I>(errorType: "ignore" | "Warn" | "Error", conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
 /**
  * Conditional read decorator factory
  * 条件读取装饰器工厂
@@ -220,7 +221,7 @@ export declare const $conditionalWrite: <TInput = any, TOutput = TInput>(errorTy
  *    - 未提供拒绝处理时返回undefined
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export declare const $conditionalRead: <TInput = any, TOutput = TInput>(errorType: "ignore" | "Warn" | "Error", conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
+export declare const $conditionalRead: <I = any, R = I>(errorType: "ignore" | "Warn" | "Error", conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
 /**
  * rulers & libSetting
  */

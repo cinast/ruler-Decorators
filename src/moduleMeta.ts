@@ -26,7 +26,17 @@ export const __Setting: {
      * 我脑子抽了要设计这个 \
      * 算了哪天移到api.test去
      */
-    enableChangingType: boolean;
+    /**
+     *
+     */
+    // veryStrict: boolean;
+
+    /**
+     * extra type check
+     * @see readme#headlineWarn
+     */
+    veryStrict: boolean;
+
     /**
      * Global switch of warn or ignore when trying to change read-only property
      */
@@ -58,7 +68,7 @@ export const __Setting: {
      */
     godMod: () => void;
 } = {
-    enableChangingType: false,
+    veryStrict: false,
     "$conditionalWR.defaultErrorType": "Error",
     "debugLogger.logInnerDetails": false,
     "$debug.allowUsing": true,

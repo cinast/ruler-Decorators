@@ -13,6 +13,24 @@ export declare const thisSymbols: unique symbol;
  */
 export declare const __Setting: {
     /**
+     * @WARN @DANGEROUS
+     * @NUKE_SWITCH
+     * changeable or unchangeable of `R` in `($setter & $getter)<I,R>`  \
+     * R is I completely or extends **any** you want
+     * @WARN LOCK this before use this lib at somewhere IMPORTANT
+     *
+     * 我脑子抽了要设计这个 \
+     * 算了哪天移到api.test去
+     */
+    /**
+     *
+     */
+    /**
+     * extra type check
+     * @see readme#headlineWarn
+     */
+    veryStrict: boolean;
+    /**
      * Global switch of warn or ignore when trying to change read-only property
      */
     "$conditionalWR.defaultErrorType": "Warn" | "Error";
