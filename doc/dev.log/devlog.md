@@ -90,24 +90,24 @@ gtr/str 负责驱动这一切
 
     当$getter 作为属性装饰器使用时，直接返回 handle 函数的调用结果，导致在 handle 函数内部访问被装饰属性时产生无限递归
 
-    想要达到 拿到那个值 的结果 就必须访问这个属性，
-    但是访问这个属性 就必须调用这个 getter，
+    想要达到 拿到那个值 的结果 就必须访问这个属性，  
+    但是访问这个属性 就必须调用这个 getter，  
     这个 getter 要返回属性就必须拿到这个属性
 
     _你永远达不到拿到属性的事实_
 
     -   解决方案：
 
-        -   ~~添加 trigger 和 tmp 两个 Symbol~~
-            ~~在 descriptor 里试图储存这个属性~~
+        -   ~~添加 trigger 和 tmp 两个 Symbol~~  
+            ~~在 descriptor 里试图储存这个属性~~  
             ↑ 神经病
         -   在装饰器那里加 trigger 开关 和 tmp 存储 企图利用闭包“优雅”地实现
 
-            > setter：咱俩心有灵犀
+            > setter：咱俩心有灵犀  
             > getter：滚
 
-            ——那我到底是储存了两遍这个东西吗
-            ——我应该储存两遍还是三遍
+            ——那我到底是储存了两遍这个东西吗  
+            ——我应该储存两遍还是三遍  
             ↑ 神经病
 
         -   在 getter 中检查 trigger 标记，防止递归调用
@@ -215,12 +215,12 @@ gtr/str 负责驱动这一切
 
 1.  **$conditionalWrite 重构**
 
-    -   继续开发二级句柄，并且在$conditionalWrite 上实践
-        设立 str/gtr 句柄 II 概念
+    -   继续开发二级句柄，并且在$conditionalWrite 上实践  
+        设立 str/gtr 句柄 II 概念  
         并把 I/II 句柄的定义移到 [type.handle.ts](../src/type.handles.ts)
 
-        当 str/gtr 函数触发，按照顺序轮流 reduce
-        可以极大强化了可扩展性
+        当 str/gtr 函数触发，按照顺序轮流 reduce  
+        可以极大强化了可扩展性  
         在二级句柄的调用里加入了另外一个返回参数
 
         ```ts
@@ -230,16 +230,16 @@ gtr/str 负责驱动这一切
         }
         ```
 
-        配合 reduce 模式，感觉像 promise.then
+        配合 reduce 模式，感觉像 promise.then  
         又加上一个 reject 参数，感觉就像盗版的 promise 不过更像是流水线管道
 
-        但是又有一个特殊想法
-        令这个句柄链的最后一个句柄必须返回相应类型参数的类型
-        可是实在是太难了，这个类型还要根据是否通过来判断
-        要拿到这个布尔值还得要等函数执行完
+        但是又有一个特殊想法  
+        令这个句柄链的最后一个句柄必须返回相应类型参数的类型  
+        可是实在是太难了，这个类型还要根据是否通过来判断  
+        要拿到这个布尔值还得要等函数执行完  
         又是先有鸡先先有蛋问题
 
-        现在的设置还有好多漏洞
+        现在的设置还有好多漏洞  
         你甚至可以直接所有句柄全部绿灯，做到事与语义违的效果
 
 2.  **代码优化**
@@ -277,51 +277,3 @@ gtr/str 负责驱动这一切
 -   移$debugger 至 api.test.ts
     再加几个配置开关
 -   预备开新坑 extra libs
-
--   发现了一个奇怪的 bug：
-
-    ```ts
-    export const stringExcludes = (...patten: (RegExp | string)[]) =>
-        $conditionalWrite(
-            "Warn",
-            [
-                (_, __, value) =>
-                    typeof value == "string" &&
-                    !patten.every((pat) => (typeof pat === "string" ? valueincludes(pat) : pat.test(value))),
-            ],
-            [
-                (_, __, value) => false,
-                (_, __, value, c, p) => {
-                    console.log(2902929, p);
-                    return false;
-                },
-                (_, __, value, c, p) => {
-                    console.log(2902929, p);
-                    return false;
-                },
-                (_, __, value, c, p) => {
-                    console.log(2902929, p);
-                    return false;
-                },
-            ]
-        );
-    ```
-
-    ```log
-            ⚠️ Property 'str' write rejected. Final output: {"approached":false,"output":{"approached":false,"output":{"approached":false,"output":{"approached":true,"output":"2502500"}}}}
-    ```
-
-    > <img src="https://cdn.jsdelivr.net/gh/cinast/cinast.imgsStore/strangeStuff/%E5%90%9E%E9%87%91%E9%B2%B8.svg" style="height: 1rem; width: 1rem; border: 1px solid gold; border-radius: 50%; background: center, center" title= "吞金鲸"/> :
-    >
-    > 当写入被拒绝时，log 输出非常深的对象，  
-    > 这是因为在`$conditionalWrite`内部，我们使用`reduce`来处理拒绝处理程序，  
-    > 但是拒绝处理程序返回了`false`（一个布尔值），  
-    > 而`$conditionalWrite`期望拒绝处理程序返回一个对象`{ approached: boolean; output: any }` 或者布尔值（会被转换成对象）。  
-    > 然而，在`stringExcludes`的拒绝处理程序中，返回的是`false`，  
-    > 这会被转换成`{ approached: false, output: false }`，然后在后续的 reduce 中作为 `lastProcess`传递，  
-    > 而下一个拒绝处理程序又返回`false`，  
-    > 这样一层层嵌套，最终形成了深层的对象。
-
-    定睛一看，好家伙忘记写 output 了
-    `-output: lastProcess`
-    `+output: lastProcess.output`

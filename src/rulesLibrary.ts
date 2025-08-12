@@ -212,7 +212,7 @@ export const stringExcludes = (...patten: (RegExp | string)[]) =>
 export const stringRequires = (...patten: (RegExp | string)[]) =>
     $conditionalWrite<string>("Warn", [
         (_, __, value) =>
-            typeof value == "string" && patten.some((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value))),
+            typeof value == "string" && patten.every((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value))),
     ]);
 
 export const trimBlank = $conditionalWrite<string>("ignore", [
@@ -357,3 +357,10 @@ export const triggeredOnSomeDay = (date: Date | number) =>
     $conditionalRead("Error", [() => Date.now() == (typeof date == "number" ? date : date.getMilliseconds())]);
 
 // export function egg() {}
+
+export const A = $conditionalWrite("ignore", [
+    () => {
+        return 0;
+    },
+    // (_, __, __, p) => true,
+]);

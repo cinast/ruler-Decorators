@@ -58,7 +58,7 @@ interface InstanceStorageValue {
     [key: string | symbol]: any;
 }
 
-import { conditionHandlerPipe, rd_GetterHandle, rd_SetterHandle, rejectionHandlerPipe } from "./type.handles";
+import { rd_GetterHandle, rd_SetterHandle } from "./type.handles";
 const instanceStorage = new WeakMap<object, InstanceStorageValue>();
 const wrapperCache = new WeakMap<object, Record<string | symbol, Function>>();
 
@@ -514,12 +514,12 @@ import { debugLogger } from "./api.test";
  */
 export const $conditionalWrite = <TInput = any, TOutput = TInput>(
     errorType: "ignore" | "Warn" | "Error",
-    conditionHandles: conditionHandlerPipe<TInput, TOutput>,
-    rejectHandlers?: rejectionHandlerPipe<TInput, TOutput>
+    conditionHandles: conditionHandler[],
+    rejectHandlers?: rejectionHandler[]
 ) => {
     return $setter<TInput, TOutput>((thisArg, key, newVal, lastResult, index, handlers) => {
-        const handlersArray = [...conditionHandles] as conditionHandlerPipe<TInput, TOutput>;
-        const callResult = handlersArray.reduce<{ approached: boolean; output: TOutput }>(
+        const handlersArray = [...conditionHandles];
+        const callResult = handlersArray.reduce(
             (lastProcess, handler, idx, arr) => {
                 const r = handler(thisArg, key, newVal, lastProcess, idx, conditionHandles);
                 if (typeof r === "boolean") {
@@ -530,14 +530,14 @@ export const $conditionalWrite = <TInput = any, TOutput = TInput>(
                 }
                 return { approached: true, output: r };
             },
-            { approached: true, output: (lastResult ?? newVal) as unknown as TOutput }
+            { approached: true, output: lastResult ?? newVal }
         );
 
         if (callResult.approached) return callResult.output;
 
         if (rejectHandlers?.length) {
-            const rejectHandlersArray = [...rejectHandlers] as rejectionHandlerPipe<TInput, TOutput>;
-            const rejectResult = rejectHandlersArray.reduce<{ approached: boolean; output: TOutput }>(
+            const rejectHandlersArray = [...rejectHandlers];
+            const rejectResult = rejectHandlersArray.reduce(
                 (lastProcess, handler, idx, arr) => {
                     const r = handler(thisArg, key, newVal, callResult, lastProcess, idx, rejectHandlers);
                     if (typeof r === "boolean") {
@@ -550,7 +550,7 @@ export const $conditionalWrite = <TInput = any, TOutput = TInput>(
                 },
                 {
                     approached: true,
-                    output: newVal as unknown as TOutput,
+                    output: newVal,
                 }
             );
 
@@ -624,13 +624,13 @@ export const $conditionalWrite = <TInput = any, TOutput = TInput>(
  */
 export const $conditionalRead = <TInput = any, TOutput = TInput>(
     errorType: "ignore" | "Warn" | "Error",
-    conditionHandles: conditionHandlerPipe<TInput, TOutput>,
-    rejectHandlers?: rejectionHandlerPipe<TInput, TOutput>
+    conditionHandles: conditionHandler[],
+    rejectHandlers?: rejectionHandler[]
 ) => {
     return $getter<TInput, TOutput | undefined>((thisArg, key, value, lastResult, index, handlers) => {
         // 类型安全的reduce处理
-        const handlersArray = [...conditionHandles] as conditionHandlerPipe<TInput, TOutput>;
-        const callResult = handlersArray.reduce<{ approached: boolean; output: TOutput }>(
+        const handlersArray = [...conditionHandles];
+        const callResult = handlersArray.reduce(
             (lastProcess, handler, idx, arr) => {
                 const r = handler(thisArg, key, value, lastProcess, idx, conditionHandles);
                 if (typeof r === "boolean") {
@@ -647,8 +647,8 @@ export const $conditionalRead = <TInput = any, TOutput = TInput>(
         if (callResult.approached) return callResult.output;
 
         if (rejectHandlers?.length) {
-            const rejectHandlersArray = [...rejectHandlers] as rejectionHandlerPipe<TInput, TOutput>;
-            const rejectResult = rejectHandlersArray.reduce<{ approached: boolean; output: TOutput }>(
+            const rejectHandlersArray = [...rejectHandlers];
+            const rejectResult = rejectHandlersArray.reduce(
                 (lastProcess, handler, idx, arr) => {
                     const r = handler(thisArg, key, value, callResult, lastProcess, idx, rejectHandlers);
                     if (typeof r === "boolean") {

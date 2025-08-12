@@ -48,22 +48,14 @@ export type rd_GetterHandle<TInput = any, TOutput = TInput> = (
  * @Waring Returns true/approached without processing will override value
  * @Waring 如果返回true/approached但未处理值，将直接覆盖原值
  */
-export type conditionHandler<TInput = any, TOutput = TInput> = (
+export type conditionHandler = (
     thisArg: any,
     key: string | symbol,
     value: any,
-    prevResult: TInput | { approached: boolean; output: any },
+    prevResult: any | { approached: boolean; output: any },
     currentIndex: number,
-    handlers: conditionHandlerPipe<TInput, TOutput>
-) => TOutput | boolean | { approached: boolean; output: TOutput };
-export type aconditionHandler<TInput = any, TOutput = TInput> = (
-    thisArg: any,
-    key: string | symbol,
-    value: any,
-    prevResult: TInput | { approached: boolean; output: any },
-    currentIndex: number,
-    handlers: conditionHandlerPipe<TInput, TOutput>
-) => TOutput | boolean | { approached: boolean; output: TOutput };
+    handlers: conditionHandler[]
+) => any;
 
 /**
  * @handle_II
@@ -75,28 +67,14 @@ export type aconditionHandler<TInput = any, TOutput = TInput> = (
  * @Waring Returns true/approached without processing will keep original value
  * @Waring 如果返回true/approached但未处理值，将保持原值
  */
-export type rejectionHandler<TInput = any, TOutput = TInput> = (
+export type rejectionHandler = (
     thisArg: any,
     key: string | symbol,
     value: any,
-    conditionHandleLastOutput: { approached: boolean; output: TOutput },
+    conditionHandleLastOutput: { approached: boolean; output: any },
     prevResult: { approached: boolean; output: any },
     currentIndex: number,
-    handlers: rejectionHandlerPipe<TInput, TOutput>
-) => TOutput | boolean | { approached: boolean; output: TOutput };
+    handlers: rejectionHandler[]
+) => any;
 
 type PreciseTuple<T, U, V> = [first: T, ...middle: U[], last: V];
-
-export type conditionHandlerPipe<I, R> =
-    | PreciseTuple<conditionHandler<I, any>, conditionHandler<any, any>, conditionHandler<any, R>>
-    | [conditionHandler<I, any>, conditionHandler<any, R>]
-    | [conditionHandler<I, R>]
-    | [];
-
-export type rejectionHandlerPipe<I, R> =
-    | PreciseTuple<rejectionHandler<I, any>, rejectionHandler<any, any>, rejectionHandler<any, R>>
-    | [rejectionHandler<I, any>, rejectionHandler<any, R>]
-    | [rejectionHandler<I, R>]
-    | [];
-
-type a = PreciseTuple<string, number, boolean>;
