@@ -512,7 +512,7 @@ export const $conditionalWrite = <I = any, R = I>(
                 }
                 return { approached: true, output: r };
             },
-            { approached: false, output: (lastResult ?? newVal) as unknown as I }
+            { approached: false, output: lastResult }
         ) satisfies
             | {
                   approached: true;
@@ -540,7 +540,7 @@ export const $conditionalWrite = <I = any, R = I>(
                 },
                 {
                     approached: true,
-                    output: newVal,
+                    output: lastResult,
                 }
             ) satisfies
                 | {
@@ -642,7 +642,7 @@ export const $conditionalRead = <I = any, R = I>(
                 }
                 return { approached: true, output: r };
             },
-            { approached: true, output: lastResult ?? value }
+            { approached: true, output: lastResult as I }
         ) satisfies
             | {
                   approached: true;

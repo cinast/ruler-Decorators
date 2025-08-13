@@ -57,7 +57,7 @@ export interface handlerIIreduceMessage {
 export type conditionHandler = (
     thisArg: unknown,
     key: string | symbol,
-    value: unknown,
+    value: any,
     prevResult: { approached: boolean; output: unknown },
     currentIndex: number,
     handlers: conditionHandler[]
@@ -76,7 +76,7 @@ export type conditionHandler = (
 export type rejectionHandler = (
     thisArg: unknown,
     key: string | symbol,
-    value: unknown,
+    value: any,
     conditionHandleLastR: { approached: boolean; output: unknown },
     prevResult: { approached: boolean; output: unknown },
     currentIndex: number,

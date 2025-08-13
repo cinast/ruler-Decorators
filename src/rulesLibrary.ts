@@ -58,9 +58,9 @@ export { __Setting };
  * @overload Auto-accessor decorator
  */
 export const Int = (onError?: ((v: number | bigint, o?: unknown) => number) | "ceil" | "floor" | "round" | number) =>
-    $conditionalWrite<number, number>(
+    $conditionalWrite<number>(
         "Error",
-        [(_, __, v) => !v.toString().includes(".")],
+        [(_, __, v: number) => !v.toString().includes(".")],
         [
             (_, __, v, o) =>
                 onError
@@ -357,10 +357,3 @@ export const triggeredOnSomeDay = (date: Date | number) =>
     $conditionalRead("Error", [() => Date.now() == (typeof date == "number" ? date : date.getMilliseconds())]);
 
 // export function egg() {}
-
-export const A = $conditionalWrite("ignore", [
-    () => {
-        return 0;
-    },
-    // (_, __, __, p) => true,
-]);
