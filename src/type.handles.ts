@@ -10,19 +10,14 @@
  * @param
  */
 export type rd_SetterHandle<I = any, R = I> = (
-    target: any,
+    target: unknown,
     attr: string | symbol,
-    value: any,
-    lastResult: I,
+    newValue: unknown,
+    thisInput: I,
     index: number,
     handlers: rd_SetterHandle<any, any>[],
     ...args: any[]
 ) => R;
-
-export interface handlerIIreduceMessage {
-    approached: boolean;
-    output: any;
-}
 
 /**
  * @handle_I
@@ -35,14 +30,19 @@ export interface handlerIIreduceMessage {
  * @chainable 通过Array.reduce()实现链式执行
  */
 export type rd_GetterHandle<I = any, R = I> = (
-    target: any,
+    target: unknown,
     attr: string | symbol,
-    value: any,
-    lastResult: I,
+    theValue: unknown,
+    thisInput: I,
     index: number,
     handlers: rd_GetterHandle[],
-    ...args: any[]
+    ...args: unknown[]
 ) => R | undefined;
+
+export interface handlerIIreduceMessage {
+    approached: boolean;
+    output: any;
+}
 
 /**
  * @handle_II
@@ -55,13 +55,13 @@ export type rd_GetterHandle<I = any, R = I> = (
  * @Waring 如果返回true/approached但未处理值，将直接覆盖原值
  */
 export type conditionHandler = (
-    thisArg: any,
+    thisArg: unknown,
     key: string | symbol,
-    value: any,
-    prevResult: any | { approached: boolean; output: any },
+    value: unknown,
+    prevResult: { approached: boolean; output: unknown },
     currentIndex: number,
     handlers: conditionHandler[]
-) => any;
+) => boolean | handlerIIreduceMessage;
 
 /**
  * @handle_II
@@ -74,13 +74,11 @@ export type conditionHandler = (
  * @Waring 如果返回true/approached但未处理值，将保持原值
  */
 export type rejectionHandler = (
-    thisArg: any,
+    thisArg: unknown,
     key: string | symbol,
-    value: any,
-    conditionHandleLasR: { approached: boolean; output: any },
-    prevResult: { approached: boolean; output: any },
+    value: unknown,
+    conditionHandleLastR: { approached: boolean; output: unknown },
+    prevResult: { approached: boolean; output: unknown },
     currentIndex: number,
     handlers: rejectionHandler[]
-) => any;
-
-type PreciseTuple<T, U, V> = [first: T, ...middle: U[], last: V];
+) => boolean | handlerIIreduceMessage;

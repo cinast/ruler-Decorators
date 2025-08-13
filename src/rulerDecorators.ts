@@ -290,7 +290,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
             enumerable: descriptor ? descriptor.enumerable : true,
 
             // 统一的 setter 处理
-            set(this: any, value: any) {
+            set(this: any, value: unknown) {
                 debugLogger(console.log, "Setter triggered for", key, "with value", value);
                 let objStore = instanceStorage.get(this);
                 if (!objStore) {
@@ -567,7 +567,7 @@ export const $conditionalWrite = <I = any, R = I>(
                     throw new Error(`🚫 ${warningMsg}`);
             }
         }
-        return thisArg[key]; // Fallback to original value
+        return (thisArg as any)[key]; // Fallback to original value
     });
 };
 
@@ -650,7 +650,7 @@ export const $conditionalRead = <I = any, R = I>(
               }
             | {
                   approached: false;
-                  output: typeof rejectHandlers extends [] | undefined ? never : any;
+                  output: typeof rejectHandlers extends [] | undefined ? never : unknown;
               };
 
         if (callResult.approached) return callResult.output;
@@ -671,20 +671,20 @@ export const $conditionalRead = <I = any, R = I>(
                 {
                     approached: true,
                     output: value,
-                } satisfies
-                    | {
-                          approached: true;
-                          output: R;
-                      }
-                    | {
-                          approached: false;
-                          output: typeof rejectHandlers extends [] | undefined
-                              ? never
-                              : typeof __Setting.veryStrict extends true /* allow warn? */
-                              ? never
-                              : any;
-                      }
-            );
+                }
+            ) satisfies
+                | {
+                      approached: true;
+                      output: R;
+                  }
+                | {
+                      approached: false;
+                      output: typeof rejectHandlers extends [] | undefined
+                          ? never
+                          : typeof __Setting.veryStrict extends true /* allow warn? */
+                          ? never
+                          : unknown;
+                  };
             if (rejectResult.approached) return rejectResult.output;
 
             const warningMsg = `Property '${String(key)}' read rejected. Final output: ${JSON.stringify(rejectResult.output)}`;
