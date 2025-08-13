@@ -504,12 +504,9 @@ export const $conditionalWrite = <I = any, R = I>(
 ) => {
     return $setter<I, R>((thisArg, key, newVal, lastResult: I, index, handlers) => {
         const handlersArray = [...conditionHandles];
-        const callResult = handlersArray.reduce<boolean | handlerIIreduceMessage | any>(
+        const callResult = handlersArray.reduce<{ approached: boolean; output: any }>(
             (lastProcess, handler, idx, arr) => {
                 const r = handler(thisArg, key, newVal, lastProcess, idx, conditionHandles);
-                if (typeof r === "boolean") {
-                    return { approached: r, output: lastProcess.output };
-                }
                 if (r && typeof r === "object" && "approached" in r && "output" in r) {
                     return r;
                 }
@@ -530,7 +527,7 @@ export const $conditionalWrite = <I = any, R = I>(
 
         if (rejectHandlers?.length) {
             const rejectHandlersArray = [...rejectHandlers];
-            const rejectResult = rejectHandlersArray.reduce(
+            const rejectResult = rejectHandlersArray.reduce<{ approached: boolean; output: any }>(
                 (lastProcess, handler, idx, arr) => {
                     const r = handler(thisArg, key, newVal, callResult, lastProcess, idx, rejectHandlers);
                     if (typeof r === "boolean") {
@@ -634,7 +631,7 @@ export const $conditionalRead = <I = any, R = I>(
 ) => {
     return $getter<I, R | undefined>((thisArg, key, value, lastResult: I, index, handlers) => {
         const handlersArray = [...conditionHandles];
-        const callResult = handlersArray.reduce(
+        const callResult = handlersArray.reduce<{ approached: boolean; output: any }>(
             (lastProcess, handler, idx, arr) => {
                 const r = handler(thisArg, key, value, lastProcess, idx, conditionHandles);
                 if (typeof r === "boolean") {
@@ -660,7 +657,7 @@ export const $conditionalRead = <I = any, R = I>(
 
         if (rejectHandlers?.length) {
             const rejectHandlersArray = [...rejectHandlers];
-            const rejectResult = rejectHandlersArray.reduce(
+            const rejectResult = rejectHandlersArray.reduce<{ approached: boolean; output: any }>(
                 (lastProcess, handler, idx, arr) => {
                     const r = handler(thisArg, key, value, callResult, lastProcess, idx, rejectHandlers);
                     if (typeof r === "boolean") {
