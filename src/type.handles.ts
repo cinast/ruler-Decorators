@@ -10,9 +10,9 @@
  * @param
  */
 export type rd_SetterHandle<I = any, R = I> = (
-    target: unknown,
+    target: any,
     attr: string | symbol,
-    newValue: unknown,
+    newValue: any,
     thisInput: I,
     index: number,
     handlers: rd_SetterHandle<any, any>[],
@@ -30,13 +30,13 @@ export type rd_SetterHandle<I = any, R = I> = (
  * @chainable 通过Array.reduce()实现链式执行
  */
 export type rd_GetterHandle<I = any, R = I> = (
-    target: unknown,
+    target: any,
     attr: string | symbol,
-    theValue: unknown,
+    theValue: any,
     thisInput: I,
     index: number,
     handlers: rd_GetterHandle[],
-    ...args: unknown[]
+    ...args: any[]
 ) => R | undefined;
 
 export interface handlerIIreduceMessage {
@@ -55,13 +55,13 @@ export interface handlerIIreduceMessage {
  * @Waring 如果返回true/approached但未处理值，将直接覆盖原值
  */
 export type conditionHandler = (
-    thisArg: unknown,
+    thisArg: any,
     key: string | symbol,
     value: any,
-    prevResult: { approached: boolean; output: unknown },
+    prevResult: { approached: boolean; output: any },
     currentIndex: number,
     handlers: conditionHandler[]
-) => boolean | handlerIIreduceMessage;
+) => boolean | handlerIIreduceMessage | any;
 
 /**
  * @handle_II
@@ -74,11 +74,11 @@ export type conditionHandler = (
  * @Waring 如果返回true/approached但未处理值，将保持原值
  */
 export type rejectionHandler = (
-    thisArg: unknown,
+    thisArg: any,
     key: string | symbol,
     value: any,
-    conditionHandleLastR: { approached: boolean; output: unknown },
-    prevResult: { approached: boolean; output: unknown },
+    conditionHandleLastR: { approached: boolean; output: any },
+    prevResult: { approached: boolean; output: any },
     currentIndex: number,
     handlers: rejectionHandler[]
-) => boolean | handlerIIreduceMessage;
+) => boolean | handlerIIreduceMessage | any;

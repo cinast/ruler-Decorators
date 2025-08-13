@@ -4,7 +4,7 @@ rulerDecorators.__Setting.dev();
 class test {
     // @$$init()
     // proxyed = 0;
-    @$$init<string>()
+    @$$init()
     @rulerDecorators.minimum(100)
     num = -10;
     @$$init()
@@ -16,10 +16,10 @@ class test {
     @$$init()
     @$conditionalWrite<number, number>("ignore", [
         (_: any, __: string | symbol, ___: number) => "8809009",
-        (_: any, __: string | symbol, value: number, prevResult: string) => {
-            return value * 2 + Number(prevResult);
+        (_: any, __: string | symbol, value: number, prevResult) => {
+            return value * 2 + Number(prevResult.output);
         },
-        (_, __, ___, p: number) => {
+        (_, __, ___, p) => {
             return {
                 approached: true,
                 output: p,

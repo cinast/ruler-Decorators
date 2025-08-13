@@ -1,3 +1,8 @@
+("use strict");
+
+import { thisSymbols } from "./moduleMeta";
+import { $setter } from "./rulerDecorators";
+
 /**
  * @this
  * @extraModule
@@ -6,10 +11,6 @@
  * @namespace valueRecorder
  * @exported src\rulerDecorators.ts ~577
  */
-("use strict");
-
-import { thisSymbols } from "./moduleMeta";
-import { $setter } from "./rulerDecorators";
 export namespace valueRecorder {
     export const $recordThis = (maxSteps: number = 10) => {
         return $setter((thisArg, key: keyof typeof thisArg, value) => {

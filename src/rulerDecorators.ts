@@ -507,6 +507,9 @@ export const $conditionalWrite = <I = any, R = I>(
         const callResult = handlersArray.reduce<{ approached: boolean; output: any }>(
             (lastProcess, handler, idx, arr) => {
                 const r = handler(thisArg, key, newVal, lastProcess, idx, conditionHandles);
+                if (typeof r === "boolean") {
+                    return { approached: r, output: lastProcess.output };
+                }
                 if (r && typeof r === "object" && "approached" in r && "output" in r) {
                     return r;
                 }
