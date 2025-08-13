@@ -11,6 +11,8 @@
 ~~试了好多次甚至不如他自己推断好~~  
 有意大佬请 救————————
 
+_回到 JS 是一种什么样的感觉？_
+
 > ```ts
 > // 你说他会有用么
 > objStore[key] = result satisfies (typeof objStore)[typeof key];
