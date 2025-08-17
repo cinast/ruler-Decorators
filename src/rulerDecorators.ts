@@ -178,9 +178,9 @@ export function $removeGetterHandler(target: object, propertyKey: string | symbo
  * 装饰器工厂：创建自适应装饰器
  * @Required_at_use 目前没法隐式自动调用
  *
- * @param initialSetters - Initial setter handlers array
+ * @typeParam InitialSetters - Initial setter handlers array
  *                       初始 setter 句柄数组
- * @param initialGetters - Initial getter handlers array
+ * @typeParam InitialGetters - Initial getter handlers array
  *                       初始 getter 句柄数组
  * @returns Adaptive decorator function
  *         自适应装饰器函数
@@ -387,15 +387,10 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
  * @tip Wraps property setters with custom logic
  * @tip 用自定义逻辑包装属性setter
  *
- * @param handle - Setter handler function with signature:
- *                setter句柄函数签名:
- *                (thisArg, attr, value, lastResult, index, handlers) => newValue
+ * @typeParam R,I - `R, I of rd_SetterHandle<R,I>`
+ * @param handle - `rd_SetterHandle<R,I>(lastResult: I) => R`
  * @returns Property/Method/Auto-accessor decorator
  *          返回属性/方法/自动访问器装饰器
- *
- * @overload Property decorator
- * @overload Method decorator (for set accessors)
- * @overload Auto-accessor decorator
  *
  * @example
  * class MyClass {
@@ -422,15 +417,11 @@ export function $setter<R = any, I = R>(handle: rd_SetterHandle<R, I>): Property
  * @tip Wraps property getters with custom logic
  * @tip 用自定义逻辑包装属性getter
  *
- * @param handle - Getter handler function with signature:
- *                getter句柄函数签名:
- *                (thisArg, attr, lastResult, index, handlers) => newValue
+ * @typeParam R,I - `R, I of rd_SetterHandle<R,I>`
+ * @param handle - `rd_SetterHandle<R,I>(lastResult: I) => R`
  * @returns Property/Method/Auto-accessor decorator
  *          返回属性/方法/自动访问器装饰器
  *
- * @overload Property decorator
- * @overload Method decorator (for get accessors)
- * @overload Auto-accessor decorator
  *
  * @example
  * class MyClass {
@@ -477,9 +468,6 @@ import { debugLogger } from "./api.test";
  * @returns Property/Method/Auto-accessor decorator
  *          返回属性/方法/自动访问器装饰器
  *
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
  *
  * @example
  * class MyClass {
@@ -511,7 +499,7 @@ export const $conditionalWrite = <R = any, I = R>(
     conditionHandles: conditionHandler[],
     rejectHandlers?: rejectionHandler[]
 ) => {
-    return $setter<I, R>((thisArg, key, newVal, lastResult: I, index, handlers) => {
+    return $setter<R, I>((thisArg, key, newVal, lastResult: I, index, handlers) => {
         const handlersArray = [...conditionHandles];
         const callResult = handlersArray.reduce<{ approached: boolean; output: any }>(
             (lastProcess, handler, idx, arr) => {
@@ -607,9 +595,6 @@ export const $conditionalWrite = <R = any, I = R>(
  * @returns Property/Method/Auto-accessor decorator
  *          返回属性/方法/自动访问器装饰器
  *
- * @overload Property decorator
- * @overload Method decorator (get accessor)
- * @overload Auto-accessor decorator
  *
  * @example
  * class MyClass {
@@ -641,7 +626,7 @@ export const $conditionalRead = <R = any, I = R>(
     conditionHandles: conditionHandler[],
     rejectHandlers?: rejectionHandler[]
 ) => {
-    return $getter<I, R | undefined>((thisArg, key, value, lastResult: I, index, handlers) => {
+    return $getter<R | undefined, I>((thisArg, key, value, lastResult: I, index, handlers) => {
         const handlersArray = [...conditionHandles];
         const callResult = handlersArray.reduce<{ approached: boolean; output: any }>(
             (lastProcess, handler, idx, arr) => {

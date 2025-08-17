@@ -14,7 +14,7 @@ export type rd_SetterHandle<R = any, I = any> = (
     target: any,
     attr: string | symbol,
     value: any,
-    lastResult: any,
+    lastResult: I,
     index: number,
     handlers: rd_SetterHandle[],
     ...args: any[]
@@ -34,7 +34,7 @@ export type rd_GetterHandle<R = any, I = any> = (
     target: any,
     attr: string | symbol,
     value: any,
-    lastResult: any,
+    lastResult: I,
     index: number,
     handlers: rd_GetterHandle[],
     ...args: any[]
@@ -45,11 +45,14 @@ export type rd_GetterHandle<R = any, I = any> = (
  * Condition handler type for factoryII (conditional level)
  * 二阶工厂条件判断句柄类型
  *
- * @param R type of return, whenever pass or not,  ~~could be limited by `(return).approached` while `__Setting.veryStrict` enabled~~
+ * @typeParam R type of return, whenever pass or not,  ~~could be limited by `(return).approached` while `__Setting.veryStrict` enabled~~
  *          返回类型限制，不论通过与否，~~可以用`__Setting.veryStrict`根据`(return).approached`限制死返回类型~~
  *
- * @param I type of input, with default of `R`, is optional and could specific the input while that unknown or otherwise
+ * @typeParam I type of input, with default of `R`, is optional and could specific the input while that unknown or otherwise
  *          输入类型限制，默认是`R`，在不知道输入的时候有用
+ *
+ * @see rulerDecorators.ts > conditionalR > $getter() callback > callResult > satisfies
+ * @see rulerDecorators.ts > conditionalW > $setter() callback > callResult > satisfies
  *
  * @tip Used in $conditionalWrite/$conditionalRead decorators
  * @tip 用于条件写入/读取装饰器的条件判断
@@ -83,11 +86,14 @@ export type conditionHandler = <R = any, I = any>(
  * Rejection handler type for factoryII (conditional level)
  * 二阶工厂拒绝处理句柄类型
  *
- * @param R type of return, whenever pass or not,  ~~could be limited by `(return).approached` while `__Setting.veryStrict` enabled~~
+ * @typeParam R type of return, whenever pass or not,  ~~could be limited by `(return).approached` while `__Setting.veryStrict` enabled~~
  *          返回类型限制，不论通过与否，~~可以用`__Setting.veryStrict`根据`(return).approached`限制死返回类型~~
  *
- * @param I type of input, with default of `R`, is optional and could specific the input while that unknown or otherwise
+ * @typeParam I type of input, with default of `R`, is optional and could specific the input while that unknown or otherwise
  *          输入类型限制，默认是`R`，在不知道输入的时候有用
+ *
+ * @see rulerDecorators.ts > conditionalR > $getter() callback > rejectResult > satisfies
+ * @see rulerDecorators.ts > conditionalW > $setter() callback > rejectResult > satisfies
  *
  * @tip Used when conditions fail in $conditionalWrite/$conditionalRead
  * @tip 用于条件写入/读取装饰器中条件失败时的处理

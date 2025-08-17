@@ -5,9 +5,6 @@ import { $setter } from "./rulerDecorators";
 /**
  * Intercept when it gonna change, do sth or process input than cover the value
  * So is why it called `Watch`
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
  * @param T Input type, or let it infer by itself
  */
 export const watchSet = <T>(handle: (thisArg: any, attr: string | symbol, value: T) => T) => $setter<T>(handle);
