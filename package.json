@@ -39,14 +39,20 @@
     ],
     "scripts": {
         "build": "npx tsc -b",
+        "build:jsm": "esbuild src/rulerDecorators.ts --bundle --format=esm --outfile=dist/rulerDecorators.mjs",
         "build:watch": "npx tsc -w",
         "build:test": "npx tsc -p test/tsconfig.json",
         "run:test": "node test/dist/test/example.js",
         "prepublishOnly": "npx npm run build && npm test",
         "[pwsh]clear-dist": "Remove-Item -Path './dist/**', './test/dist/**' -Force",
-        "[pwsh]clear-trash-at-src": "Remove-Item -Path './src/*.js','./src/*.d.ts','./src/*.d.ts.map' -Force"
+        "[pwsh]clear-trash-at-src": "Remove-Item -Path './src/*.js','./src/*.d.ts','./src/*.d.ts.map' -Force",
+        "preinstall": "node node_script/pre-install-massage.js",
+        "install": "node node_script/install-massage.js",
+        "postinstall": "node node_script/post-install-massage.js"
     },
     "devDependencies": {
+        "esbuild": "^0.25.9",
+        "tsc": "^2.0.4",
         "typescript": "^5.2.0"
     },
     "peerDependencies": {
