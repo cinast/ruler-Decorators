@@ -54,7 +54,6 @@ console.log("______________");
 console.log(t.int);
 console.log(t.str);
 console.log(t.num);
-console.log(t.a);
 
 // // class TestClass {
 //     // Simplified approach: Use onlyTheClassCanWrite for write protection

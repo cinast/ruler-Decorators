@@ -400,9 +400,15 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
  *   num = 1; // Will be doubled on set
  * }
  */
-export function $setter<I, R = I>(handle: rd_SetterHandle<I, R>): PropertyDecorator & MethodDecorator {
+export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): PropertyDecorator;
+export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): MethodDecorator;
+export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T, ...arg: any[]) => T) {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
-        $addSetterHandler(target, attr, handle as rd_SetterHandle);
+        // if (!instanceStorage.has(target)) $$init()(target, attr, descriptor);
+
+        $addSetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
+            return handle(thisArg, key, value, lastResult, index, handlers);
+        });
     };
 }
 
@@ -431,11 +437,15 @@ export function $setter<I, R = I>(handle: rd_SetterHandle<I, R>): PropertyDecora
  *   num = 1; // Will add 100 when get
  * }
  */
-export function $getter<I, R = I>(
-    handle: rd_GetterHandle<I, typeof __Setting.veryStrict extends false ? R : I>
-): PropertyDecorator & MethodDecorator {
+export function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
+export function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
+export function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown) {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
-        $addGetterHandler(target, attr, handle as rd_GetterHandle);
+        // if (!instanceStorage.has(target)) $$init()(target, attr, descriptor);
+
+        $addGetterHandler(target, attr, function (thisArg, key, lastResult, index, handlers) {
+            return handle(thisArg, key, lastResult, index, handlers);
+        });
     };
 }
 
@@ -497,7 +507,7 @@ import { debugLogger } from "./api.test";
  *    - 未提供拒绝处理时返回原值
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export const $conditionalWrite = <I = any, R = I>(
+export const $conditionalWrite = <T = any>(
     errorType: "ignore" | "Warn" | "Error",
     conditionHandles: conditionHandler[],
     rejectHandlers?: rejectionHandler[]
@@ -627,7 +637,7 @@ export const $conditionalWrite = <I = any, R = I>(
  *    - 未提供拒绝处理时返回undefined
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export const $conditionalRead = <I = any, R = I>(
+export const $conditionalRead = <T = any>(
     errorType: "ignore" | "Warn" | "Error",
     conditionHandles: conditionHandler[],
     rejectHandlers?: rejectionHandler[]
