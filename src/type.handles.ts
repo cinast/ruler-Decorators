@@ -7,15 +7,14 @@
  * @core_concept WeakMap存储的句柄链中的可链式调用单元
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
- * @param
  */
 export type rd_SetterHandle<I = any, R = I> = (
     target: any,
     attr: string | symbol,
-    newValue: any,
-    thisInput: I,
+    value: any,
+    lastResult: I,
     index: number,
-    handlers: rd_SetterHandle<any, any>[],
+    handlers: rd_SetterHandle[],
     ...args: any[]
 ) => R;
 
@@ -32,17 +31,12 @@ export type rd_SetterHandle<I = any, R = I> = (
 export type rd_GetterHandle<I = any, R = I> = (
     target: any,
     attr: string | symbol,
-    theValue: any,
-    thisInput: I,
+    value: any,
+    lastResult: I,
     index: number,
     handlers: rd_GetterHandle[],
     ...args: any[]
-) => R | undefined;
-
-export interface handlerIIreduceMessage {
-    approached: boolean;
-    output: any;
-}
+) => R;
 
 /**
  * @handle_II
@@ -54,14 +48,14 @@ export interface handlerIIreduceMessage {
  * @Waring Returns true/approached without processing will override value
  * @Waring 如果返回true/approached但未处理值，将直接覆盖原值
  */
-export type conditionHandler = (
+export type conditionHandler<I = any, R = I> = (
     thisArg: any,
     key: string | symbol,
     value: any,
-    prevResult: { approached: boolean; output: any },
+    prevResult: I | { approached: boolean; output: any },
     currentIndex: number,
     handlers: conditionHandler[]
-) => boolean | handlerIIreduceMessage | any;
+) => { approached: boolean; output: any };
 
 /**
  * @handle_II
@@ -73,12 +67,36 @@ export type conditionHandler = (
  * @Waring Returns true/approached without processing will keep original value
  * @Waring 如果返回true/approached但未处理值，将保持原值
  */
-export type rejectionHandler = (
+export type rejectionHandler<I = any, R = I> = (
     thisArg: any,
     key: string | symbol,
     value: any,
-    conditionHandleLastR: { approached: boolean; output: any },
+    conditionHandleLasR: { approached: boolean; output: R },
     prevResult: { approached: boolean; output: any },
     currentIndex: number,
     handlers: rejectionHandler[]
-) => boolean | handlerIIreduceMessage | any;
+) => { approached: boolean; output: any };
+
+type PreciseTuple<T, U, V> = [first: T, ...middle: U[], last: V];
+
+export type conditionHandlerPipe<I, R> =
+    | PreciseTuple<conditionHandler<I, any>, conditionHandler<any, any>, conditionHandler<any>>
+    | [conditionHandler<I, any>, conditionHandler<any, reducePipeHandlerReturn<R>>]
+    | [conditionHandler<any, reducePipeHandlerReturn<R>>]
+    | [];
+
+export type rejectionHandlerPipe<I, R> =
+    | PreciseTuple<rejectionHandler<I, any>, rejectionHandler<any, any>, rejectionHandler<any, reducePipeHandlerReturn<R>>>
+    | [rejectionHandler<I, any>, rejectionHandler<any, reducePipeHandlerReturn<R>>]
+    | [rejectionHandler<any, reducePipeHandlerReturn<R>>]
+    | [];
+
+export type reducePipeHandlerReturn<R> =
+    | {
+          approached: true;
+          output: R;
+      }
+    | {
+          approached: false;
+          output: any;
+      };

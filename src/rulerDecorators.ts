@@ -645,7 +645,7 @@ export const $conditionalRead = <I = any, R = I>(
                 }
                 return { approached: true, output: r };
             },
-            { approached: true, output: lastResult as I }
+            { approached: true, output: lastResult }
         ) satisfies
             | {
                   approached: true;

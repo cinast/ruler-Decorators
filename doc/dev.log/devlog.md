@@ -277,3 +277,16 @@ gtr/str 负责驱动这一切
 -   移$debugger 至 api.test.ts
     再加几个配置开关
 -   预备开新坑 extra libs
+
+## 2025-08-12 ~ 13
+
+艹，reduce 到底是什么垃圾  
+类型 tmd 传不进去  
+改句柄类型、传 typeof parm 一层一层最后发现自己是小丑  
+梦回 JS  
+加 satisfies 改 unknown，规则库满江红  
+我真的很怀疑  
+`"use strict"` 和 `"strict": true` 干什么吃的  
+mmp 哪里都 ™ 是 any  
+我定义个 number 能被 string 覆盖了  
+艹，我柜子动了，nmlg\* ，我裂开
