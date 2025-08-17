@@ -45,7 +45,7 @@ export type conditionHandler = (thisArg: any, key: string | symbol, value: any, 
 }, currentIndex: number, handlers: conditionHandler[]) => {
     approached: boolean;
     output: any;
-} | boolean;
+} | boolean | any;
 /**
  * @handle_II
  * Rejection handler type for factoryII (conditional level)
@@ -71,5 +71,5 @@ export type rejectionHandler = (thisArg: any, key: string | symbol, value: any, 
 }, currentIndex: number, handlers: rejectionHandler[]) => {
     approached: boolean;
     output: any;
-} | boolean;
+} | boolean | any;
 //# sourceMappingURL=type.handles.d.ts.map

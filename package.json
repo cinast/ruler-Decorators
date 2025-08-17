@@ -34,6 +34,7 @@
     },
     "files": [
         "dist/",
+        "test/",
         "./doc/dev",
         "README.md",
         "LICENSE"
@@ -47,6 +48,7 @@
         "prepublishOnly": "npx npm run build && npm test",
         "[pwsh]clear-dist": "Remove-Item -Path './dist/**', './test/dist/**' -Force",
         "[pwsh]clear-trash-at-src": "Remove-Item -Path './src/*.js','./src/*.d.ts','./src/*.d.ts.map' -Force",
+        "test": "npm run build:test && npm run run:test",
         "preinstall": "node node_script/pre-install-massage.js",
         "install": "node node_script/install-massage.js",
         "postinstall": "node node_script/post-install-massage.js"

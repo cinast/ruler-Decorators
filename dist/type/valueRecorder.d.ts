@@ -3,6 +3,7 @@
  * @extraModule
  * @moreExtra see https://github.com/cinast/ruler-Decorators-extra-libraries or other pack at npm
  * @deprecated
+ * untested
  * @namespace valueRecorder
  * @exported src\rulerDecorators.ts ~577
  */
