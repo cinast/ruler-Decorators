@@ -71,7 +71,8 @@ export type conditionHandler = (
           approached: boolean;
           output: any;
       }
-    | boolean;
+    | boolean
+    | any;
 
 /**
  * @handle_II
@@ -105,6 +106,7 @@ export type rejectionHandler = (
           approached: boolean;
           output: any;
       }
-    | boolean;
+    | boolean
+    | any;
 
 type PreciseTuple<T, U, V> = [first: T, ...middle: U[], last: V];

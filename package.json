@@ -34,6 +34,7 @@
     },
     "files": [
         "dist/",
+        "./doc/dev",
         "README.md",
         "LICENSE"
     ],
