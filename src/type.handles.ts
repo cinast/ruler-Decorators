@@ -8,11 +8,11 @@
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
  */
-export type rd_SetterHandle = (
+export type rd_SetterHandle<R = any, I = any> = (
     target: any,
     attr: string | symbol,
     value: any,
-    lastResult: unknown,
+    lastResult: any,
     index: number,
     handlers: rd_SetterHandle[],
     ...args: any[]
@@ -28,10 +28,11 @@ export type rd_SetterHandle = (
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
  */
-export type rd_GetterHandle = (
+export type rd_GetterHandle<R = any, I = any> = (
     target: any,
     attr: string | symbol,
-    lastResult: unknown,
+    value: any,
+    lastResult: any,
     index: number,
     handlers: rd_GetterHandle[],
     ...args: any[]
@@ -47,7 +48,7 @@ export type rd_GetterHandle = (
  * @Waring Returns true/approached without processing will override value
  * @Waring 如果返回true/approached但未处理值，将直接覆盖原值
  */
-export type conditionHandler = (
+export type conditionHandler<R = any, I = any> = (
     thisArg: any,
     key: string | symbol,
     value: any,
@@ -59,7 +60,8 @@ export type conditionHandler = (
           approached: boolean;
           output: any;
       }
-    | boolean;
+    | boolean
+    | never;
 
 /**
  * @handle_II
@@ -71,7 +73,7 @@ export type conditionHandler = (
  * @Waring Returns true/approached without processing will keep original value
  * @Waring 如果返回true/approached但未处理值，将保持原值
  */
-export type rejectionHandler = (
+export type rejectionHandler<R = any, I = any> = (
     thisArg: any,
     key: string | symbol,
     value: any,
@@ -81,10 +83,10 @@ export type rejectionHandler = (
     handlers: rejectionHandler[]
 ) =>
     | {
-          approached: true;
-          output: R;
-      }
-    | {
-          approached: false;
+          approached: boolean;
           output: any;
-      };
+      }
+    | boolean
+    | never;
+
+type PreciseTuple<T, U, V> = [first: T, ...middle: U[], last: V];

@@ -58,7 +58,7 @@ interface InstanceStorageValue {
     [key: string | symbol]: any;
 }
 
-import { handlerIIreduceMessage, rd_GetterHandle, rd_SetterHandle } from "./type.handles";
+import { rd_GetterHandle, rd_SetterHandle } from "./type.handles";
 const instanceStorage = new WeakMap<object, InstanceStorageValue>();
 const wrapperCache = new WeakMap<object, Record<string | symbol, Function>>();
 
@@ -185,7 +185,7 @@ export function $removeGetterHandler(target: object, propertyKey: string | symbo
  * @returns Adaptive decorator function
  *         自适应装饰器函数
  */
-export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: rd_GetterHandle[] = []) => {
+export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], initialGetters: rd_GetterHandle[] = []) => {
     return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
         debugLogger(console.log, "$$init decorator applied to:", target?.name || target, propertyKey, descriptor);
 
@@ -290,7 +290,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
             enumerable: descriptor ? descriptor.enumerable : true,
 
             // 统一的 setter 处理
-            set(this: any, value: unknown) {
+            set(this: any, value: any) {
                 debugLogger(console.log, "Setter triggered for", key, "with value", value);
                 let objStore = instanceStorage.get(this);
                 if (!objStore) {
@@ -312,7 +312,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
                 );
 
                 // 存储处理结果 + “检查”
-                objStore[key] = result;
+                objStore[key] = result satisfies T;
                 // 你说他会有用么
 
                 debugLogger(console.log, "Final stored value:", result);
@@ -358,7 +358,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
 
                             // 应用 getter 链（对返回值处理）
                             return getters.reduce(
-                                (prev, handler, idx, arr) => handler(this, key, this, prev, idx, [...arr]),
+                                (prev, handler, idx, arr) => handler(this, key, this, prev, idx, [...arr]) satisfies R,
                                 result
                             );
                         };
@@ -367,7 +367,10 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
                 }
 
                 // 常规属性处理
-                return getters.reduce((prev, handler, idx, arr) => handler(this, key, this[key], prev, idx, [...arr]), baseValue);
+                return getters.reduce(
+                    (prev, handler, idx, arr) => handler(this, key, this[key], prev, idx, [...arr]),
+                    baseValue
+                ) satisfies R;
             },
         };
     };
@@ -400,9 +403,7 @@ export const $$init = (initialSetters: rd_SetterHandle[] = [], initialGetters: r
  *   num = 1; // Will be doubled on set
  * }
  */
-export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): PropertyDecorator;
-export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T) => T): MethodDecorator;
-export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: T, ...arg: any[]) => T) {
+export function $setter<R = any, I = R>(handle: rd_SetterHandle<R, I>): PropertyDecorator & MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
         // if (!instanceStorage.has(target)) $$init()(target, attr, descriptor);
 
@@ -437,14 +438,12 @@ export function $setter<T>(handle: (thisArg: any, attr: string | symbol, value: 
  *   num = 1; // Will add 100 when get
  * }
  */
-export function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown): PropertyDecorator;
-export function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown): MethodDecorator;
-export function $getter(handle: (thisArg: any, attr: string | symbol, ...arg: any[]) => unknown) {
+export function $getter<R = any, I = R>(handle: rd_GetterHandle<R, I>): PropertyDecorator & MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
         // if (!instanceStorage.has(target)) $$init()(target, attr, descriptor);
 
-        $addGetterHandler(target, attr, function (thisArg, key, lastResult, index, handlers) {
-            return handle(thisArg, key, lastResult, index, handlers);
+        $addGetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
+            return handle(thisArg, key, value, lastResult, index, handlers);
         });
     };
 }
@@ -507,7 +506,7 @@ import { debugLogger } from "./api.test";
  *    - 未提供拒绝处理时返回原值
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export const $conditionalWrite = <T = any>(
+export const $conditionalWrite = <R = any, I = R>(
     errorType: "ignore" | "Warn" | "Error",
     conditionHandles: conditionHandler[],
     rejectHandlers?: rejectionHandler[]
@@ -637,7 +636,7 @@ export const $conditionalWrite = <T = any>(
  *    - 未提供拒绝处理时返回undefined
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export const $conditionalRead = <T = any>(
+export const $conditionalRead = <R = any, I = R>(
     errorType: "ignore" | "Warn" | "Error",
     conditionHandles: conditionHandler[],
     rejectHandlers?: rejectionHandler[]
@@ -663,7 +662,7 @@ export const $conditionalRead = <T = any>(
               }
             | {
                   approached: false;
-                  output: typeof rejectHandlers extends [] | undefined ? never : unknown;
+                  output: typeof rejectHandlers extends [] | undefined ? never : any;
               };
 
         if (callResult.approached) return callResult.output;
@@ -696,7 +695,7 @@ export const $conditionalRead = <T = any>(
                           ? never
                           : typeof __Setting.veryStrict extends true /* allow warn? */
                           ? never
-                          : unknown;
+                          : any;
                   };
             if (rejectResult.approached) return rejectResult.output;
 
