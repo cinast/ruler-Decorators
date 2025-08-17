@@ -309,3 +309,28 @@ mmp 哪里都 ™ 是 any
 _调侃_  
 别人的 ts 到处是类型警告，可是我的 ts 好像 js  
 vsc 页面一关，错误没有
+
+废物 ts，静态语言就是静态语言，类型都不支持动态检查的  
+伪君子锁简直是
+
+```ts
+satisfies
+    | {
+          approached: true;
+          output: R;
+      }
+    | {
+          approached: false;
+          output: typeof rejectHandlers extends [] | undefined ? never : any;
+      };
+```
+
+您猜怎么着：`= any`
+
+```ts
+a: number = 0;
+// @ts-ignore
+t.a = "##@dgd";
+console.log(t.a);
+// “##@dgd”
+```

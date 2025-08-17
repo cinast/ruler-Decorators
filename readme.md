@@ -1,8 +1,9 @@
 # **❌WARNING 警告 ❌**
 
-**这个库不能运用于生产环境**  
-**使用本模组将会使你的类型检查失效**  
+**一旦使用这个库**  
+**你的类型检查将会失效**  
 **尤其在处理句柄中，你甚至可以欺骗 ts 返回一个与原来完全不同的类型**  
+**这意味着你将回到 JS**  
 **如果你要用这个库，建议手动加类型注释，尤其在最后一个 conditionH/rejectH 处，加一个类型检查关口**  
 因为这个库大部分是建立在 getter 和 setter 上的，一旦定义这两个东西，就必须另外加属性  
 然而这个库除了预定义 gtr/str 对，并不会额外定义新的属性（_你见过 Object.defineOwnProperty 能定义#字头私有属性么_）  
@@ -33,7 +34,7 @@ _回到 JS 是一种什么样的感觉？_
 
 ![wallpaper](https://cdn.jsdelivr.net/gh/cinast/cinast.imgsStore/com.gh.rulerDecorators/readme.img/wallpaper.png)
 
-# **装饰器神教 _ruler-DECORATORS_**（实验性阶段）
+# **装饰器神教 _ruler-DECORATORS_.~~ts~~ js**（实验性阶段）
 
 ## 📦 ~~安装~~
 

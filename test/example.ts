@@ -14,15 +14,14 @@ class test {
     @rulerDecorators.stringExcludes("250")
     str = "default";
     @$$init()
-    @$conditionalWrite<number, number>("ignore", [
-        (_: any, __: string | symbol, ___: number) => "8809009",
-        (_: any, __: string | symbol, value: number, prevResult) => {
-            return value * 2 + Number(prevResult.output);
+    @$conditionalWrite<number>("ignore", [
+        (_: any, __: string | symbol, ___: number) => {
+            return { approached: false, output: "ospos" + ___ };
         },
         (_, __, ___, p) => {
             return {
                 approached: true,
-                output: p,
+                output: p.output,
             };
         },
     ])
@@ -54,6 +53,10 @@ console.log("______________");
 console.log(t.int);
 console.log(t.str);
 console.log(t.num);
+console.log(t.a);
+// @ts-ignore
+t.a = "##@dgd";
+console.log(t.a);
 
 // // class TestClass {
 //     // Simplified approach: Use onlyTheClassCanWrite for write protection
