@@ -290,3 +290,18 @@ gtr/str 负责驱动这一切
 mmp 哪里都 ™ 是 any  
 我定义个 number 能被 string 覆盖了  
 艹，我柜子动了，nmlg\* ，我裂开
+
+## 2025-08-17
+
+重新 revert，但是问题变少了？  
+下定决心强制`HandlerII`必须以
+
+```ts
+ | {
+          approached: bool;
+          output: any | never;
+   }
+ | boolean
+```
+
+的格式返回

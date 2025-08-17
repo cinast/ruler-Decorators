@@ -384,8 +384,8 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
  *
  * @factory Core decorator factory for property setters
  * @factory 属性setter的核心装饰器工厂
- * @core_concept Wraps property setters with custom logic
- * @core_concept 用自定义逻辑包装属性setter
+ * @tip Wraps property setters with custom logic
+ * @tip 用自定义逻辑包装属性setter
  *
  * @param handle - Setter handler function with signature:
  *                setter句柄函数签名:
@@ -419,8 +419,8 @@ export function $setter<R = any, I = R>(handle: rd_SetterHandle<R, I>): Property
  *
  * @factory Core decorator factory for property getters
  * @factory 属性getter的核心装饰器工厂
- * @core_concept Wraps property getters with custom logic
- * @core_concept 用自定义逻辑包装属性getter
+ * @tip Wraps property getters with custom logic
+ * @tip 用自定义逻辑包装属性getter
  *
  * @param handle - Getter handler function with signature:
  *                getter句柄函数签名:
@@ -459,8 +459,8 @@ import { debugLogger } from "./api.test";
  *
  * @factory Core decorator for conditional property writes
  * @factory 属性条件写入的核心装饰器
- * @core_concept Implements conditional logic chain for property setters
- * @core_concept 为属性setter实现条件逻辑链
+ * @tip Implements conditional logic chain for property setters
+ * @tip 为属性setter实现条件逻辑链
  *
  * @template T - Property value type
  *               属性值类型
@@ -589,8 +589,8 @@ export const $conditionalWrite = <R = any, I = R>(
  *
  * @factory Core decorator for conditional property reads
  * @factory 属性条件读取的核心装饰器
- * @core_concept Implements conditional logic chain for property getters
- * @core_concept 为属性getter实现条件逻辑链
+ * @tip Implements conditional logic chain for property getters
+ * @tip 为属性getter实现条件逻辑链
  *
  * @template T - Property value type
  *               属性值类型

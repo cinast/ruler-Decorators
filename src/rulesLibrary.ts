@@ -10,8 +10,8 @@
  * @extendable Can be used as base for custom rules
  * @extendable 可作为自定义规则的基础
  *
- * @core_concept Built on factoryI/factoryII foundations
- * @core_concept 基于一阶/二阶工厂构建
+ * @tip Built on factoryI/factoryII foundations
+ * @tip 基于一阶/二阶工厂构建
  * @author cinast
  * @since 2022-11-29
  * @update 2025-8-9
