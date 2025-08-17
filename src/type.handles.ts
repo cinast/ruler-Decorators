@@ -45,10 +45,10 @@ export type rd_GetterHandle<R = any, I = any> = (
  * Condition handler type for factoryII (conditional level)
  * 二阶工厂条件判断句柄类型
  *
- * @typeParam R type of return, whenever pass or not,  ~~could be limited by `(return).approached` while `__Setting.veryStrict` enabled~~
- *          返回类型限制，不论通过与否，~~可以用`__Setting.veryStrict`根据`(return).approached`限制死返回类型~~
+ * @template R type of return, whenever pass or not
+ *          返回类型限制，不论通过与否
  *
- * @typeParam I type of input, with default of `R`, is optional and could specific the input while that unknown or otherwise
+ * @template I type of input, with default of `R`, is optional and could specific the input while that unknown or otherwise
  *          输入类型限制，默认是`R`，在不知道输入的时候有用
  *
  * @see rulerDecorators.ts > conditionalR > $getter() callback > callResult > satisfies
@@ -59,26 +59,18 @@ export type rd_GetterHandle<R = any, I = any> = (
  * @Waring Returns true/approached without processing will override value
  * @Waring 如果返回true/approached但未处理值，将直接覆盖原值
  */
-export type conditionHandler = <R = any, I = any>(
+export type conditionHandler = (
     thisArg: any,
     key: string | symbol,
     value: any,
-    prevResult: { approached: boolean; output: I },
+    prevResult: { approached: boolean; output: any },
     currentIndex: number,
     handlers: conditionHandler[]
 ) =>
     | {
-          approached: true;
-          output: R;
+          approached: boolean;
+          output: any;
       }
-    | {
-          approached: false;
-          output: any | never;
-      }
-    // | {
-    //       approached: false;
-    //       output: typeof __Setting.veryStrict extends true ? never : any;
-    //   }
     | boolean;
 
 /**
@@ -86,10 +78,10 @@ export type conditionHandler = <R = any, I = any>(
  * Rejection handler type for factoryII (conditional level)
  * 二阶工厂拒绝处理句柄类型
  *
- * @typeParam R type of return, whenever pass or not,  ~~could be limited by `(return).approached` while `__Setting.veryStrict` enabled~~
- *          返回类型限制，不论通过与否，~~可以用`__Setting.veryStrict`根据`(return).approached`限制死返回类型~~
+ * @template R type of return, whenever pass or not
+ *          返回类型限制，不论通过与否
  *
- * @typeParam I type of input, with default of `R`, is optional and could specific the input while that unknown or otherwise
+ * @template I type of input, with default of `R`, is optional and could specific the input while that unknown or otherwise
  *          输入类型限制，默认是`R`，在不知道输入的时候有用
  *
  * @see rulerDecorators.ts > conditionalR > $getter() callback > rejectResult > satisfies
@@ -100,27 +92,19 @@ export type conditionHandler = <R = any, I = any>(
  * @Waring Returns true/approached without processing will keep original value
  * @Waring 如果返回true/approached但未处理值，将保持原值
  */
-export type rejectionHandler = <R = any, I = any>(
+export type rejectionHandler = (
     thisArg: any,
     key: string | symbol,
     value: any,
     conditionHandleLastOutput: any,
-    prevResult: { approached: boolean; output: I },
+    prevResult: { approached: boolean; output: any },
     currentIndex: number,
     handlers: rejectionHandler[]
 ) =>
     | {
-          approached: true;
-          output: R;
+          approached: boolean;
+          output: any;
       }
-    | {
-          approached: false;
-          output: any | never;
-      }
-    // | {
-    //       approached: false;
-    //       output: typeof __Setting.veryStrict extends true ? never : any;
-    //   }
     | boolean;
 
 type PreciseTuple<T, U, V> = [first: T, ...middle: U[], last: V];

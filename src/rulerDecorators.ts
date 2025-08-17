@@ -178,9 +178,9 @@ export function $removeGetterHandler(target: object, propertyKey: string | symbo
  * 装饰器工厂：创建自适应装饰器
  * @Required_at_use 目前没法隐式自动调用
  *
- * @typeParam InitialSetters - Initial setter handlers array
+ * @template InitialSetters - Initial setter handlers array
  *                       初始 setter 句柄数组
- * @typeParam InitialGetters - Initial getter handlers array
+ * @template InitialGetters - Initial getter handlers array
  *                       初始 getter 句柄数组
  * @returns Adaptive decorator function
  *         自适应装饰器函数
@@ -387,7 +387,7 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
  * @tip Wraps property setters with custom logic
  * @tip 用自定义逻辑包装属性setter
  *
- * @typeParam R,I - `R, I of rd_SetterHandle<R,I>`
+ * @template R,I - `R, I of rd_SetterHandle<R,I>`
  * @param handle - `rd_SetterHandle<R,I>(lastResult: I) => R`
  * @returns Property/Method/Auto-accessor decorator
  *          返回属性/方法/自动访问器装饰器
@@ -417,7 +417,7 @@ export function $setter<R = any, I = R>(handle: rd_SetterHandle<R, I>): Property
  * @tip Wraps property getters with custom logic
  * @tip 用自定义逻辑包装属性getter
  *
- * @typeParam R,I - `R, I of rd_SetterHandle<R,I>`
+ * @template R,I - `R, I of rd_SetterHandle<R,I>`
  * @param handle - `rd_SetterHandle<R,I>(lastResult: I) => R`
  * @returns Property/Method/Auto-accessor decorator
  *          返回属性/方法/自动访问器装饰器
@@ -453,17 +453,14 @@ import { debugLogger } from "./api.test";
  * @tip Implements conditional logic chain for property setters
  * @tip 为属性setter实现条件逻辑链
  *
- * @template T - Property value type
- *               属性值类型
+ * @template R type of return
+ *          返回类型限制
  *
- * @param conditionHandles - Array of conditions to check:
- *                条件检查数组:
- *                - Boolean values
- *                - Functions with signature:
- *                  (thisArg, key, value, prevResult, currentIndex, handlers) => boolean|{approached,output}
- * @param [rejectHandlers] - Optional rejection handlers with signature:
- *                可选的拒绝处理函数:
- *                (thisArg, key, value, conditionResult, prevResult, currentIndex, handlers) => T|{approached,output}
+ * @template I type of input, with default of `R`
+ *          输入类型限制，默认是`R`
+ *
+ * @param conditionHandles - `(conditionHandles(prevResult: I)=> {approached: bool; output: R | any | never} | bool)[]`
+ * @param [rejectHandlers] - `(rejectionHandler(prevResult: I)=> {approached: bool; output: R | any | never} | bool)[]`
  *
  * @returns Property/Method/Auto-accessor decorator
  *          返回属性/方法/自动访问器装饰器
@@ -504,13 +501,7 @@ export const $conditionalWrite = <R = any, I = R>(
         const callResult = handlersArray.reduce<{ approached: boolean; output: any }>(
             (lastProcess, handler, idx, arr) => {
                 const r = handler(thisArg, key, newVal, lastProcess, idx, conditionHandles);
-                if (typeof r === "boolean") {
-                    return { approached: r, output: lastProcess.output };
-                }
-                if (r && typeof r === "object" && "approached" in r && "output" in r) {
-                    return r;
-                }
-                return { approached: true, output: r };
+                return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
             },
             { approached: false, output: lastResult }
         ) satisfies
@@ -530,13 +521,7 @@ export const $conditionalWrite = <R = any, I = R>(
             const rejectResult = rejectHandlersArray.reduce<{ approached: boolean; output: any }>(
                 (lastProcess, handler, idx, arr) => {
                     const r = handler(thisArg, key, newVal, callResult, lastProcess, idx, rejectHandlers);
-                    if (typeof r === "boolean") {
-                        return { approached: r, output: lastProcess.output };
-                    }
-                    if (r && typeof r === "object" && "approached" in r && "output" in r) {
-                        return r;
-                    }
-                    return { approached: true, output: r };
+                    return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
                 },
                 {
                     approached: true,
@@ -580,17 +565,14 @@ export const $conditionalWrite = <R = any, I = R>(
  * @tip Implements conditional logic chain for property getters
  * @tip 为属性getter实现条件逻辑链
  *
- * @template T - Property value type
- *               属性值类型
+ * @template R type of return
+ *          返回类型限制
  *
- * @param conditionHandles - Array of conditions to check:
- *                条件检查数组:
- *                - Boolean values
- *                - Functions with signature:
- *                  (thisArg, key, value, prevResult, currentIndex, handlers) => boolean|{approached,output}
- * @param [rejectHandlers] - Optional rejection handlers with signature:
- *                可选的拒绝处理函数:
- *                (thisArg, key, value, conditionResult, prevResult, currentIndex, handlers) => T|{approached,output}
+ * @template I type of input, with default of `R`
+ *          输入类型限制，默认是`R`
+ *
+ * @param conditionHandles - `(conditionHandles(prevResult: I)=> {approached: bool; output: R | any | never} | bool)[]`
+ * @param [rejectHandlers] - `(rejectionHandler(prevResult: I)=> {approached: bool; output: R | any | never} | bool)[]`
  *
  * @returns Property/Method/Auto-accessor decorator
  *          返回属性/方法/自动访问器装饰器
@@ -626,20 +608,14 @@ export const $conditionalRead = <R = any, I = R>(
     conditionHandles: conditionHandler[],
     rejectHandlers?: rejectionHandler[]
 ) => {
-    return $getter<R | undefined, I>((thisArg, key, value, lastResult: I, index, handlers) => {
+    return $getter((thisArg, key, value, lastResult: I, index, handlers) => {
         const handlersArray = [...conditionHandles];
         const callResult = handlersArray.reduce<{ approached: boolean; output: any }>(
             (lastProcess, handler, idx, arr) => {
                 const r = handler(thisArg, key, value, lastProcess, idx, conditionHandles);
-                if (typeof r === "boolean") {
-                    return { approached: r, output: lastProcess.output };
-                }
-                if (r && typeof r === "object" && "approached" in r && "output" in r) {
-                    return r;
-                }
-                return { approached: true, output: r };
+                return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
             },
-            { approached: true, output: lastResult }
+            { approached: false, output: lastResult }
         ) satisfies
             | {
                   approached: true;
@@ -657,17 +633,11 @@ export const $conditionalRead = <R = any, I = R>(
             const rejectResult = rejectHandlersArray.reduce<{ approached: boolean; output: any }>(
                 (lastProcess, handler, idx, arr) => {
                     const r = handler(thisArg, key, value, callResult, lastProcess, idx, rejectHandlers);
-                    if (typeof r === "boolean") {
-                        return { approached: r, output: lastProcess.output };
-                    }
-                    if (r && typeof r === "object" && "approached" in r && "output" in r) {
-                        return r;
-                    }
-                    return { approached: true, output: r };
+                    return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
                 },
                 {
                     approached: true,
-                    output: value,
+                    output: lastResult,
                 }
             ) satisfies
                 | {
