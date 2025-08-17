@@ -1,4 +1,3 @@
-import { __Setting } from "./moduleMeta";
 import { rd_GetterHandle, rd_SetterHandle } from "./type.handles";
 /**
  * Add setter handler to specified property
@@ -53,32 +52,27 @@ export declare function $removeGetterHandler(target: object, propertyKey: string
  * 装饰器工厂：创建自适应装饰器
  * @Required_at_use 目前没法隐式自动调用
  *
- * @param initialSetters - Initial setter handlers array
+ * @template InitialSetters - Initial setter handlers array
  *                       初始 setter 句柄数组
- * @param initialGetters - Initial getter handlers array
+ * @template InitialGetters - Initial getter handlers array
  *                       初始 getter 句柄数组
  * @returns Adaptive decorator function
  *         自适应装饰器函数
  */
-export declare const $$init: <T>(initialSetters?: rd_SetterHandle[], initialGetters?: rd_GetterHandle[]) => (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => any;
+export declare const $$init: <T = any, R = T>(initialSetters?: rd_SetterHandle[], initialGetters?: rd_GetterHandle[]) => (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => any;
 /**
  * Setter handler decorator factory
  * Setter句柄装饰器工厂
  *
  * @factory Core decorator factory for property setters
  * @factory 属性setter的核心装饰器工厂
- * @core_concept Wraps property setters with custom logic
- * @core_concept 用自定义逻辑包装属性setter
+ * @tip Wraps property setters with custom logic
+ * @tip 用自定义逻辑包装属性setter
  *
- * @param handle - Setter handler function with signature:
- *                setter句柄函数签名:
- *                (thisArg, attr, value, lastResult, index, handlers) => newValue
+ * @template R,I - `R, I of rd_SetterHandle<R,I>`
+ * @param handle - `rd_SetterHandle<R,I>(lastResult: I) => R`
  * @returns Property/Method/Auto-accessor decorator
  *          返回属性/方法/自动访问器装饰器
- *
- * @overload Property decorator
- * @overload Method decorator (for set accessors)
- * @overload Auto-accessor decorator
  *
  * @example
  * class MyClass {
@@ -86,25 +80,21 @@ export declare const $$init: <T>(initialSetters?: rd_SetterHandle[], initialGett
  *   num = 1; // Will be doubled on set
  * }
  */
-export declare function $setter<I, R = I>(handle: rd_SetterHandle<I, R>): PropertyDecorator & MethodDecorator;
+export declare function $setter<R = any, I = R>(handle: rd_SetterHandle<R, I>): PropertyDecorator & MethodDecorator;
 /**
  * Getter handler decorator factory
  * Getter句柄装饰器工厂
  *
  * @factory Core decorator factory for property getters
  * @factory 属性getter的核心装饰器工厂
- * @core_concept Wraps property getters with custom logic
- * @core_concept 用自定义逻辑包装属性getter
+ * @tip Wraps property getters with custom logic
+ * @tip 用自定义逻辑包装属性getter
  *
- * @param handle - Getter handler function with signature:
- *                getter句柄函数签名:
- *                (thisArg, attr, lastResult, index, handlers) => newValue
+ * @template R,I - `R, I of rd_SetterHandle<R,I>`
+ * @param handle - `rd_SetterHandle<R,I>(lastResult: I) => R`
  * @returns Property/Method/Auto-accessor decorator
  *          返回属性/方法/自动访问器装饰器
  *
- * @overload Property decorator
- * @overload Method decorator (for get accessors)
- * @overload Auto-accessor decorator
  *
  * @example
  * class MyClass {
@@ -112,7 +102,7 @@ export declare function $setter<I, R = I>(handle: rd_SetterHandle<I, R>): Proper
  *   num = 1; // Will add 100 when get
  * }
  */
-export declare function $getter<I, R = I>(handle: rd_GetterHandle<I, typeof __Setting.veryStrict extends false ? R : I>): PropertyDecorator & MethodDecorator;
+export declare function $getter<R = any, I = R>(handle: rd_GetterHandle<R, I>): PropertyDecorator & MethodDecorator;
 import { conditionHandler, rejectionHandler } from "./type.handles";
 /**
  * Conditional write decorator factory
@@ -120,27 +110,21 @@ import { conditionHandler, rejectionHandler } from "./type.handles";
  *
  * @factory Core decorator for conditional property writes
  * @factory 属性条件写入的核心装饰器
- * @core_concept Implements conditional logic chain for property setters
- * @core_concept 为属性setter实现条件逻辑链
+ * @tip Implements conditional logic chain for property setters
+ * @tip 为属性setter实现条件逻辑链
  *
- * @template T - Property value type
- *               属性值类型
+ * @template R type of return
+ *          返回类型限制
  *
- * @param conditionHandles - Array of conditions to check:
- *                条件检查数组:
- *                - Boolean values
- *                - Functions with signature:
- *                  (thisArg, key, value, prevResult, currentIndex, handlers) => boolean|{approached,output}
- * @param [rejectHandlers] - Optional rejection handlers with signature:
- *                可选的拒绝处理函数:
- *                (thisArg, key, value, conditionResult, prevResult, currentIndex, handlers) => T|{approached,output}
+ * @template I type of input, with default of `R`
+ *          输入类型限制，默认是`R`
+ *
+ * @param conditionHandles - `(conditionHandles(prevResult: I)=> {approached: bool; output: R | any | never} | bool)[]`
+ * @param [rejectHandlers] - `(rejectionHandler(prevResult: I)=> {approached: bool; output: R | any | never} | bool)[]`
  *
  * @returns Property/Method/Auto-accessor decorator
  *          返回属性/方法/自动访问器装饰器
  *
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
  *
  * @example
  * class MyClass {
@@ -167,34 +151,28 @@ import { conditionHandler, rejectionHandler } from "./type.handles";
  *    - 未提供拒绝处理时返回原值
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export declare const $conditionalWrite: <I = any, R = I>(errorType: "ignore" | "Warn" | "Error", conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
+export declare const $conditionalWrite: <R = any, I = R>(errorType: "ignore" | "Warn" | "Error", conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
 /**
  * Conditional read decorator factory
  * 条件读取装饰器工厂
  *
  * @factory Core decorator for conditional property reads
  * @factory 属性条件读取的核心装饰器
- * @core_concept Implements conditional logic chain for property getters
- * @core_concept 为属性getter实现条件逻辑链
+ * @tip Implements conditional logic chain for property getters
+ * @tip 为属性getter实现条件逻辑链
  *
- * @template T - Property value type
- *               属性值类型
+ * @template R type of return
+ *          返回类型限制
  *
- * @param conditionHandles - Array of conditions to check:
- *                条件检查数组:
- *                - Boolean values
- *                - Functions with signature:
- *                  (thisArg, key, value, prevResult, currentIndex, handlers) => boolean|{approached,output}
- * @param [rejectHandlers] - Optional rejection handlers with signature:
- *                可选的拒绝处理函数:
- *                (thisArg, key, value, conditionResult, prevResult, currentIndex, handlers) => T|{approached,output}
+ * @template I type of input, with default of `R`
+ *          输入类型限制，默认是`R`
+ *
+ * @param conditionHandles - `(conditionHandles(prevResult: I)=> {approached: bool; output: R | any | never} | bool)[]`
+ * @param [rejectHandlers] - `(rejectionHandler(prevResult: I)=> {approached: bool; output: R | any | never} | bool)[]`
  *
  * @returns Property/Method/Auto-accessor decorator
  *          返回属性/方法/自动访问器装饰器
  *
- * @overload Property decorator
- * @overload Method decorator (get accessor)
- * @overload Auto-accessor decorator
  *
  * @example
  * class MyClass {
@@ -221,7 +199,7 @@ export declare const $conditionalWrite: <I = any, R = I>(errorType: "ignore" | "
  *    - 未提供拒绝处理时返回undefined
  *    - 根据__Setting配置发出警告/抛出错误
  */
-export declare const $conditionalRead: <I = any, R = I>(errorType: "ignore" | "Warn" | "Error", conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
+export declare const $conditionalRead: <R = any, I = R>(errorType: "ignore" | "Warn" | "Error", conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
 /**
  * rulers & libSetting
  */

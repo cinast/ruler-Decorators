@@ -51,11 +51,9 @@
         "postinstall": "node node_script/post-install-massage.js"
     },
     "devDependencies": {
-        "esbuild": "^0.25.9",
-        "tsc": "^2.0.4",
-        "typescript": "^5.2.0"
+        "esbuild": "^0.25.9"
     },
-    "peerDependencies": {
-        "typescript": ">=4.3.0"
+    "dependencies": {
+        "typescript": "^5.9.2"
     }
 }

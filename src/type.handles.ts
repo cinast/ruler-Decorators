@@ -18,7 +18,7 @@ export type rd_SetterHandle<R = any, I = any> = (
     index: number,
     handlers: rd_SetterHandle[],
     ...args: any[]
-) => any;
+) => R;
 
 /**
  * @handle_I

@@ -3,57 +3,73 @@
  * Core setter handler type for factoryI (base level)
  * 一阶工厂基础setter句柄类型
  *
- * @core_concept Chainable unit in WeakMap-stored handler chain
- * @core_concept WeakMap存储的句柄链中的可链式调用单元
+ * @tip Chainable unit in WeakMap-stored handler chain
+ * @tip WeakMap存储的句柄链中的可链式调用单元
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
- * @param
  */
-export type rd_SetterHandle<I = any, R = I> = (target: any, attr: string | symbol, value: any, lastResult: I, index: number, handlers: rd_SetterHandle<any, any>[], ...args: any[]) => R;
-export interface handlerIIreduceMessage {
-    approached: boolean;
-    output: any;
-}
+export type rd_SetterHandle<R = any, I = any> = (target: any, attr: string | symbol, value: any, lastResult: I, index: number, handlers: rd_SetterHandle[], ...args: any[]) => R;
 /**
  * @handle_I
  * Core getter handler type for factoryI (base level)
  * 一阶工厂基础getter句柄类型
  *
- * @core_concept Chainable unit in WeakMap-stored handler chain
- * @core_concept WeakMap存储的句柄链中的可链式调用单元
+ * @tip Chainable unit in WeakMap-stored handler chain
+ * @tip WeakMap存储的句柄链中的可链式调用单元
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
  */
-export type rd_GetterHandle<I = any, R = I> = (target: any, attr: string | symbol, value: any, lastResult: I, index: number, handlers: rd_GetterHandle[], ...args: any[]) => R | undefined;
+export type rd_GetterHandle<R = any, I = any> = (target: any, attr: string | symbol, value: any, lastResult: I, index: number, handlers: rd_GetterHandle[], ...args: any[]) => R;
 /**
  * @handle_II
  * Condition handler type for factoryII (conditional level)
  * 二阶工厂条件判断句柄类型
  *
- * @core_concept Used in $conditionalWrite/$conditionalRead decorators
- * @core_concept 用于条件写入/读取装饰器的条件判断
+ * @template R type of return, whenever pass or not
+ *          返回类型限制，不论通过与否
+ *
+ * @template I type of input, with default of `R`, is optional and could specific the input while that unknown or otherwise
+ *          输入类型限制，默认是`R`，在不知道输入的时候有用
+ *
+ * @see rulerDecorators.ts > conditionalR > $getter() callback > callResult > satisfies
+ * @see rulerDecorators.ts > conditionalW > $setter() callback > callResult > satisfies
+ *
+ * @tip Used in $conditionalWrite/$conditionalRead decorators
+ * @tip 用于条件写入/读取装饰器的条件判断
  * @Waring Returns true/approached without processing will override value
  * @Waring 如果返回true/approached但未处理值，将直接覆盖原值
  */
-export type conditionHandler = (thisArg: any, key: string | symbol, value: any, prevResult: any | {
+export type conditionHandler = (thisArg: any, key: string | symbol, value: any, prevResult: {
     approached: boolean;
     output: any;
-}, currentIndex: number, handlers: conditionHandler[]) => any;
+}, currentIndex: number, handlers: conditionHandler[]) => {
+    approached: boolean;
+    output: any;
+} | boolean;
 /**
  * @handle_II
  * Rejection handler type for factoryII (conditional level)
  * 二阶工厂拒绝处理句柄类型
  *
- * @core_concept Used when conditions fail in $conditionalWrite/$conditionalRead
- * @core_concept 用于条件写入/读取装饰器中条件失败时的处理
+ * @template R type of return, whenever pass or not
+ *          返回类型限制，不论通过与否
+ *
+ * @template I type of input, with default of `R`, is optional and could specific the input while that unknown or otherwise
+ *          输入类型限制，默认是`R`，在不知道输入的时候有用
+ *
+ * @see rulerDecorators.ts > conditionalR > $getter() callback > rejectResult > satisfies
+ * @see rulerDecorators.ts > conditionalW > $setter() callback > rejectResult > satisfies
+ *
+ * @tip Used when conditions fail in $conditionalWrite/$conditionalRead
+ * @tip 用于条件写入/读取装饰器中条件失败时的处理
  * @Waring Returns true/approached without processing will keep original value
  * @Waring 如果返回true/approached但未处理值，将保持原值
  */
-export type rejectionHandler = (thisArg: any, key: string | symbol, value: any, conditionHandleLasR: {
+export type rejectionHandler = (thisArg: any, key: string | symbol, value: any, conditionHandleLastOutput: any, prevResult: {
     approached: boolean;
     output: any;
-}, prevResult: {
+}, currentIndex: number, handlers: rejectionHandler[]) => {
     approached: boolean;
     output: any;
-}, currentIndex: number, handlers: rejectionHandler[]) => any;
+} | boolean;
 //# sourceMappingURL=type.handles.d.ts.map

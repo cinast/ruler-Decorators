@@ -14,9 +14,6 @@ export { __Setting };
  *                - none: Wait for warning or error thrown
  * @warning Returns undefined if validation fails and no onError provided
  * @warning 如果验证失败且未提供onError处理，则返回undefined
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
  */
 export declare const Int: (onError?: ((v: number | bigint, o?: unknown) => number) | "ceil" | "floor" | "round" | number) => PropertyDecorator & MethodDecorator;
 /**
@@ -29,9 +26,6 @@ export declare const Int: (onError?: ((v: number | bigint, o?: unknown) => numbe
  *                待验证的输入值
  * @returns true if value is positive, false otherwise
  *          如果值为正数返回true，否则返回false
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
  */
 export declare const alwaysPositive: PropertyDecorator & MethodDecorator;
 /**
@@ -44,9 +38,6 @@ export declare const alwaysPositive: PropertyDecorator & MethodDecorator;
  *                待验证的输入值
  * @returns true if value is negative, false otherwise
  *          如果值为负数返回true，否则返回false
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
  */
 export declare const alwaysNegative: PropertyDecorator & MethodDecorator;
 /**
@@ -61,9 +52,6 @@ export declare const alwaysNegative: PropertyDecorator & MethodDecorator;
  *                    是否允许等于最小值(默认: true)
  * @returns New value if below minimum, original value otherwise
  *          低于最小值时返回新值，否则保持原值
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
  */
 export declare const minimum: (min: bigint | number, allowEqual?: boolean) => PropertyDecorator & MethodDecorator;
 /**
@@ -78,9 +66,6 @@ export declare const minimum: (min: bigint | number, allowEqual?: boolean) => Pr
  *                    是否允许等于最大值(默认: true)
  * @returns New value if above maximum, original value otherwise
  *          超过最大值时返回新值，否则保持原值
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
  */
 export declare const maximum: (max: bigint | number, allowEqual?: boolean) => PropertyDecorator & MethodDecorator;
 /**
@@ -88,9 +73,6 @@ export declare const maximum: (max: bigint | number, allowEqual?: boolean) => Pr
  * 拒绝包含指定模式的字符串
  * @param patten - Patterns to exclude (string or RegExp)
  *                 要排除的模式(字符串或正则表达式)
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
  */
 export declare const stringExcludes: (...patten: (RegExp | string)[]) => PropertyDecorator & MethodDecorator;
 /**
@@ -98,20 +80,8 @@ export declare const stringExcludes: (...patten: (RegExp | string)[]) => Propert
  * 要求字符串包含指定模式
  * @param patten - Required patterns (string or RegExp)
  *                 要求的模式(字符串或正则表达式)
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
  */
 export declare const stringRequires: (...patten: (RegExp | string)[]) => PropertyDecorator & MethodDecorator;
-export declare const trimBlank: PropertyDecorator & MethodDecorator;
-/**
- * 根据长度规则验证并调整字符串
- * @param length 目标长度
- * @param tail 可选操作符和文本：
- *   - `+文本`：如果不足长度则追加
- *   - `-文本`：如果超出长度则替换末尾
- */
-export declare const validateLength: (length: number | bigint, tail?: `+${string}` | `-${string}`) => PropertyDecorator & MethodDecorator;
 /**
  *
  */
@@ -134,9 +104,6 @@ export declare const validateLength: (length: number | bigint, tail?: `+${string
  *                   用于权限检查的类构造函数
  * @returns Original value if access allowed, undefined otherwise
  *          允许访问时返回原值，否则返回undefined
- * @overload Property decorator
- * @overload Method decorator (get accessor)
- * @overload Auto-accessor decorator
  */
 export declare const onlyTheClassCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator & MethodDecorator;
 /**
@@ -150,9 +117,6 @@ export declare const onlyTheClassCanRead: (thisClass: new (...args: any[]) => an
  *                   用于权限检查的类构造函数
  * @returns New value if access allowed, keeps old value otherwise
  *          允许访问时接受新值，否则保持原值
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
  */
 export declare const onlyTheClassCanWrite: (thisClass: new (...args: any[]) => any) => PropertyDecorator & MethodDecorator;
 /**
@@ -166,9 +130,6 @@ export declare const onlyTheClassCanWrite: (thisClass: new (...args: any[]) => a
  *                   用于权限检查的基类构造函数
  * @returns New value if access allowed, keeps old value otherwise
  *          允许访问时接受新值，否则保持原值
- * @overload Property decorator
- * @overload Method decorator (set accessor)
- * @overload Auto-accessor decorator
  */
 export declare const onlyTheClassAndSubCanWrite: (thisClass: new (...args: any[]) => any) => PropertyDecorator & MethodDecorator;
 /**
@@ -182,9 +143,6 @@ export declare const onlyTheClassAndSubCanWrite: (thisClass: new (...args: any[]
  *                   用于权限检查的基类构造函数
  * @returns Original value if access allowed, undefined otherwise
  *          允许访问时返回原值，否则返回undefined
- * @overload Property decorator
- * @overload Method decorator (get accessor)
- * @overload Auto-accessor decorator
  */
 export declare const onlyTheClassAndSubCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator & MethodDecorator;
 /**
@@ -193,5 +151,4 @@ export declare const onlyTheClassAndSubCanRead: (thisClass: new (...args: any[])
  * @returns
  */
 export declare const triggeredOnSomeDay: (date: Date | number) => PropertyDecorator & MethodDecorator;
-export declare const A: PropertyDecorator & MethodDecorator;
 //# sourceMappingURL=rulesLibrary.d.ts.map
