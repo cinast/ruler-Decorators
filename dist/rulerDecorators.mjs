@@ -82,8 +82,7 @@ __export(rulesLibrary_exports, {
   onlyTheClassCanRead: () => onlyTheClassCanRead,
   onlyTheClassCanWrite: () => onlyTheClassCanWrite,
   stringExcludes: () => stringExcludes,
-  stringRequires: () => stringRequires,
-  triggeredOnSomeDay: () => triggeredOnSomeDay
+  stringRequires: () => stringRequires
 });
 var Int = (onError) => $conditionalWrite(
   "Error",
@@ -115,29 +114,26 @@ var minimum = (min, allowEqual = true) => $conditionalWrite(
     }
   ]
 );
-var maximum = (max, allowEqual = true) => $conditionalWrite("ignore", [
-  (_, __, v) => allowEqual ? typeof v == "number" ? Math.max(v, Number(max)) == max : v <= max : typeof v == "number" ? Math.max(v, Number(max)) == max && v !== Number(max) : v < max
-]);
-var stringExcludes = (...patten) => $conditionalWrite(
+var maximum = (max, allowEqual = true) => $conditionalWrite(
+  "ignore",
+  [
+    (_, __, v) => allowEqual ? typeof v == "number" ? Math.max(v, Number(max)) == max : v <= max : typeof v == "number" ? Math.max(v, Number(max)) == max && v !== Number(max) : v < max
+  ],
+  [
+    () => {
+      return {
+        approached: true,
+        output: max
+      };
+    }
+  ]
+);
+var stringExcludes = (patten, replace) => $conditionalWrite(
   "Warn",
   [
     (_, __, value) => typeof value == "string" && !patten.some((pat) => typeof pat === "string" ? value.includes(pat) : pat.test(value))
   ],
-  [
-    (_, __, value) => false,
-    (_, __, value, c, p) => {
-      console.log(2902929, p);
-      return false;
-    },
-    (_, __, value, c, p) => {
-      console.log(2902929, p);
-      return false;
-    },
-    (_, __, value, c, p) => {
-      console.log(2902929, p);
-      return false;
-    }
-  ]
+  [(_, __, v) => replace ? !patten.some((pat) => v.replace(pat, replace)) : false]
 );
 var stringRequires = (...patten) => $conditionalWrite("Warn", [
   (_, __, value) => typeof value == "string" && patten.every((pat) => typeof pat == "string" ? value.includes(pat) : pat.test(value))
@@ -150,26 +146,31 @@ var onlyTheClassCanWrite = (thisClass) => $conditionalWrite("Error", [
 ]);
 var onlyTheClassAndSubCanWrite = (thisClass) => $conditionalWrite("Error", [(thisArg) => thisArg instanceof thisClass]);
 var onlyTheClassAndSubCanRead = (thisClass) => $conditionalRead("Error", [(thisArg) => thisArg instanceof thisClass]);
-var triggeredOnSomeDay = (date) => $conditionalRead("Error", [() => Date.now() == (typeof date == "number" ? date : date.getMilliseconds())]);
 
-// src/valueRecorder.ts
+// src/extraLibraries/valueRecorder.ts
+var recordStorage = /* @__PURE__ */ new WeakMap();
 var valueRecorder;
 ((valueRecorder2) => {
   valueRecorder2.$recordThis = (maxSteps = 10) => {
     return $setter((thisArg, key, value) => {
-      if (!thisArg[thisSymbols]) {
-        thisArg[thisSymbols] = {};
+      if (!recordStorage.get(thisArg)) {
+        recordStorage.set(thisArg, {});
       }
-      const storage = thisArg[thisSymbols];
-      const recordKey = `${String(key)}_history`;
-      if (!storage[recordKey]) {
-        storage[recordKey] = {
+      const storage = recordStorage.get(thisArg);
+      if (!storage[key]) {
+        storage[key] = {
           recordList: [],
-          redoStack: []
+          redoStack: [],
+          trigger: false
         };
       }
-      const history = storage[recordKey];
+      if (storage[key].trigger) {
+        storage[key].trigger = false;
+        return value;
+      }
       const currentValue = thisArg[key];
+      const history = storage[key];
+      console.log(String(key) + " history", history);
       history.recordList.push(currentValue);
       if (history.recordList.length > maxSteps) {
         history.recordList.shift();
@@ -179,28 +180,28 @@ var valueRecorder;
     });
   };
   function undo(target, key) {
-    const symbol = thisSymbols;
-    const storage = target[symbol];
+    const storage = recordStorage.get(target);
     if (!storage) return false;
-    const recordKey = `${String(key)}_history`;
-    const history = storage[recordKey];
+    const history = storage[key];
     if (!history || history.recordList.length === 0) return false;
     const currentValue = target[key];
     const lastValue = history.recordList.pop();
     history.redoStack.push(currentValue);
+    storage[key].trigger = true;
+    debugLogger(console.log, "[undo] " + String(key) + " history", history);
     target[key] = lastValue;
     return true;
   }
   valueRecorder2.undo = undo;
   function redo(target, key) {
-    const symbol = thisSymbols;
-    const storage = target[symbol];
+    const storage = recordStorage.get(target);
     if (!storage) return false;
-    const recordKey = `${String(key)}_history`;
-    const history = storage[recordKey];
+    const history = storage[key];
     if (!history || history.redoStack.length === 0) return false;
     const nextValue = history.redoStack.pop();
     history.recordList.push(target[key]);
+    storage[key].trigger = true;
+    debugLogger(console.log, "[redo] " + String(key) + " history", history);
     target[key] = nextValue;
     return true;
   }

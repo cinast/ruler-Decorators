@@ -42,7 +42,7 @@
     ],
     "scripts": {
         "build": "npx tsc -b",
-        "build:jsm": "esbuild src/rulerDecorators.ts --bundle --format=esm --outfile=dist/rulerDecorators.mjs",
+        "build:mjs": "esbuild src/rulerDecorators.ts --bundle --format=esm --outfile=dist/rulerDecorators.mjs",
         "build:watch": "npx tsc -w",
         "build:test": "npx tsc -p test/tsconfig.json",
         "run:test": "node test/dist/test/example.js",
