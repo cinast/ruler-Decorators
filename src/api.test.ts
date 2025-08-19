@@ -19,7 +19,7 @@ import { getDecoratorType } from "./utils";
 
 /**
  * @switch `__Setting["debugLogger.logInnerDetails"]`
- * @inheritdoc
+ *
  * 我自己内部调试用
  * 如果你对内部机理好奇，开`debugLogger.logInnerDetails`
  */

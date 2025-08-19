@@ -1,38 +1,51 @@
 ("use strict");
 
-import { thisSymbols } from "./moduleMeta";
+import { debugLogger } from "./api.test";
 import { $setter } from "./rulerDecorators";
+
+const recordStorage = new WeakMap<
+    object,
+    Record<
+        string | symbol,
+        {
+            recordList: any[];
+            redoStack: any[];
+            trigger: boolean;
+        }
+    >
+>();
 
 /**
  * @this
  * @extraModule
  * @moreExtra see https://github.com/cinast/ruler-Decorators-extra-libraries or other pack at npm
- * @deprecated
- * untested
  * @namespace valueRecorder
  * @exported src\rulerDecorators.ts ~577
  */
 export namespace valueRecorder {
     export const $recordThis = (maxSteps: number = 10) => {
         return $setter((thisArg, key: keyof typeof thisArg, value) => {
-            // 初始化历史记录存储
-            if (!thisArg[thisSymbols]) {
-                thisArg[thisSymbols] = {};
+            if (!recordStorage.get(thisArg)) {
+                recordStorage.set(thisArg, {});
             }
-
-            const storage = thisArg[thisSymbols];
-            const recordKey = `${String(key)}_history`;
+            const storage = recordStorage.get(thisArg)!;
 
             // 初始化历史记录列表
-            if (!storage[recordKey]) {
-                storage[recordKey] = {
+            if (!storage[key]) {
+                storage[key] = {
                     recordList: [],
                     redoStack: [],
+                    trigger: false,
                 };
             }
+            if (storage[key].trigger) {
+                storage[key].trigger = false;
+                return value;
+            }
 
-            const history = storage[recordKey];
             const currentValue = thisArg[key];
+            const history = storage[key];
+            console.log(String(key) + " history", history);
 
             // 保存旧值到历史记录
             history.recordList.push(currentValue);
@@ -50,37 +63,33 @@ export namespace valueRecorder {
     };
 
     // 撤销操作
-    export function undo<T>(target: T, key: keyof T): boolean {
-        const symbol = thisSymbols;
-        const storage = (target as any)[symbol];
-
+    export function undo(target: any, key: keyof typeof target): boolean {
+        const storage = recordStorage.get(target)!;
         if (!storage) return false;
 
-        const recordKey = `${String(key)}_history`;
-        const history = storage[recordKey];
-
+        const history = storage[key];
         if (!history || history.recordList.length === 0) return false;
 
         const currentValue = target[key];
+
         const lastValue = history.recordList.pop()!;
 
         // 保存当前值到重做栈
         history.redoStack.push(currentValue);
-
+        storage[key].trigger = true;
         // 恢复历史值
+        debugLogger(console.log, "[undo] " + String(key) + " history", history);
         (target as any)[key] = lastValue;
         return true;
     }
 
     // 重做操作
-    export function redo<T>(target: T, key: keyof T): boolean {
-        const symbol = thisSymbols;
-        const storage = (target as any)[symbol];
+    export function redo(target: any, key: keyof typeof target): boolean {
+        const storage = recordStorage.get(target);
 
         if (!storage) return false;
 
-        const recordKey = `${String(key)}_history`;
-        const history = storage[recordKey];
+        const history = storage[key];
 
         if (!history || history.redoStack.length === 0) return false;
 
@@ -88,8 +97,10 @@ export namespace valueRecorder {
 
         // 保存当前值到历史记录
         history.recordList.push(target[key]);
+        storage[key].trigger = true;
 
         // 应用重做值
+        debugLogger(console.log, "[redo] " + String(key) + " history", history);
         (target as any)[key] = nextValue;
         return true;
     }

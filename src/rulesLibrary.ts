@@ -14,7 +14,7 @@
  * @tip 基于一阶/二阶工厂构建
  * @author cinast
  * @since 2022-11-29
- * @update 2025-8-9
+ * @update 2025-8-19
  * @version 1.0.0
  *
  * @notice Decorators type: experimental stage 2
@@ -36,6 +36,12 @@ import { $conditionalWrite, $conditionalRead } from "./rulerDecorators";
 import { __Setting } from "./moduleMeta";
 export { __Setting };
 ("use strict");
+
+// debugging use
+// (_, __, v, ___, p) => {
+//     console.log(p);
+//     return p.approached;
+// },
 
 //     -------- math toy --------
 
@@ -158,16 +164,27 @@ export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
  *          超过最大值时返回新值，否则保持原值
  */
 export const maximum = (max: bigint | number, allowEqual: boolean = true) =>
-    $conditionalWrite<number | bigint>("ignore", [
-        (_, __, v) =>
-            allowEqual
-                ? typeof v == "number"
-                    ? Math.max(v, Number(max)) == max
-                    : v <= max
-                : typeof v == "number"
-                ? Math.max(v, Number(max)) == max && v !== Number(max)
-                : v < max,
-    ]);
+    $conditionalWrite<number | bigint>(
+        "ignore",
+        [
+            (_, __, v) =>
+                allowEqual
+                    ? typeof v == "number"
+                        ? Math.max(v, Number(max)) == max
+                        : v <= max
+                    : typeof v == "number"
+                    ? Math.max(v, Number(max)) == max && v !== Number(max)
+                    : v < max,
+        ],
+        [
+            () => {
+                return {
+                    approached: true,
+                    output: max,
+                };
+            },
+        ]
+    );
 
 //     -------- String  toy --------
 /**
@@ -175,8 +192,11 @@ export const maximum = (max: bigint | number, allowEqual: boolean = true) =>
  * 拒绝包含指定模式的字符串
  * @param patten - Patterns to exclude (string or RegExp)
  *                 要排除的模式(字符串或正则表达式)
+ *
+ * @param replace - replace excluded string
+ *                  替换排除的字符串
  */
-export const stringExcludes = (...patten: (RegExp | string)[]) =>
+export const stringExcludes = (patten: (RegExp | string)[], replace?: string) =>
     $conditionalWrite(
         "Warn",
         [
@@ -184,21 +204,7 @@ export const stringExcludes = (...patten: (RegExp | string)[]) =>
                 typeof value == "string" &&
                 !patten.some((pat) => (typeof pat === "string" ? value.includes(pat) : pat.test(value))),
         ],
-        [
-            (_, __, value) => false,
-            (_, __, value, c, p) => {
-                console.log(2902929, p);
-                return false;
-            },
-            (_, __, value, c, p) => {
-                console.log(2902929, p);
-                return false;
-            },
-            (_, __, value, c, p) => {
-                console.log(2902929, p);
-                return false;
-            },
-        ]
+        [(_, __, v: string) => (replace ? !patten.some((pat) => v.replace(pat, replace)) : false)]
     );
 
 /**
@@ -213,15 +219,6 @@ export const stringRequires = (...patten: (RegExp | string)[]) =>
             typeof value == "string" && patten.every((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value))),
     ]);
 
-//     -------- unnamed --------
-
-// export const ;
-// 没灵感了
-// 有意者请见github.com/cinast/ruler-Decorators
-// 展示结束
-/**
- *
- */
 //     -------- authority like --------
 
 /**
@@ -297,14 +294,4 @@ export const onlyTheClassAndSubCanWrite = (thisClass: new (...args: any[]) => an
 export const onlyTheClassAndSubCanRead = (thisClass: new (...args: any[]) => any) =>
     $conditionalRead("Error", [(thisArg) => thisArg instanceof thisClass]);
 
-//     -------- strange --------
-
-/**
- * @deprecated 😂➡️demo used and even failed
- * @param date
- * @returns
- */
-export const triggeredOnSomeDay = (date: Date | number) =>
-    $conditionalRead("Error", [() => Date.now() == (typeof date == "number" ? date : date.getMilliseconds())]);
-
-// export function egg() {}
+// export * from "./ruleLibraries/"
