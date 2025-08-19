@@ -10,10 +10,7 @@
         "outDir": "./dist",
         "noEmit": false,
         "composite": false,
-        "baseUrl": ".",
-        "paths": {
-            "@src/*": ["../src/*"]
-        }
+        "baseUrl": "."
     },
     "include": ["./*.ts"],
     "exclude": ["node_modules", "dist"]

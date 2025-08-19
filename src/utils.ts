@@ -7,7 +7,13 @@ import { $setter } from "./rulerDecorators";
  * So is why it called `Watch`
  * @param T Input type, or let it infer by itself
  */
-export const watchSet = <T>(handle: (thisArg: any, attr: string | symbol, value: T) => T) => $setter<T>(handle);
+export const watchSet = <T>(
+    handle: (thisArg: any, attr: string | symbol, value: T, lastResult: any, idx: number, handlers: Function[]) => T
+) =>
+    $setter<T>((target, attr, v, lastResult, idx, handlers) => {
+        handle(target, attr, v, lastResult, idx, handlers);
+        return v;
+    });
 
 /** Identifies decorator type from arguments */
 export function getDecoratorType(args: any[]): string {
