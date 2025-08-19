@@ -2,19 +2,6 @@ import { __Setting } from "./moduleMeta";
 import { $setter } from "./rulerDecorators";
 ("use strict");
 
-/**
- * Intercept when it gonna change, do sth or process input than cover the value
- * So is why it called `Watch`
- * @param T Input type, or let it infer by itself
- */
-export const watchSet = <T>(
-    handle: (thisArg: any, attr: string | symbol, value: T, lastResult: any, idx: number, handlers: Function[]) => T
-) =>
-    $setter<T>((target, attr, v, lastResult, idx, handlers) => {
-        handle(target, attr, v, lastResult, idx, handlers);
-        return v;
-    });
-
 /** Identifies decorator type from arguments */
 export function getDecoratorType(args: any[]): string {
     switch (args.length) {

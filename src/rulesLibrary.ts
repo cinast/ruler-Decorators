@@ -32,7 +32,7 @@
  * @namespace rulerDecorators
  */
 
-import { $conditionalWrite, $conditionalRead } from "./rulerDecorators";
+import { $conditionalWrite, $conditionalRead, $setter } from "./rulerDecorators";
 import { __Setting } from "./moduleMeta";
 export { __Setting };
 ("use strict");
@@ -42,6 +42,31 @@ export { __Setting };
 //     console.log(p);
 //     return p.approached;
 // },
+//     -------- script candy --------
+
+/**
+ * *function for lazy you*
+ *
+ * Give me handler and args, and I'l do all thing you need
+ * (trigged on changing)
+ * @param handler array.sort、console.log etc.
+ * @param args args[0] value of property
+ * @returns processed thing
+ */
+export const auto = (handler: Function, ...args: any[]) => $setter((_, __, v) => handler(v));
+
+/**
+ * Intercept when it gonna change, do sth other but not disturb it
+ * So is why it called `Watch`
+ * @template T Input type, or let it infer by itself
+ */
+export const watchSet = <T>(
+    handle: (thisArg: any, attr: string | symbol, value: T, lastResult: any, idx: number, handlers: Function[]) => T
+) =>
+    $setter<T>((target, attr, v, lastResult, idx, handlers) => {
+        handle(target, attr, v, lastResult, idx, handlers);
+        return v;
+    });
 
 //     -------- math toy --------
 
