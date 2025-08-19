@@ -36,7 +36,7 @@
         "dist/",
         "test/",
         "!test/dist",
-        "./doc/dev",
+        "doc/dev",
         "README.md",
         "LICENSE"
     ],
