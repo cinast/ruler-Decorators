@@ -294,4 +294,4 @@ export const onlyTheClassAndSubCanWrite = (thisClass: new (...args: any[]) => an
 export const onlyTheClassAndSubCanRead = (thisClass: new (...args: any[]) => any) =>
     $conditionalRead("Error", [(thisArg) => thisArg instanceof thisClass]);
 
-// export * from "./ruleLibraries/"
+export * from "./extraLibraries/rulerDecorators.extend.router";

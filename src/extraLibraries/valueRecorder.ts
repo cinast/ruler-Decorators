@@ -1,7 +1,15 @@
+/**
+ * @this
+ * @extraModule
+ * @moreExtra see https://github.com/cinast/ruler-Decorators-extra-libraries or other pack at npm
+ * @namespace valueRecorder
+ * @exported src\rulerDecorators.ts ~577
+ */
+
 ("use strict");
 
-import { debugLogger } from "./api.test";
-import { $setter } from "./rulerDecorators";
+import { debugLogger } from "../api.test";
+import { $setter } from "../rulerDecorators";
 
 const recordStorage = new WeakMap<
     object,
@@ -16,11 +24,8 @@ const recordStorage = new WeakMap<
 >();
 
 /**
- * @this
  * @extraModule
- * @moreExtra see https://github.com/cinast/ruler-Decorators-extra-libraries or other pack at npm
  * @namespace valueRecorder
- * @exported src\rulerDecorators.ts ~577
  */
 export namespace valueRecorder {
     export const $recordThis = (maxSteps: number = 10) => {
