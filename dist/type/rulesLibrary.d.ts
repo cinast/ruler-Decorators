@@ -73,8 +73,11 @@ export declare const maximum: (max: bigint | number, allowEqual?: boolean) => Pr
  * 拒绝包含指定模式的字符串
  * @param patten - Patterns to exclude (string or RegExp)
  *                 要排除的模式(字符串或正则表达式)
+ *
+ * @param replace - replace excluded string
+ *                  替换排除的字符串
  */
-export declare const stringExcludes: (...patten: (RegExp | string)[]) => PropertyDecorator & MethodDecorator;
+export declare const stringExcludes: (patten: (RegExp | string)[], replace?: string) => PropertyDecorator & MethodDecorator;
 /**
  * Requires strings to contain specified patterns
  * 要求字符串包含指定模式
@@ -82,9 +85,6 @@ export declare const stringExcludes: (...patten: (RegExp | string)[]) => Propert
  *                 要求的模式(字符串或正则表达式)
  */
 export declare const stringRequires: (...patten: (RegExp | string)[]) => PropertyDecorator & MethodDecorator;
-/**
- *
- */
 /**
  * @deprecated
  * @tip
@@ -145,10 +145,5 @@ export declare const onlyTheClassAndSubCanWrite: (thisClass: new (...args: any[]
  *          允许访问时返回原值，否则返回undefined
  */
 export declare const onlyTheClassAndSubCanRead: (thisClass: new (...args: any[]) => any) => PropertyDecorator & MethodDecorator;
-/**
- * @deprecated 😂➡️demo used and even failed
- * @param date
- * @returns
- */
-export declare const triggeredOnSomeDay: (date: Date | number) => PropertyDecorator & MethodDecorator;
+export * from "./extraLibraries/rulerDecorators.extend.router";
 //# sourceMappingURL=rulesLibrary.d.ts.map

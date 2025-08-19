@@ -204,8 +204,5 @@ export declare const $conditionalRead: <R = any, I = R>(errorType: "ignore" | "W
  * rulers & libSetting
  */
 export * as rulerDecorators from "./rulesLibrary";
-/**
- * extra lib (optional)
- */
-export * from "./valueRecorder";
+export * from "./extraLibraries/extraMod.router";
 //# sourceMappingURL=rulerDecorators.d.ts.map
