@@ -1,6 +1,6 @@
 {
     "name": "ruler-decorators",
-    "version": "0.0.0-test-4",
+    "version": "0.0.0-test-5",
     "description": "TypeScript decorators library for property access control and validation",
     "keywords": [
         "typescript",
