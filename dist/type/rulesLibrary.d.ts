@@ -1,6 +1,22 @@
 import { __Setting } from "./moduleMeta";
 export { __Setting };
 /**
+ * *function for lazy you*
+ *
+ * Give me handler and args, and I'l do all thing you need
+ * (trigged on changing)
+ * @param handler array.sort、console.log etc.
+ * @param args args[0] value of property
+ * @returns processed thing
+ */
+export declare const auto: (handler: Function, ...args: any[]) => PropertyDecorator & MethodDecorator;
+/**
+ * Intercept when it gonna change, do sth other but not disturb it
+ * So is why it called `Watch`
+ * @template T Input type, or let it infer by itself
+ */
+export declare const watchSet: <T>(handle: (thisArg: any, attr: string | symbol, value: T, lastResult: any, idx: number, handlers: Function[]) => T) => PropertyDecorator & MethodDecorator;
+/**
  * Integer value validator decorator
  * 整数值验证装饰器
  *

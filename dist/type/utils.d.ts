@@ -1,9 +1,3 @@
-/**
- * Intercept when it gonna change, do sth or process input than cover the value
- * So is why it called `Watch`
- * @param T Input type, or let it infer by itself
- */
-export declare const watchSet: <T>(handle: (thisArg: any, attr: string | symbol, value: T) => T) => PropertyDecorator & MethodDecorator;
 /** Identifies decorator type from arguments */
 export declare function getDecoratorType(args: any[]): string;
 /**
