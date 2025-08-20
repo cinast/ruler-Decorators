@@ -75,6 +75,7 @@ __export(rulesLibrary_exports, {
   __Setting: () => __Setting,
   alwaysNegative: () => alwaysNegative,
   alwaysPositive: () => alwaysPositive,
+  auto: () => auto,
   maximum: () => maximum,
   minimum: () => minimum,
   onlyTheClassAndSubCanRead: () => onlyTheClassAndSubCanRead,
@@ -82,7 +83,13 @@ __export(rulesLibrary_exports, {
   onlyTheClassCanRead: () => onlyTheClassCanRead,
   onlyTheClassCanWrite: () => onlyTheClassCanWrite,
   stringExcludes: () => stringExcludes,
-  stringRequires: () => stringRequires
+  stringRequires: () => stringRequires,
+  watchSet: () => watchSet
+});
+var auto = (handler, ...args) => $setter((_, __, v) => handler(v));
+var watchSet = (handle) => $setter((target, attr, v, lastResult, idx, handlers) => {
+  handle(target, attr, v, lastResult, idx, handlers);
+  return v;
 });
 var Int = (onError) => $conditionalWrite(
   "Error",
