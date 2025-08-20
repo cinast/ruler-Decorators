@@ -43,8 +43,6 @@ _回到 JS 是一种什么样的感觉？_
 npm install ruler-decorators
 ```
 
-快了快了
-
 ## 🛠️ 主要 API
 
 ### 核心装饰器
@@ -105,13 +103,20 @@ class SecureData {
      `setterHandlers`、`getterHandlers` 目前是什么东西都有权更改，关于他的管理权我还没做好
 -   ℹ️ **必须启用**`experimentalDecorators`
 -   ℹ️ 需要 TypeScript 5.2+
+
+-   ℹ️rd 库并不成熟，还要多次重写
+
 -   ⚠️ **一旦**使用`$$init`，这个属性/方法/类 不得再置新的 gtr/setr  
     会直接破坏这个库的运行
 -   ℹ️ ~~详见[已知问题文档](./doc/known_issues.md)~~
--   由于更新频繁，文档跟不上，而且有些是吞金鲸帮我写的
+-   ℹ️ 由于更新频繁，文档跟不上，而且有些是吞金鲸帮我写的
     以代码为准
 
--   谨慎魔改 [`src/type.handles.ts`](src/type.handles.ts)，当心报错 40+
+-   ℹ️ 谨慎魔改 [`src/type.handles.ts`](src/type.handles.ts)，当心报错 40+
+-   ℹ️ 目前只详细研究了**属性装饰器**，其他的还没有开发好，只有预留框架  
+    之后要从属性描述符转到代理 proxy，详情请看 _已知问题_  
+    也有可能两个并存  
+    总之底层还要重构
 
 ## 🤔 为什么选择这个库？
 
