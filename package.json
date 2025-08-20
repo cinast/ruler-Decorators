@@ -36,6 +36,7 @@
         "dist/",
         "test/",
         "!test/dist",
+        "node_script",
         "doc/dev",
         "README.md",
         "LICENSE"
