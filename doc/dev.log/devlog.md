@@ -355,3 +355,65 @@ _代理个空数组有可能吗_
 原来是发现个漏洞，只能给这个属性加上 g/s 对，
 然而管不着属性的属性  
 转到 proxy 可能要提上日程
+
+## 2025-08-20
+
+突然想起来一件事儿，自己只做了一种装饰器  
+属性装饰器倒是没有太大问题现在  
+类装饰器需要 proxy 加持，哦对了列表属性也需要，对象属性也需要  
+方法装饰器不可能再用 get 和 set 了  
+网上的示例好像是直接塞进 value 描述项里面的
+
+以后还要兼容更多种类的装饰器，这些基础函数可能要高度模块化  
+向后兼容呢我是不大愿意用重载扩展  
+虽然说这些都是装饰器，但是运用的逻辑十分不同
+
+用参数装饰器好像没有用头  
+这就只是记录一些信息，然后没有了  
+要控制参数还必须要在函数入手  
+在外面再套一层调用
+（ds 拟稿）
+
+```ts
+function processParams(
+    ...processors: Array<{
+        validator?: (value: any) => boolean;
+        transformer?: (value: any) => any;
+        errorMessage?: string;
+    }>
+) {
+    return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+        const originalMethod = descriptor.value;
+
+        descriptor.value = function (...args: any[]) {
+            const processedArgs = args.map((arg, index) => {
+                if (index < processors.length && processors[index]) {
+                    const processor = processors[index];
+
+                    // 验证参数
+                    if (processor.validator && !processor.validator(arg)) {
+                        throw new Error(processor.errorMessage || `参数 ${index} 验证失败`);
+                    }
+
+                    // 转换参数
+                    if (processor.transformer) {
+                        return processor.transformer(arg);
+                    }
+                }
+                return arg;
+            });
+
+            return originalMethod.apply(this, processedArgs);
+        };
+
+        return descriptor;
+    };
+}
+```
+
+长得和我的 conditionalW/R 很像，只不过这个列表里面不是流水线，而是一排处理器  
+或者它也需要做成流水线的样子  
+那就是`...processors: h[][]`了
+
+这个库以后还要考虑要怎么和其他装饰器或者 gtr/str 等等友好相处  
+但是我管不了那么多了（嘻
