@@ -757,8 +757,6 @@ export function PropertyAccessor(): PropertyDecorator {
     };
 }
 
-// ==================== 存储结构 ====================
-
 // 获取或创建属性模式映射
 function getPropertyModes(target: any): Map<string | symbol, "proxy" | "accessor"> {
     const targetMap = Storage.get(target);
