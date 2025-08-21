@@ -432,3 +432,10 @@ function processParams(
 极速不稳定更新  
 吞金鲸居然炸了快两百万 tk  
 给我大一统了 storage
+
+又过了一会儿整个窗口已经有 100k tk 了（捂脸笑
+ds 真的是拼了
+<img
+src="https://cdn.jsdelivr.net/gh/cinast/cinast.imgsStore/public-emoji/捂脸哭笑.png"
+style="height: 1rem; width: 1rem; border-radius: 50%; background: center, center"
+/>,

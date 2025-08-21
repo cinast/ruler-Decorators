@@ -108,3 +108,55 @@ export type rejectionHandler = (
     | boolean;
 
 type PreciseTuple<T, U, V> = [first: T, ...middle: U[], last: V];
+
+/**
+ * @handle_II
+ * Parameter handler type for function-param-accessor mode
+ * 函数参数访问器模式的参数处理器类型
+ *
+ * @template R type of return, processed arguments or boolean for condition
+ *          返回类型，处理后的参数或布尔值用于条件判断
+ *
+ * @tip Used in function-param-accessor mode for method parameter interception
+ * @tip 用于函数参数访问器模式的方法参数拦截
+ * @Waring Returns true/approached without processing will allow original call
+ * @Waring 如果返回true/approached但未处理参数，将允许原始调用
+ */
+export type paramHandler = (
+    thisArg: any,
+    methodName: string | symbol,
+    method: Function,
+    args: any[],
+    prevResult: { approached: boolean; output: any[] },
+    currentIndex: number,
+    handlers: paramHandler[]
+) =>
+    | {
+          approached: boolean;
+          output: any[];
+      }
+    | boolean;
+
+/**
+ * @handle_II
+ * Parameter rejection handler type for function-param-accessor mode
+ * 函数参数访问器模式的参数拒绝处理器类型
+ *
+ * @tip Used when parameter conditions fail in function-param-accessor mode
+ * @tip 用于函数参数访问器模式中参数条件失败时的处理
+ */
+export type paramRejectionHandler = (
+    thisArg: any,
+    methodName: string | symbol,
+    method: Function,
+    args: any[],
+    conditionHandleLastOutput: any,
+    prevResult: { approached: boolean; output: any[] },
+    currentIndex: number,
+    handlers: paramRejectionHandler[]
+) =>
+    | {
+          approached: boolean;
+          output: any[];
+      }
+    | boolean;

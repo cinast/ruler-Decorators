@@ -16,7 +16,14 @@
  */
 ("use strict");
 import { __Setting } from "./moduleMeta";
-import { rd_GetterHandle, rd_SetterHandle, conditionHandler, rejectionHandler } from "./type.handles";
+import {
+    rd_GetterHandle,
+    rd_SetterHandle,
+    conditionHandler,
+    rejectionHandler,
+    paramHandler,
+    paramRejectionHandler,
+} from "./type.handles";
 import { debugLogger } from "./api.test";
 
 /**
@@ -35,6 +42,8 @@ export declare type rd_descriptor = {
     originalInstance?: object;
     setters?: rd_SetterHandle[];
     getters?: rd_GetterHandle[];
+    paramHandlers?: paramHandler[];
+    paramRejectHandlers?: paramRejectionHandler[];
     interceptionEnabled: boolean;
     propertyMode?: "proxy" | "accessor";
     interceptionModes: $interceptionModes;
@@ -53,8 +62,8 @@ export declare type rd_descriptor = {
 };
 
 /**
- * Unified Storage for ruler decorators
- * 统一的ruler装饰器存储
+ * Unified Storage for decorated things
+ * 统一的存储
  */
 const Storage = new WeakMap<object, Map<string | symbol, rd_descriptor>>();
 
@@ -241,6 +250,26 @@ export function $removeGetterHandler(target: object, propertyKey: string | symbo
 //#endregion
 
 /**
+ * Add parameter handler to specified method
+ * 添加参数处理器到指定方法
+ */
+export function $addParamHandler(target: object, methodKey: string | symbol, handler: paramHandler): void {
+    const descriptor = getDescriptor(target, methodKey);
+    descriptor.paramHandlers = [...(descriptor.paramHandlers || []), handler];
+    setDescriptor(target, methodKey, descriptor);
+}
+
+/**
+ * Add parameter rejection handler to specified method
+ * 添加参数拒绝处理器到指定方法
+ */
+export function $addParamRejectionHandler(target: object, methodKey: string | symbol, handler: paramRejectionHandler): void {
+    const descriptor = getDescriptor(target, methodKey);
+    descriptor.paramRejectHandlers = [...(descriptor.paramRejectHandlers || []), handler];
+    setDescriptor(target, methodKey, descriptor);
+}
+
+/**
  * Check if a property has handlers
  * 检查属性是否有处理器
  */
@@ -248,7 +277,8 @@ function hasHandlersFor(target: object, propertyKey: string | symbol): boolean {
     const descriptor = getDescriptor(target, propertyKey);
     const hasSetter = Boolean(descriptor.setters?.length);
     const hasGetter = Boolean(descriptor.getters?.length);
-    return hasSetter || hasGetter;
+    const hasParam = Boolean(descriptor.paramHandlers?.length);
+    return hasSetter || hasGetter || hasParam;
 }
 
 /**
@@ -275,6 +305,51 @@ function applySetterHandlers(receiver: any, propertyKey: string | symbol, value:
     if (setters.length === 0) return value;
 
     return setters.reduce((prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]), value);
+}
+
+/**
+ * Apply parameter handlers for a method
+ * 应用方法的参数处理器
+ */
+function applyParamHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[]): any[] {
+    const prototype = Object.getPrototypeOf(receiver);
+    const descriptor = getDescriptor(prototype, methodKey);
+    const paramHandlers = descriptor.paramHandlers || [];
+    if (paramHandlers.length === 0) return args;
+
+    try {
+        return paramHandlers.reduce((prev, handler, idx, arr) => {
+            const result = handler(receiver, methodKey, method, args, { approached: false, output: prev }, idx, [...arr]);
+            return typeof result === "boolean" ? prev : result.output;
+        }, args);
+    } catch (error) {
+        debugLogger(console.error, "Parameter handler error for method", methodKey, ":", error);
+        return args; // 发生错误时返回原始参数
+    }
+}
+
+/**
+ * Apply parameter rejection handlers for a method
+ * 应用方法的参数拒绝处理器
+ */
+function applyParamRejectionHandlers(
+    receiver: any,
+    methodKey: string | symbol,
+    method: Function,
+    args: any[],
+    conditionResult: any
+): any[] {
+    const prototype = Object.getPrototypeOf(receiver);
+    const descriptor = getDescriptor(prototype, methodKey);
+    const rejectHandlers = descriptor.paramRejectHandlers || [];
+    if (rejectHandlers.length === 0) return args;
+
+    return rejectHandlers.reduce((prev, handler, idx, arr) => {
+        const result = handler(receiver, methodKey, method, args, conditionResult, { approached: false, output: prev }, idx, [
+            ...arr,
+        ]);
+        return typeof result === "boolean" ? prev : result.output;
+    }, args);
 }
 
 /**
@@ -540,12 +615,38 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
             setDescriptor(targetObj, key, rdDescriptor);
         }
 
+        // 验证装饰器类型和模式的兼容性
+        const decoratorType = determineDecoratorType(target, propertyKey, descriptor);
+        const interceptionMode = rdDescriptor.interceptionModes || "accessor";
+
+        if (!isModeCompatible(decoratorType, interceptionMode)) {
+            console.warn(`警告：装饰器类型 ${decoratorType} 与拦截模式 ${interceptionMode} 不兼容`);
+        }
+
         // 对于没有启用全局Proxy的情况，需要处理属性级拦截
         const targetMap = Storage.get(targetObj);
         const hasGlobalProxy = targetMap ? Array.from(targetMap.values()).some((d) => d.globalProxyEnabled) : false;
 
         if (!hasGlobalProxy && descriptor) {
-            // 获取属性模式（默认为Proxy）
+            // 获取拦截模式
+            const interceptionMode = rdDescriptor.interceptionModes || "accessor";
+
+            // 处理function-param-accessor模式（MethodDecorator）
+            if (interceptionMode === "function-param-accessor" && typeof descriptor.value === "function") {
+                const originalMethod = descriptor.value;
+                descriptor.value = function (...args: any[]) {
+                    debugLogger(console.log, "Function parameter accessor triggered for", key, "with args", args);
+
+                    // 应用参数处理器
+                    const processedArgs = applyParamHandlers(this, key, originalMethod, args);
+
+                    // 调用原始方法
+                    return originalMethod.apply(this, processedArgs);
+                };
+                return descriptor;
+            }
+
+            // 处理accessor模式（PropertyDecorator）
             const modes = getPropertyModes(targetObj);
             const mode = modes.get(key) || "proxy";
 
@@ -599,6 +700,28 @@ export function $getter<R = any, I = R>(handle: rd_GetterHandle<R, I>): Property
         $addGetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
             return handle(thisArg, key, value, lastResult, index, handlers);
         });
+    };
+}
+
+/**
+ * Parameter check handler decorator factory
+ * 参数检查句柄装饰器工厂
+ */
+export function $paramCheck(handle: paramHandler, rejectHandle?: paramRejectionHandler): MethodDecorator {
+    return function (target: any, methodKey: string | symbol, descriptor?: PropertyDescriptor) {
+        $addParamHandler(target, methodKey, function (thisArg, key, method, args, prevResult, index, handlers) {
+            return handle(thisArg, key, method, args, prevResult, index, handlers);
+        });
+
+        if (rejectHandle) {
+            $addParamRejectionHandler(
+                target,
+                methodKey,
+                function (thisArg, key, method, args, conditionResult, prevResult, index, handlers) {
+                    return rejectHandle(thisArg, key, method, args, conditionResult, prevResult, index, handlers);
+                }
+            );
+        }
     };
 }
 
@@ -771,4 +894,43 @@ function getPropertyModes(target: any): Map<string | symbol, "proxy" | "accessor
         }
     }
     return modes;
+}
+
+/**
+ * Determine decorator type based on parameters
+ * 根据参数确定装饰器类型
+ */
+function determineDecoratorType(
+    target: any,
+    propertyKey: string | symbol | undefined,
+    descriptor: PropertyDescriptor | undefined
+): decoratorType {
+    if (typeof propertyKey === "undefined") {
+        return "ClassDecorator";
+    }
+
+    if (descriptor && typeof descriptor.value === "function") {
+        return "MethodDecorator";
+    }
+
+    if (descriptor && (descriptor.get || descriptor.set)) {
+        return "PropertyDecorator";
+    }
+
+    return "PropertyDecorator";
+}
+
+/**
+ * Check if decorator type is compatible with interception mode
+ * 检查装饰器类型是否与拦截模式兼容
+ */
+function isModeCompatible(decoratorType: decoratorType, mode: $interceptionModes): boolean {
+    const compatibility: Record<decoratorType, $interceptionModes[]> = {
+        ClassDecorator: ["class-proxy", "accessor"],
+        PropertyDecorator: ["property-proxy", "accessor"],
+        MethodDecorator: ["function-param-accessor", "accessor"],
+        ParameterDecorator: [], // 暂不支持
+    };
+
+    return compatibility[decoratorType].includes(mode);
 }
