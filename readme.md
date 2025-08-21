@@ -104,7 +104,7 @@ class SecureData {
 -   ℹ️ **必须启用**`experimentalDecorators`
 -   ℹ️ 需要 TypeScript 5.2+
 
--   ℹ️rd 库并不成熟，还要多次重写
+-   ℹ️ rd 库并不成熟，还要多次重写
 
 -   ⚠️ **一旦**使用`$$init`，这个属性/方法/类 不得再置新的 gtr/setr  
     会直接破坏这个库的运行

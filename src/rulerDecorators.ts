@@ -1,66 +1,23 @@
 /**
  * @this
  * @core
- * Code candies library for property decoration CORE
- * 属性装饰的代码糖果库的底层核心
+ * Code candies library for property decoration CORE - Multi-Mode Implementation
+ * 属性装饰的代码糖果库的底层核心 - 多模式实现
  *
  * @author cinast
  * @since 2022-11-29
  * @update 2025-8-8
- * @version 1.0.0
- *
+ * @version 2.5.0
  *
  * @notice Decorators type: experimental stage 2
- * 注意：装饰器类型为实验性stage 2
- *
  * @warning tsconfig `experimentalDecorators` must be `true`
- * 警告：必须设置tsconfig的experimentalDecorators为true
- *
  * @tip tsconfig.json should be placed at ts files' parent or sibling folders
- * 提示：tsconfig.json应放在ts文件的父级或同级目录
- *
  * @tip tsc needs 5.2+
- * 提示：需要TypeScript 5.2+版本
  */
 ("use strict");
 import { __Setting } from "./moduleMeta";
-
-/**
- *           ———————— 注意事项 Notice ————————
- */
-
-/**
- * @WARNING @DEBUGGING
- * 警告：还在制作
- */
-
-/**
- * @WARNING
- * @Mind the order of the decorators, as they are applied in the order they are defined.
- * 注意：装饰器按定义顺序应用
- * @Mind the getter and setter will might call each other INFINITY
- * 注意：getter和setter可能会无限互相调用
- *
- *          setter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → getter → ...
- *          setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → setter → ...
- *
- *          世纪笑话↑
- * 这个版本少见了
- */
-
-//     -------- 核心 core --------
-
-/**
- * Storage for actual values and wrapper functions
- * 存储实际值和包装函数
- */
-interface InstanceStorageValue {
-    [key: string | symbol]: any;
-}
-
-import { rd_GetterHandle, rd_SetterHandle } from "./type.handles";
-const instanceStorage = new WeakMap<object, InstanceStorageValue>();
-const wrapperCache = new WeakMap<object, Record<string | symbol, Function>>();
+import { rd_GetterHandle, rd_SetterHandle, conditionHandler, rejectionHandler } from "./type.handles";
+import { debugLogger } from "./api.test";
 
 /**
  * Storage for property handler chains
@@ -70,14 +27,21 @@ const setterHandlers = new WeakMap<object, Map<string | symbol, rd_SetterHandle[
 const getterHandlers = new WeakMap<object, Map<string | symbol, rd_GetterHandle[]>>();
 
 /**
+ * Storage for original values and proxy instances
+ * 存储原始值和代理实例
+ */
+const originalInstances = new WeakMap<object, object>();
+const proxyInstances = new WeakMap<object, object>();
+
+/**
+ * Mode configuration for each class
+ * 每个类的模式配置
+ */
+const classModes = new WeakMap<object, "global-proxy" | "property-proxy" | "accessor">();
+
+/**
  * Add setter handler to specified property
  * 添加 setter 句柄到指定属性
- * @param target - Class prototype or constructor
- *               类原型或构造函数
- * @param propertyKey - Property name
- *                    属性名
- * @param handler - Setter handler to add
- *                要添加的 setter 句柄
  */
 export function $addSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): void {
     let handlersMap = setterHandlers.get(target);
@@ -98,12 +62,6 @@ export function $addSetterHandler(target: object, propertyKey: string | symbol, 
 /**
  * Add getter handler to specified property
  * 添加 getter 句柄到指定属性
- * @param target - Class prototype or constructor
- *               类原型或构造函数
- * @param propertyKey - Property name
- *                    属性名
- * @param handler - Getter handler to add
- *                要添加的 getter 句柄
  */
 export function $addGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): void {
     let handlersMap = getterHandlers.get(target);
@@ -124,14 +82,6 @@ export function $addGetterHandler(target: object, propertyKey: string | symbol, 
 /**
  * Remove setter handler from specified property
  * 从指定属性移除 setter 句柄
- * @param target - Class prototype or constructor
- *               类原型或构造函数
- * @param propertyKey - Property name
- *                    属性名
- * @param handler - Getter handler to remove
- *                要移除的 setter 句柄
- * @returns Whether the handler was removed
- *         是否成功移除句柄
  */
 export function $removeSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): boolean {
     const handlersMap = setterHandlers.get(target);
@@ -150,14 +100,6 @@ export function $removeSetterHandler(target: object, propertyKey: string | symbo
 /**
  * Remove getter handler from specified property
  * 从指定属性移除 getter 句柄
- * @param target - Class prototype or constructor
- *               类原型或构造函数
- * @param propertyKey - Property name
- *                    属性名
- * @param handler - Getter handler to remove
- *                要移除的 getter 句柄
- * @returns Whether the handler was removed
- *         是否成功移除句柄
  */
 export function $removeGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): boolean {
     const handlersMap = getterHandlers.get(target);
@@ -174,32 +116,197 @@ export function $removeGetterHandler(target: object, propertyKey: string | symbo
 }
 
 /**
- * Decorator factory: creates adaptive decorator
- * 装饰器工厂：创建自适应装饰器
- * @Required_at_use 目前没法隐式自动调用
- *
- * @template InitialSetters - Initial setter handlers array
- *                       初始 setter 句柄数组
- * @template InitialGetters - Initial getter handlers array
- *                       初始 getter 句柄数组
- * @returns Adaptive decorator function
- *         自适应装饰器函数
+ * Check if a property has handlers
+ * 检查属性是否有处理器
  */
-export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], initialGetters: rd_GetterHandle[] = []) => {
-    return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
-        debugLogger(console.log, "$$init decorator applied to:", target?.name || target, propertyKey, descriptor);
+function hasHandlersFor(target: object, propertyKey: string | symbol): boolean {
+    const hasSetter = Boolean(setterHandlers.get(target)?.get(propertyKey)?.length);
+    const hasGetter = Boolean(getterHandlers.get(target)?.get(propertyKey)?.length);
+    return hasSetter || hasGetter;
+}
 
-        // 初始化instanceStorage
-        const initStorage = (t: any) => !instanceStorage.has(t) && instanceStorage.set(t, {});
-        initStorage(target);
+/**
+ * Apply getter handlers for a property
+ * 应用属性的 getter 处理器
+ */
+function applyGetterHandlers(receiver: any, propertyKey: string | symbol, value: any): any {
+    const getters = getterHandlers.get(Object.getPrototypeOf(receiver))?.get(propertyKey) || [];
+    if (getters.length === 0) return value;
+
+    return getters.reduce((prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]), value);
+}
+
+/**
+ * Apply setter handlers for a property
+ * 应用属性的 setter 处理器
+ */
+function applySetterHandlers(receiver: any, propertyKey: string | symbol, value: any): any {
+    const setters = setterHandlers.get(Object.getPrototypeOf(receiver))?.get(propertyKey) || [];
+    if (setters.length === 0) return value;
+
+    return setters.reduce((prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]), value);
+}
+
+/**
+ * Create global proxy for instance (intercept all properties)
+ * 为实例创建全局代理（拦截所有属性）
+ */
+function createGlobalProxy(instance: any, target: any): any {
+    if (proxyInstances.has(instance)) {
+        return proxyInstances.get(instance);
+    }
+
+    const proxy = new Proxy(instance, {
+        get(target, propertyKey, receiver) {
+            debugLogger(console.log, "Global Proxy getter triggered for", propertyKey);
+
+            // 获取原始值
+            let value = Reflect.get(target, propertyKey, receiver);
+
+            // 获取 getter 处理链
+            const getters = getterHandlers.get(target)?.get(propertyKey) || [];
+
+            if (getters.length > 0) {
+                // 应用 getter 处理链
+                value = getters.reduce(
+                    (prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]),
+                    value
+                );
+            }
+
+            // 如果是函数，确保绑定正确的 this 上下文
+            if (typeof value === "function") {
+                return value.bind(receiver);
+            }
+
+            return value;
+        },
+
+        set(target, propertyKey, value, receiver) {
+            debugLogger(console.log, "Global Proxy setter triggered for", propertyKey, "with value", value);
+
+            // 获取 setter 处理链
+            const setters = setterHandlers.get(target)?.get(propertyKey) || [];
+
+            let processedValue = value;
+
+            if (setters.length > 0) {
+                // 应用 setter 处理链
+                processedValue = setters.reduce(
+                    (prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]),
+                    value
+                );
+            }
+
+            // 设置处理后的值
+            return Reflect.set(target, propertyKey, processedValue, receiver);
+        },
+    });
+
+    proxyInstances.set(instance, proxy);
+    originalInstances.set(proxy, instance);
+
+    return proxy;
+}
+
+/**
+ * Create property proxy for instance (intercept only decorated properties)
+ * 为实例创建属性代理（只拦截被装饰的属性）
+ */
+function createPropertyProxy(instance: any, target: any): any {
+    if (proxyInstances.has(instance)) {
+        return proxyInstances.get(instance);
+    }
+
+    const proxy = new Proxy(instance, {
+        get(target, propertyKey, receiver) {
+            // 只拦截有处理器的属性
+            if (hasHandlersFor(target, propertyKey)) {
+                debugLogger(console.log, "Property Proxy getter triggered for", propertyKey);
+                let value = Reflect.get(target, propertyKey, receiver);
+                return applyGetterHandlers(receiver, propertyKey, value);
+            }
+
+            // 直接返回其他属性
+            return Reflect.get(target, propertyKey, receiver);
+        },
+
+        set(target, propertyKey, value, receiver) {
+            // 只拦截有处理器的属性
+            if (hasHandlersFor(target, propertyKey)) {
+                debugLogger(console.log, "Property Proxy setter triggered for", propertyKey, "with value", value);
+                const processedValue = applySetterHandlers(receiver, propertyKey, value);
+                return Reflect.set(target, propertyKey, processedValue, receiver);
+            }
+
+            // 直接设置其他属性
+            return Reflect.set(target, propertyKey, value, receiver);
+        },
+    });
+
+    proxyInstances.set(instance, proxy);
+    originalInstances.set(proxy, instance);
+
+    return proxy;
+}
+
+/**
+ * Create accessor-based interception (traditional getter/setter)
+ * 创建基于访问器的拦截（传统 getter/setter）
+ */
+function createAccessorInterception(instance: any, targetPrototype: any): any {
+    // 获取所有有处理器的属性
+    const handlerProperties = new Set<string | symbol>();
+    const settersMap = setterHandlers.get(targetPrototype) || new Map();
+    const gettersMap = getterHandlers.get(targetPrototype) || new Map();
+
+    for (const key of settersMap.keys()) handlerProperties.add(key);
+    for (const key of gettersMap.keys()) handlerProperties.add(key);
+
+    // 为每个有处理器的属性创建访问器
+    for (const propertyKey of handlerProperties) {
+        let value = instance[propertyKey];
+
+        Object.defineProperty(instance, propertyKey, {
+            get: () => {
+                debugLogger(console.log, "Accessor getter triggered for", propertyKey);
+                return applyGetterHandlers(instance, propertyKey, value);
+            },
+            set: (newValue) => {
+                debugLogger(console.log, "Accessor setter triggered for", propertyKey, "with value", newValue);
+                value = applySetterHandlers(instance, propertyKey, newValue);
+            },
+            enumerable: true,
+            configurable: true,
+        });
+    }
+
+    return instance;
+}
+
+/**
+ * Decorator factory: creates adaptive decorator with multiple mode implementation
+ * 装饰器工厂：使用多模式实现创建自适应装饰器
+ */
+export const $$init = <T = any, R = T>(
+    initialSetters: rd_SetterHandle[] = [],
+    initialGetters: rd_GetterHandle[] = [],
+    mode: "global-proxy" | "property-proxy" | "accessor" = "property-proxy"
+) => {
+    return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
+        debugLogger(console.log, "$$init decorator applied to:", target?.name || target, propertyKey, descriptor, "Mode:", mode);
+
+        // 存储类的模式配置
+        classModes.set(target, mode);
         if (typeof target === "function" && target.prototype) {
-            initStorage(target.prototype);
+            classModes.set(target.prototype, mode);
         }
 
         // 初始化handlers
         const initHandlers = (map: WeakMap<any, any>, t: any) => !map.has(t) && map.set(t, new Map());
         initHandlers(setterHandlers, target);
         initHandlers(getterHandlers, target);
+
         if (typeof target === "function" && target.prototype) {
             initHandlers(setterHandlers, target.prototype);
             initHandlers(getterHandlers, target.prototype);
@@ -214,31 +321,20 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
                         super(...args);
                         debugLogger(console.log, "Decorated class constructor called");
 
-                        // 初始化实例存储
-                        const instance: InstanceStorageValue = {};
-                        instanceStorage.set(this, instance);
+                        // 根据模式返回相应的实例
+                        const mode = classModes.get(target.prototype) || "property-proxy";
+                        debugLogger(console.log, "Using mode:", mode);
 
-                        // 处理所有装饰属性初始值
-                        const settersMap = setterHandlers.get(target.prototype) || new Map();
-                        for (const [key, handlers] of settersMap.entries()) {
-                            const initialValue = this[key];
-                            debugLogger(
-                                console.log,
-                                `Processing decorated property ${String(key)} with initial value:`,
-                                initialValue
-                            );
-
-                            const processed = handlers.reduce((val: any, handler: rd_SetterHandle) => {
-                                const result = handler(this, key, val, val, 0, handlers);
-                                debugLogger(console.log, `Handler for ${String(key)} processed value:`, val, "=>", result);
-                                return result;
-                            }, initialValue);
-
-                            instance[key] = processed;
-                            debugLogger(console.log, `Final value for ${String(key)}:`, processed);
+                        switch (mode) {
+                            case "global-proxy":
+                                return createGlobalProxy(this, target.prototype);
+                            case "property-proxy":
+                                return createPropertyProxy(this, target.prototype);
+                            case "accessor":
+                                return createAccessorInterception(this, target.prototype);
+                            default:
+                                return this;
                         }
-
-                        debugLogger(console.log, "Instance fully initialized with decorated values:", instance);
                     }
                 };
             }
@@ -247,7 +343,7 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
         }
 
         const key = propertyKey as string | symbol;
-        const targetObj = target; // 保存目标对象（类原型或构造函数）
+        const targetObj = target;
 
         // === 初始化句柄存储 ===
         // 初始化 setter 句柄
@@ -268,111 +364,31 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
 
         if (!gettersMap.has(key)) gettersMap.set(key, [...initialGetters]);
 
-        // === 属性/方法/访问器装饰器处理 ===
-        // 存储原始值或描述符
-        if (!instanceStorage.has(targetObj)) {
-            instanceStorage.set(targetObj, {});
+        // 对于 accessor 模式，需要返回修改后的属性描述符
+        mode = classModes.get(targetObj) || "property-proxy";
+        if (mode === "accessor" && descriptor) {
+            const originalGet = descriptor.get || (() => descriptor.value);
+            const originalSet =
+                descriptor.set ||
+                ((value: any) => {
+                    descriptor.value = value;
+                });
+
+            return {
+                ...descriptor,
+                get() {
+                    const value = originalGet.call(this);
+                    return applyGetterHandlers(this, key, value);
+                },
+                set(value: any) {
+                    const processedValue = applySetterHandlers(this, key, value);
+                    originalSet.call(this, processedValue);
+                },
+            };
         }
-        const protoStore = instanceStorage.get(targetObj)!;
 
-        if (descriptor) {
-            if ("value" in descriptor) {
-                // 方法装饰器
-                protoStore[key] = descriptor.value;
-            } else if ("get" in descriptor || "set" in descriptor) {
-                // 访问器装饰器
-                protoStore[key] = descriptor;
-            }
-        }
-
-        return {
-            configurable: true,
-            enumerable: descriptor ? descriptor.enumerable : true,
-
-            // 统一的 setter 处理
-            set(this: any, value: any) {
-                debugLogger(console.log, "Setter triggered for", key, "with value", value);
-                let objStore = instanceStorage.get(this);
-                if (!objStore) {
-                    objStore = {};
-                    instanceStorage.set(this, objStore);
-                }
-
-                // 获取当前 setter 句柄链
-                const setters = setterHandlers.get(targetObj)?.get(key) || [];
-
-                // 执行句柄链
-                const result = setters.reduce(
-                    (prev, handler, idx, arr) => {
-                        const newVal = handler(this, key, value, prev, idx, [...arr]);
-                        debugLogger(console.log, `Handler ${idx} processed value:`, newVal);
-                        return newVal;
-                    },
-                    value // 初始值使用传入的value
-                );
-
-                // 存储处理结果 + “检查”
-                objStore[key] = result satisfies T;
-                // 你说他会有用么
-
-                debugLogger(console.log, "Final stored value:", result);
-                debugLogger(console.log, "Stored in value:", instanceStorage.get(this));
-
-                // 清除包装缓存
-                const wrapperMap = wrapperCache.get(this);
-                if (wrapperMap) {
-                    delete wrapperMap[key];
-                }
-            },
-
-            // 统一的 getter 处理
-            get(this: any) {
-                // 获取当前 getter 句柄链
-                const getters = getterHandlers.get(targetObj)?.get(key) || [];
-
-                // 解析基础值
-                let baseValue: any;
-                const objStore = instanceStorage.get(this) || {};
-
-                if (key in objStore) {
-                    // 实例自有值
-                    baseValue = objStore[key];
-                } else {
-                    // 原型链上的值（方法/访问器）
-                    const protoStore = instanceStorage.get(targetObj) || {};
-                    baseValue = protoStore[key];
-                }
-
-                // 特殊处理：方法装饰器
-                if (typeof baseValue === "function") {
-                    let wrapperMap = wrapperCache.get(this);
-                    if (!wrapperMap) {
-                        wrapperMap = {};
-                        wrapperCache.set(this, wrapperMap);
-                    }
-
-                    // 使用缓存或创建新包装
-                    if (!wrapperMap[key]) {
-                        wrapperMap[key] = function (this: any, ...args: any[]) {
-                            let result = baseValue.apply(this, args);
-
-                            // 应用 getter 链（对返回值处理）
-                            return getters.reduce(
-                                (prev, handler, idx, arr) => handler(this, key, this, prev, idx, [...arr]) satisfies R,
-                                result
-                            );
-                        };
-                    }
-                    return wrapperMap[key];
-                }
-
-                // 常规属性处理
-                return getters.reduce(
-                    (prev, handler, idx, arr) => handler(this, key, this[key], prev, idx, [...arr]),
-                    baseValue
-                ) satisfies R;
-            },
-        };
+        // 对于 proxy 模式，属性将通过Proxy处理
+        return descriptor;
     };
 };
 
@@ -381,27 +397,9 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
 /**
  * Setter handler decorator factory
  * Setter句柄装饰器工厂
- *
- * @factory Core decorator factory for property setters
- * @factory 属性setter的核心装饰器工厂
- * @tip Wraps property setters with custom logic
- * @tip 用自定义逻辑包装属性setter
- *
- * @template R,I - `R, I of rd_SetterHandle<R,I>`
- * @param handle - `rd_SetterHandle<R,I>(lastResult: I) => R`
- * @returns Property/Method/Auto-accessor decorator
- *          返回属性/方法/自动访问器装饰器
- *
- * @example
- * class MyClass {
- *   @$setter((_, __, v) => v * 2)
- *   num = 1; // Will be doubled on set
- * }
  */
 export function $setter<R = any, I = R>(handle: rd_SetterHandle<R, I>): PropertyDecorator & MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
-        // if (!instanceStorage.has(target)) $$init()(target, attr, descriptor);
-
         $addSetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
             return handle(thisArg, key, value, lastResult, index, handlers);
         });
@@ -411,28 +409,9 @@ export function $setter<R = any, I = R>(handle: rd_SetterHandle<R, I>): Property
 /**
  * Getter handler decorator factory
  * Getter句柄装饰器工厂
- *
- * @factory Core decorator factory for property getters
- * @factory 属性getter的核心装饰器工厂
- * @tip Wraps property getters with custom logic
- * @tip 用自定义逻辑包装属性getter
- *
- * @template R,I - `R, I of rd_SetterHandle<R,I>`
- * @param handle - `rd_SetterHandle<R,I>(lastResult: I) => R`
- * @returns Property/Method/Auto-accessor decorator
- *          返回属性/方法/自动访问器装饰器
- *
- *
- * @example
- * class MyClass {
- *   @$getter((_, __, v) => v + 100)
- *   num = 1; // Will add 100 when get
- * }
  */
 export function $getter<R = any, I = R>(handle: rd_GetterHandle<R, I>): PropertyDecorator & MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
-        // if (!instanceStorage.has(target)) $$init()(target, attr, descriptor);
-
         $addGetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
             return handle(thisArg, key, value, lastResult, index, handlers);
         });
@@ -441,55 +420,9 @@ export function $getter<R = any, I = R>(handle: rd_GetterHandle<R, I>): Property
 
 //     -------- 神器 wonderful tools --------
 
-import { conditionHandler, rejectionHandler } from "./type.handles";
-import { debugLogger } from "./api.test";
-
 /**
  * Conditional write decorator factory
  * 条件写入装饰器工厂
- *
- * @factory Core decorator for conditional property writes
- * @factory 属性条件写入的核心装饰器
- * @tip Implements conditional logic chain for property setters
- * @tip 为属性setter实现条件逻辑链
- *
- * @template R type of return
- *          返回类型限制
- *
- * @template I type of input, with default of `R`
- *          输入类型限制，默认是`R`
- *
- * @param conditionHandles - `(conditionHandles(prevResult: I)=> {approached: bool; output: R | any | never} | bool)[]`
- * @param [rejectHandlers] - `(rejectionHandler(prevResult: I)=> {approached: bool; output: R | any | never} | bool)[]`
- *
- * @returns Property/Method/Auto-accessor decorator
- *          返回属性/方法/自动访问器装饰器
- *
- *
- * @example
- * class MyClass {
- *   @$conditionalWrite(
- *     [(_, __, v) => v > 0], // Only allow positive numbers
- *     [(_, __, v) => Math.abs(v)] // If negative, use absolute value
- *   )
- *   num = 1;
- * }
- *
- * @behavior
- * 1. Processes conditions in chain using Array.reduce()
- * 2. If all conditions pass (approached=true), returns new value
- * 3. If any condition fails:
- *    - Applies reject handlers if provided
- *    - Returns original value if no reject handlers
- *    - Can warn/throw based on __Setting configuration
- *
- * 行为：
- * 1. 使用Array.reduce()链式处理条件
- * 2. 所有条件通过时(approached=true)返回新值
- * 3. 任一条件失败时:
- *    - 应用拒绝处理函数(如果提供)
- *    - 未提供拒绝处理时返回原值
- *    - 根据__Setting配置发出警告/抛出错误
  */
 export const $conditionalWrite = <R = any, I = R>(
     errorType: "ignore" | "Warn" | "Error",
@@ -504,15 +437,7 @@ export const $conditionalWrite = <R = any, I = R>(
                 return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
             },
             { approached: false, output: lastResult }
-        ) satisfies
-            | {
-                  approached: true;
-                  output: R;
-              }
-            | {
-                  approached: false;
-                  output: typeof rejectHandlers extends [] | undefined ? never : any;
-              };
+        );
 
         if (callResult.approached) return callResult.output;
 
@@ -527,19 +452,7 @@ export const $conditionalWrite = <R = any, I = R>(
                     approached: true,
                     output: lastResult,
                 }
-            ) satisfies
-                | {
-                      approached: true;
-                      output: R;
-                  }
-                | {
-                      approached: false;
-                      output: typeof rejectHandlers extends [] | undefined
-                          ? never
-                          : typeof __Setting.veryStrict extends true /* allow warn? */
-                          ? never
-                          : any;
-                  };
+            );
 
             if (rejectResult.approached) return rejectResult.output;
 
@@ -552,56 +465,13 @@ export const $conditionalWrite = <R = any, I = R>(
                     throw new Error(`🚫 ${warningMsg}`);
             }
         }
-        return (thisArg as any)[key]; // Fallback to original value
+        return (thisArg as any)[key];
     });
 };
 
 /**
  * Conditional read decorator factory
  * 条件读取装饰器工厂
- *
- * @factory Core decorator for conditional property reads
- * @factory 属性条件读取的核心装饰器
- * @tip Implements conditional logic chain for property getters
- * @tip 为属性getter实现条件逻辑链
- *
- * @template R type of return
- *          返回类型限制
- *
- * @template I type of input, with default of `R`
- *          输入类型限制，默认是`R`
- *
- * @param conditionHandles - `(conditionHandles(prevResult: I)=> {approached: bool; output: R | any | never} | bool)[]`
- * @param [rejectHandlers] - `(rejectionHandler(prevResult: I)=> {approached: bool; output: R | any | never} | bool)[]`
- *
- * @returns Property/Method/Auto-accessor decorator
- *          返回属性/方法/自动访问器装饰器
- *
- *
- * @example
- * class MyClass {
- *   @$conditionalRead(
- *     [(_, __, v) => v !== undefined], // Only allow defined values
- *     [() => 'default'] // Return 'default' if undefined
- *   )
- *   data?: string;
- * }
- *
- * @behavior
- * 1. Processes conditions in chain using Array.reduce()
- * 2. If all conditions pass (approached=true), returns original value
- * 3. If any condition fails:
- *    - Applies reject handlers if provided
- *    - Returns undefined if no reject handlers
- *    - Can warn/throw based on __Setting configuration
- *
- * 行为：
- * 1. 使用Array.reduce()链式处理条件
- * 2. 所有条件通过时(approached=true)返回原值
- * 3. 任一条件失败时:
- *    - 应用拒绝处理函数(如果提供)
- *    - 未提供拒绝处理时返回undefined
- *    - 根据__Setting配置发出警告/抛出错误
  */
 export const $conditionalRead = <R = any, I = R>(
     errorType: "ignore" | "Warn" | "Error",
@@ -616,15 +486,7 @@ export const $conditionalRead = <R = any, I = R>(
                 return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
             },
             { approached: false, output: lastResult }
-        ) satisfies
-            | {
-                  approached: true;
-                  output: R;
-              }
-            | {
-                  approached: false;
-                  output: typeof rejectHandlers extends [] | undefined ? never : any;
-              };
+        );
 
         if (callResult.approached) return callResult.output;
 
@@ -639,19 +501,7 @@ export const $conditionalRead = <R = any, I = R>(
                     approached: true,
                     output: lastResult,
                 }
-            ) satisfies
-                | {
-                      approached: true;
-                      output: R;
-                  }
-                | {
-                      approached: false;
-                      output: typeof rejectHandlers extends [] | undefined
-                          ? never
-                          : typeof __Setting.veryStrict extends true /* allow warn? */
-                          ? never
-                          : any;
-                  };
+            );
             if (rejectResult.approached) return rejectResult.output;
 
             const warningMsg = `Property '${String(key)}' read rejected. Final output: ${JSON.stringify(rejectResult.output)}`;
@@ -663,7 +513,7 @@ export const $conditionalRead = <R = any, I = R>(
                     throw new Error(`🚫 ${warningMsg}`);
             }
         }
-        return void 0; // Fallback to void
+        return void 0;
     });
 };
 
