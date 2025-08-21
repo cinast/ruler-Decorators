@@ -19,31 +19,105 @@ import { __Setting } from "./moduleMeta";
 import { rd_GetterHandle, rd_SetterHandle, conditionHandler, rejectionHandler } from "./type.handles";
 import { debugLogger } from "./api.test";
 
-declare type rd_descriptor = PropertyDescriptor & {
-    value: any;
-    proxy: any;
-    get(): any;
-    set(v: any): void;
-    interceptionModes: $types;
+/**
+ * mod list
+ * - proxy     (class proxy)
+ * - proxy     (property proxy)
+ *              *used on `Array` `Object`
+ * - accessor  (normal getter&setter)
+ * - accessor* (specific accessor for function param)
+ */
+export declare type $interceptionModes = "class-proxy" | "property-proxy" | "accessor" | "function-param-accessor";
+export declare type decoratorType = "ClassDecorator" | "PropertyDecorator" | "MethodDecorator" | "ParameterDecorator";
+
+export declare type rd_descriptor = {
+    proxyInstance?: object;
+    originalInstance?: object;
+    setters?: rd_SetterHandle[];
+    getters?: rd_GetterHandle[];
+    interceptionEnabled: boolean;
+    propertyMode?: "proxy" | "accessor";
+    interceptionModes: $interceptionModes;
+    globalProxyEnabled?: boolean;
+
+    configurable?: boolean;
+    enumerable?: boolean;
+    writable?: boolean;
+
+    metadata?: {
+        createdAt: Date;
+        lastModified: Date;
+        version: string;
+        dependencies?: string[];
+    };
 };
-/**
- *
- */
-const Storage = new WeakMap();
 
 /**
- * Storage for property handler chains
- * 存储每个属性的句柄链
+ * Unified Storage for ruler decorators
+ * 统一的ruler装饰器存储
  */
-const setterHandlers = new WeakMap<object, Map<string | symbol, rd_SetterHandle[]>>();
-const getterHandlers = new WeakMap<object, Map<string | symbol, rd_GetterHandle[]>>();
+const Storage = new WeakMap<object, Map<string | symbol, rd_descriptor>>();
 
 /**
- * Storage for original values and proxy instances
- * 存储原始值和代理实例
+ * Get or create descriptor for target property
+ * 获取或创建目标属性的描述符
  */
-const originalInstances = new WeakMap<object, object>();
-const proxyInstances = new WeakMap<object, object>();
+function getDescriptor(target: object, propertyKey: string | symbol): rd_descriptor {
+    let targetMap = Storage.get(target);
+    if (!targetMap) {
+        targetMap = new Map();
+        Storage.set(target, targetMap);
+    }
+
+    let descriptor = targetMap.get(propertyKey);
+    if (!descriptor) {
+        descriptor = {
+            interceptionEnabled: false,
+            interceptionModes: "accessor",
+            setters: [],
+            getters: [],
+        };
+        targetMap.set(propertyKey, descriptor);
+    }
+    return descriptor;
+}
+
+/**
+ * Set descriptor for target property
+ * 设置目标属性的描述符
+ */
+function setDescriptor(target: object, propertyKey: string | symbol, descriptor: rd_descriptor): void {
+    let targetMap = Storage.get(target);
+    if (!targetMap) {
+        targetMap = new Map();
+        Storage.set(target, targetMap);
+    }
+    targetMap.set(propertyKey, descriptor);
+}
+
+/**
+ * Check if target has any descriptors
+ * 检查目标是否有任何描述符
+ */
+function hasDescriptors(target: object): boolean {
+    const targetMap = Storage.get(target);
+    return !!targetMap && targetMap.size > 0;
+}
+
+/**
+ * Get all descriptors for target
+ * 获取目标的所有描述符
+ */
+function getAllDescriptors(target: object): Map<string | symbol, rd_descriptor> | undefined {
+    return Storage.get(target);
+}
+
+// 检查环境是否支持 Proxy
+if (typeof Proxy === "undefined") {
+    console.warn("This environment don't suppose Proxy");
+    __Setting["Optimize.$$init.disableUsingProxy"] = true;
+    __Setting["Optimize.$$init.defaultMod"] = "accessor";
+}
 
 /**
  * Automatic mode selector for rulerDecorators
@@ -54,7 +128,7 @@ function rd_executeModeSelector(
     decoratorType: Exclude<decoratorType, "ParameterDecorator">,
     target: any,
     propertiesWithRuleApplied: number
-): $modTypes {
+): $interceptionModes {
     // 1. 检查是否强制禁用 Proxy
     if (__Setting["Optimize.$$init.disableUsingProxy"]) {
         return "accessor";
@@ -97,13 +171,18 @@ function rd_executeModeSelector(
 function getDecoratedPropertyCount(target: any): number {
     if (!target) return 0;
 
-    const setters = setterHandlers.get(target) || new Map();
-    const getters = getterHandlers.get(target) || new Map();
+    const targetMap = Storage.get(target);
+    if (!targetMap) return 0;
 
-    // 合并所有有处理器的属性键
-    const allKeys = new Set<string | symbol>([...setters.keys(), ...getters.keys()]);
+    // 计算有处理器的属性数量
+    let count = 0;
+    for (const descriptor of targetMap.values()) {
+        if (descriptor.setters?.length || descriptor.getters?.length) {
+            count++;
+        }
+    }
 
-    return allKeys.size;
+    return count;
 }
 
 //#region
@@ -112,19 +191,9 @@ function getDecoratedPropertyCount(target: any): number {
  * 添加 setter 句柄到指定属性
  */
 export function $addSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): void {
-    let handlersMap = setterHandlers.get(target);
-    if (!handlersMap) {
-        handlersMap = new Map();
-        setterHandlers.set(target, handlersMap);
-    }
-
-    let handlers = handlersMap.get(propertyKey);
-    if (!handlers) {
-        handlers = [];
-        handlersMap.set(propertyKey, handlers);
-    }
-
-    handlers.push(handler);
+    const descriptor = getDescriptor(target, propertyKey);
+    descriptor.setters = [...(descriptor.setters || []), handler];
+    setDescriptor(target, propertyKey, descriptor);
 }
 
 /**
@@ -132,19 +201,9 @@ export function $addSetterHandler(target: object, propertyKey: string | symbol, 
  * 添加 getter 句柄到指定属性
  */
 export function $addGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): void {
-    let handlersMap = getterHandlers.get(target);
-    if (!handlersMap) {
-        handlersMap = new Map();
-        getterHandlers.set(target, handlersMap);
-    }
-
-    let handlers = handlersMap.get(propertyKey);
-    if (!handlers) {
-        handlers = [];
-        handlersMap.set(propertyKey, handlers);
-    }
-
-    handlers.push(handler);
+    const descriptor = getDescriptor(target, propertyKey);
+    descriptor.getters = [...(descriptor.getters || []), handler];
+    setDescriptor(target, propertyKey, descriptor);
 }
 
 /**
@@ -152,16 +211,14 @@ export function $addGetterHandler(target: object, propertyKey: string | symbol, 
  * 从指定属性移除 setter 句柄
  */
 export function $removeSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): boolean {
-    const handlersMap = setterHandlers.get(target);
-    if (!handlersMap) return false;
+    const descriptor = getDescriptor(target, propertyKey);
+    if (!descriptor.setters || descriptor.setters.length === 0) return false;
 
-    const handlers = handlersMap.get(propertyKey);
-    if (!handlers) return false;
-
-    const index = handlers.indexOf(handler);
+    const index = descriptor.setters.indexOf(handler);
     if (index === -1) return false;
 
-    handlers.splice(index, 1);
+    descriptor.setters.splice(index, 1);
+    setDescriptor(target, propertyKey, descriptor);
     return true;
 }
 
@@ -170,16 +227,14 @@ export function $removeSetterHandler(target: object, propertyKey: string | symbo
  * 从指定属性移除 getter 句柄
  */
 export function $removeGetterHandler(target: object, propertyKey: string | symbol, handler: rd_GetterHandle): boolean {
-    const handlersMap = getterHandlers.get(target);
-    if (!handlersMap) return false;
+    const descriptor = getDescriptor(target, propertyKey);
+    if (!descriptor.getters || descriptor.getters.length === 0) return false;
 
-    const handlers = handlersMap.get(propertyKey);
-    if (!handlers) return false;
-
-    const index = handlers.indexOf(handler);
+    const index = descriptor.getters.indexOf(handler);
     if (index === -1) return false;
 
-    handlers.splice(index, 1);
+    descriptor.getters.splice(index, 1);
+    setDescriptor(target, propertyKey, descriptor);
     return true;
 }
 
@@ -190,8 +245,9 @@ export function $removeGetterHandler(target: object, propertyKey: string | symbo
  * 检查属性是否有处理器
  */
 function hasHandlersFor(target: object, propertyKey: string | symbol): boolean {
-    const hasSetter = Boolean(setterHandlers.get(target)?.get(propertyKey)?.length);
-    const hasGetter = Boolean(getterHandlers.get(target)?.get(propertyKey)?.length);
+    const descriptor = getDescriptor(target, propertyKey);
+    const hasSetter = Boolean(descriptor.setters?.length);
+    const hasGetter = Boolean(descriptor.getters?.length);
     return hasSetter || hasGetter;
 }
 
@@ -200,7 +256,9 @@ function hasHandlersFor(target: object, propertyKey: string | symbol): boolean {
  * 应用属性的 getter 处理器
  */
 function applyGetterHandlers(receiver: any, propertyKey: string | symbol, value: any): any {
-    const getters = getterHandlers.get(Object.getPrototypeOf(receiver))?.get(propertyKey) || [];
+    const prototype = Object.getPrototypeOf(receiver);
+    const descriptor = getDescriptor(prototype, propertyKey);
+    const getters = descriptor.getters || [];
     if (getters.length === 0) return value;
 
     return getters.reduce((prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]), value);
@@ -211,7 +269,9 @@ function applyGetterHandlers(receiver: any, propertyKey: string | symbol, value:
  * 应用属性的 setter 处理器
  */
 function applySetterHandlers(receiver: any, propertyKey: string | symbol, value: any): any {
-    const setters = setterHandlers.get(Object.getPrototypeOf(receiver))?.get(propertyKey) || [];
+    const prototype = Object.getPrototypeOf(receiver);
+    const descriptor = getDescriptor(prototype, propertyKey);
+    const setters = descriptor.setters || [];
     if (setters.length === 0) return value;
 
     return setters.reduce((prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]), value);
@@ -222,8 +282,17 @@ function applySetterHandlers(receiver: any, propertyKey: string | symbol, value:
  * 为实例创建全局代理（拦截所有属性）
  */
 function createGlobalProxy(instance: any, prototype: any): any {
-    if (proxyInstances.has(instance)) {
-        return proxyInstances.get(instance);
+    // 检查是否已经有代理实例
+    const allDescriptors = getAllDescriptors(prototype);
+    if (allDescriptors) {
+        for (const descriptor of allDescriptors.values()) {
+            if (descriptor.proxyInstance === instance) {
+                return descriptor.originalInstance;
+            }
+            if (descriptor.originalInstance === instance) {
+                return descriptor.proxyInstance;
+            }
+        }
     }
 
     const proxy = new Proxy(instance, {
@@ -234,7 +303,8 @@ function createGlobalProxy(instance: any, prototype: any): any {
             let value = Reflect.get(target, propertyKey, receiver);
 
             // 检查是否有属性级处理器
-            const getters = getterHandlers.get(prototype)?.get(propertyKey) || [];
+            const descriptor = getDescriptor(prototype, propertyKey);
+            const getters = descriptor.getters || [];
 
             if (getters.length > 0) {
                 // 应用属性级getter处理链
@@ -256,7 +326,8 @@ function createGlobalProxy(instance: any, prototype: any): any {
             debugLogger(console.log, "Global Proxy setter triggered for", propertyKey, "with value", value);
 
             // 检查是否有属性级处理器
-            const setters = setterHandlers.get(prototype)?.get(propertyKey) || [];
+            const descriptor = getDescriptor(prototype, propertyKey);
+            const setters = descriptor.setters || [];
 
             let processedValue = value;
 
@@ -273,8 +344,15 @@ function createGlobalProxy(instance: any, prototype: any): any {
         },
     });
 
-    proxyInstances.set(instance, proxy);
-    originalInstances.set(proxy, instance);
+    // 存储代理和原始实例的映射关系
+    const targetMap = Storage.get(prototype);
+    if (targetMap) {
+        for (const [propertyKey, descriptor] of targetMap.entries()) {
+            descriptor.proxyInstance = proxy;
+            descriptor.originalInstance = instance;
+            targetMap.set(propertyKey, descriptor);
+        }
+    }
 
     return proxy;
 }
@@ -284,13 +362,26 @@ function createGlobalProxy(instance: any, prototype: any): any {
  * 为实例创建属性代理（只拦截被装饰的属性）
  */
 function createPropertyProxy(instance: any, prototype: any): any {
-    // 获取属性模式配置
-    const modes = propertyInterceptionModes.get(prototype) || new Map();
+    // 检查是否已经有代理实例
+    const allDescriptors = getAllDescriptors(prototype);
+    if (allDescriptors) {
+        for (const descriptor of allDescriptors.values()) {
+            if (descriptor.proxyInstance === instance) {
+                return descriptor.originalInstance;
+            }
+            if (descriptor.originalInstance === instance) {
+                return descriptor.proxyInstance;
+            }
+        }
+    }
 
     const proxy = new Proxy(instance, {
         get(target, propertyKey, receiver) {
+            // 获取属性描述符
+            const descriptor = getDescriptor(prototype, propertyKey);
+
             // 只拦截配置为Proxy模式的属性
-            if (modes.get(propertyKey) === "proxy") {
+            if (descriptor.propertyMode === "proxy") {
                 debugLogger(console.log, "Property Proxy getter triggered for", propertyKey);
                 let value = Reflect.get(target, propertyKey, receiver);
                 return applyGetterHandlers(receiver, propertyKey, value);
@@ -301,8 +392,11 @@ function createPropertyProxy(instance: any, prototype: any): any {
         },
 
         set(target, propertyKey, value, receiver) {
+            // 获取属性描述符
+            const descriptor = getDescriptor(prototype, propertyKey);
+
             // 只拦截配置为Proxy模式的属性
-            if (modes.get(propertyKey) === "proxy") {
+            if (descriptor.propertyMode === "proxy") {
                 debugLogger(console.log, "Property Proxy setter triggered for", propertyKey, "with value", value);
                 const processedValue = applySetterHandlers(receiver, propertyKey, value);
                 return Reflect.set(target, propertyKey, processedValue, receiver);
@@ -314,22 +408,30 @@ function createPropertyProxy(instance: any, prototype: any): any {
     });
 
     // 为配置为Accessor模式的属性创建访问器
-    for (const [propertyKey, mode] of modes.entries()) {
-        if (mode === "accessor") {
-            let value = instance[propertyKey];
+    const targetMap = Storage.get(prototype);
+    if (targetMap) {
+        for (const [propertyKey, descriptor] of targetMap.entries()) {
+            if (descriptor.propertyMode === "accessor") {
+                let value = instance[propertyKey];
 
-            Object.defineProperty(proxy, propertyKey, {
-                get: () => {
-                    debugLogger(console.log, "Accessor getter triggered for", propertyKey);
-                    return applyGetterHandlers(proxy, propertyKey, value);
-                },
-                set: (newValue) => {
-                    debugLogger(console.log, "Accessor setter triggered for", propertyKey, "with value", newValue);
-                    value = applySetterHandlers(proxy, propertyKey, newValue);
-                },
-                enumerable: true,
-                configurable: true,
-            });
+                Object.defineProperty(proxy, propertyKey, {
+                    get: () => {
+                        debugLogger(console.log, "Accessor getter triggered for", propertyKey);
+                        return applyGetterHandlers(proxy, propertyKey, value);
+                    },
+                    set: (newValue) => {
+                        debugLogger(console.log, "Accessor setter triggered for", propertyKey, "with value", newValue);
+                        value = applySetterHandlers(proxy, propertyKey, newValue);
+                    },
+                    enumerable: true,
+                    configurable: true,
+                });
+            }
+
+            // 存储代理和原始实例的映射关系
+            descriptor.proxyInstance = proxy;
+            descriptor.originalInstance = instance;
+            targetMap.set(propertyKey, descriptor);
         }
     }
 
@@ -343,11 +445,15 @@ function createPropertyProxy(instance: any, prototype: any): any {
 function createAccessorInterception(instance: any, targetPrototype: any): any {
     // 获取所有有处理器的属性
     const handlerProperties = new Set<string | symbol>();
-    const settersMap = setterHandlers.get(targetPrototype) || new Map();
-    const gettersMap = getterHandlers.get(targetPrototype) || new Map();
+    const targetMap = Storage.get(targetPrototype);
 
-    for (const key of settersMap.keys()) handlerProperties.add(key);
-    for (const key of gettersMap.keys()) handlerProperties.add(key);
+    if (targetMap) {
+        for (const [propertyKey, descriptor] of targetMap.entries()) {
+            if (descriptor.setters?.length || descriptor.getters?.length) {
+                handlerProperties.add(propertyKey);
+            }
+        }
+    }
 
     // 为每个有处理器的属性创建访问器
     for (const propertyKey of handlerProperties) {
@@ -379,14 +485,13 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
         // 只注册处理器，不处理模式选择
         debugLogger(console.log, "$$init decorator applied to:", target?.name || target, propertyKey, descriptor);
 
-        // 初始化handlers
-        const initHandlers = (map: WeakMap<any, any>, t: any) => !map.has(t) && map.set(t, new Map());
-        initHandlers(setterHandlers, target);
-        initHandlers(getterHandlers, target);
+        // 初始化Storage
+        if (!Storage.has(target)) {
+            Storage.set(target, new Map());
+        }
 
-        if (typeof target === "function" && target.prototype) {
-            initHandlers(setterHandlers, target.prototype);
-            initHandlers(getterHandlers, target.prototype);
+        if (typeof target === "function" && target.prototype && !Storage.has(target.prototype)) {
+            Storage.set(target.prototype, new Map());
         }
 
         // === 类装饰器处理 ===
@@ -399,7 +504,12 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
                         debugLogger(console.log, "Decorated class constructor called");
 
                         // 根据是否启用全局Proxy选择创建方式
-                        if (globalProxyEnabled.get(target.prototype)) {
+                        const prototypeMap = Storage.get(target.prototype);
+                        const hasGlobalProxy = prototypeMap
+                            ? Array.from(prototypeMap.values()).some((d) => d.globalProxyEnabled)
+                            : false;
+
+                        if (hasGlobalProxy) {
                             debugLogger(console.log, "Using global proxy mode");
                             return createGlobalProxy(this, target.prototype);
                         } else {
@@ -418,27 +528,25 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
 
         // === 初始化句柄存储 ===
         // 初始化 setter 句柄
-        let settersMap = setterHandlers.get(targetObj);
-        if (!settersMap) {
-            settersMap = new Map();
-            setterHandlers.set(targetObj, settersMap);
+        const rdDescriptor = getDescriptor(targetObj, key);
+        if (initialSetters.length > 0) {
+            rdDescriptor.setters = [...(rdDescriptor.setters || []), ...initialSetters];
+            setDescriptor(targetObj, key, rdDescriptor);
         }
-
-        if (!settersMap.has(key)) settersMap.set(key, [...initialSetters]);
 
         // 初始化 getter 句柄
-        let gettersMap = getterHandlers.get(targetObj);
-        if (!gettersMap) {
-            gettersMap = new Map();
-            getterHandlers.set(targetObj, gettersMap);
+        if (initialGetters.length > 0) {
+            rdDescriptor.getters = [...(rdDescriptor.getters || []), ...initialGetters];
+            setDescriptor(targetObj, key, rdDescriptor);
         }
 
-        if (!gettersMap.has(key)) gettersMap.set(key, [...initialGetters]);
-
         // 对于没有启用全局Proxy的情况，需要处理属性级拦截
-        if (!globalProxyEnabled.get(targetObj) && descriptor) {
+        const targetMap = Storage.get(targetObj);
+        const hasGlobalProxy = targetMap ? Array.from(targetMap.values()).some((d) => d.globalProxyEnabled) : false;
+
+        if (!hasGlobalProxy && descriptor) {
             // 获取属性模式（默认为Proxy）
-            const modes = propertyInterceptionModes.get(targetObj) || new Map();
+            const modes = getPropertyModes(targetObj);
             const mode = modes.get(key) || "proxy";
 
             if (mode === "accessor") {
@@ -609,7 +717,9 @@ export function ClassProxy(): ClassDecorator {
     return function (target: any) {
         // 标记该类启用全局Proxy
         const prototype = target.prototype;
-        globalProxyEnabled.set(prototype, true);
+        const descriptor = getDescriptor(prototype, Symbol.for("globalProxy"));
+        descriptor.globalProxyEnabled = true;
+        setDescriptor(prototype, Symbol.for("globalProxy"), descriptor);
 
         // 返回修改后的类
         return class extends target {
@@ -649,18 +759,18 @@ export function PropertyAccessor(): PropertyDecorator {
 
 // ==================== 存储结构 ====================
 
-// 存储全局Proxy启用状态
-const globalProxyEnabled = new WeakMap<any, boolean>();
-
-// 存储每个类的属性拦截模式
-const propertyInterceptionModes = new WeakMap<any, Map<string | symbol, "proxy" | "accessor">>();
-
 // 获取或创建属性模式映射
 function getPropertyModes(target: any): Map<string | symbol, "proxy" | "accessor"> {
-    let modes = propertyInterceptionModes.get(target);
-    if (!modes) {
-        modes = new Map();
-        propertyInterceptionModes.set(target, modes);
+    const targetMap = Storage.get(target);
+    if (!targetMap) {
+        return new Map();
+    }
+
+    const modes = new Map<string | symbol, "proxy" | "accessor">();
+    for (const [propertyKey, descriptor] of targetMap.entries()) {
+        if (descriptor.propertyMode) {
+            modes.set(propertyKey, descriptor.propertyMode);
+        }
     }
     return modes;
 }
