@@ -37,7 +37,7 @@ export const __Setting: {
      */
     veryStrict: boolean;
 
-    "Optimize.$$init.defaultMod": "global-proxy" | "property-proxy" | "accessor" | "auto";
+    "Optimize.$$init.defaultMod": "proxy" | "accessor";
     "Optimize.$$init.disableUsingProxy": boolean;
     "Optimize.$$init.autoUseProxyWhenRuledKeysMoreThan": bigint;
 
@@ -74,7 +74,7 @@ export const __Setting: {
 } = {
     veryStrict: false,
     "Optimize.$$init.autoUseProxyWhenRuledKeysMoreThan": 10n,
-    "Optimize.$$init.defaultMod": "global-proxy",
+    "Optimize.$$init.defaultMod": "accessor",
     "Optimize.$$init.disableUsingProxy": false,
     "$conditionalWR.defaultErrorType": "Error",
     "debugLogger.logInnerDetails": false,

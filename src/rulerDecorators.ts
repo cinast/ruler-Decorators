@@ -19,6 +19,18 @@ import { __Setting } from "./moduleMeta";
 import { rd_GetterHandle, rd_SetterHandle, conditionHandler, rejectionHandler } from "./type.handles";
 import { debugLogger } from "./api.test";
 
+declare type rd_descriptor = PropertyDescriptor & {
+    value: any;
+    proxy: any;
+    get(): any;
+    set(v: any): void;
+    interceptionModes: $types;
+};
+/**
+ *
+ */
+const Storage = new WeakMap();
+
 /**
  * Storage for property handler chains
  * 存储每个属性的句柄链
@@ -34,55 +46,48 @@ const originalInstances = new WeakMap<object, object>();
 const proxyInstances = new WeakMap<object, object>();
 
 /**
- * Mode configuration for each class
- * 每个类的模式配置
- */
-const classModes = new WeakMap<object, "global-proxy" | "property-proxy" | "accessor">();
-
-/**
  * Automatic mode selector for rulerDecorators
- * 根据配置和运行时条件自动选择最佳模式
+ * 根据配置和装饰器类型及运行时条件自动选择最佳模式
+ * @returns see $modTypes
  */
-function modeSelector(target: any, propertyCount: number): "global-proxy" | "property-proxy" | "accessor" {
+function rd_executeModeSelector(
+    decoratorType: Exclude<decoratorType, "ParameterDecorator">,
+    target: any,
+    propertiesWithRuleApplied: number
+): $modTypes {
     // 1. 检查是否强制禁用 Proxy
     if (__Setting["Optimize.$$init.disableUsingProxy"]) {
-        debugLogger(console.log, "Mode selector: Proxy disabled by config, using accessor mode");
         return "accessor";
     }
 
     // 2. 检查环境是否支持 Proxy
     if (typeof Proxy === "undefined") {
-        debugLogger(console.log, "Mode selector: Proxy not supported in environment, using accessor mode");
         return "accessor";
     }
 
-    // 3. 检查是否超过属性数量阈值
-    const threshold = Number(__Setting["Optimize.$$init.autoUseProxyWhenRuledKeysMoreThan"]);
-    if (propertyCount > threshold) {
-        debugLogger(
-            console.log,
-            `Mode selector: ${propertyCount} properties exceed threshold ${threshold}, using global-proxy mode`
-        );
-        return "global-proxy";
+    // 3. 筛选可确定的
+    switch (decoratorType) {
+        case "ClassDecorator":
+            return __Setting["Optimize.$$init.disableUsingProxy"] ? "accessor" : "class-proxy";
+        case "MethodDecorator":
+            return "function-param-accessor";
     }
 
-    // 4. 检查默认模式配置
-    const defaultMode = __Setting["Optimize.$$init.defaultMod"];
-    if (defaultMode !== "auto") {
-        debugLogger(console.log, `Mode selector: Using configured default mode: ${defaultMode}`);
-        return defaultMode as "global-proxy" | "property-proxy" | "accessor";
+    // target: [] | {...}
+    // 4. 对数组特别设定
+    if (target instanceof Array) {
+        return __Setting["Optimize.$$init.disableUsingProxy"] ? "accessor" : "property-proxy";
     }
 
-    // 5. 基于启发式规则选择模式
-    // 如果是大型对象或需要高性能，使用属性局部 Proxy
-    if (propertyCount > 0 && propertyCount <= 5) {
-        debugLogger(console.log, `Mode selector: ${propertyCount} properties, using property-proxy mode`);
+    // target: {...}
+    // 5.对普遍对象类 检查是否超过属性数量阈值
+    const threshold = __Setting["Optimize.$$init.autoUseProxyWhenRuledKeysMoreThan"];
+    if (propertiesWithRuleApplied > threshold) {
         return "property-proxy";
     }
 
-    // 6. 默认回退到属性局部 Proxy (平衡性能与功能)
-    debugLogger(console.log, "Mode selector: Using fallback property-proxy mode");
-    return "property-proxy";
+    // 6. 回退到默认值
+    return __Setting["Optimize.$$init.defaultMod"] == "proxy" ? "property-proxy" : "accessor";
 }
 
 /**
@@ -101,6 +106,7 @@ function getDecoratedPropertyCount(target: any): number {
     return allKeys.size;
 }
 
+//#region
 /**
  * Add setter handler to specified property
  * 添加 setter 句柄到指定属性
@@ -176,6 +182,8 @@ export function $removeGetterHandler(target: object, propertyKey: string | symbo
     handlers.splice(index, 1);
     return true;
 }
+
+//#endregion
 
 /**
  * Check if a property has handlers
@@ -597,7 +605,7 @@ export * from "./extraLibraries/extraMod.router";
  * 全局Proxy类装饰器
  * 显式启用全局代理拦截
  */
-export function GlobalProxy(): ClassDecorator {
+export function ClassProxy(): ClassDecorator {
     return function (target: any) {
         // 标记该类启用全局Proxy
         const prototype = target.prototype;
