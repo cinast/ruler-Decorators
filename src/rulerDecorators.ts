@@ -213,7 +213,7 @@ function applySetterHandlers(receiver: any, propertyKey: string | symbol, value:
  * Create global proxy for instance (intercept all properties)
  * 为实例创建全局代理（拦截所有属性）
  */
-function createGlobalProxy(instance: any, target: any): any {
+function createGlobalProxy(instance: any, prototype: any): any {
     if (proxyInstances.has(instance)) {
         return proxyInstances.get(instance);
     }
@@ -225,18 +225,18 @@ function createGlobalProxy(instance: any, target: any): any {
             // 获取原始值
             let value = Reflect.get(target, propertyKey, receiver);
 
-            // 获取 getter 处理链
-            const getters = getterHandlers.get(target)?.get(propertyKey) || [];
+            // 检查是否有属性级处理器
+            const getters = getterHandlers.get(prototype)?.get(propertyKey) || [];
 
             if (getters.length > 0) {
-                // 应用 getter 处理链
+                // 应用属性级getter处理链
                 value = getters.reduce(
                     (prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]),
                     value
                 );
             }
 
-            // 如果是函数，确保绑定正确的 this 上下文
+            // 如果是函数，确保绑定正确的this上下文
             if (typeof value === "function") {
                 return value.bind(receiver);
             }
@@ -247,13 +247,13 @@ function createGlobalProxy(instance: any, target: any): any {
         set(target, propertyKey, value, receiver) {
             debugLogger(console.log, "Global Proxy setter triggered for", propertyKey, "with value", value);
 
-            // 获取 setter 处理链
-            const setters = setterHandlers.get(target)?.get(propertyKey) || [];
+            // 检查是否有属性级处理器
+            const setters = setterHandlers.get(prototype)?.get(propertyKey) || [];
 
             let processedValue = value;
 
             if (setters.length > 0) {
-                // 应用 setter 处理链
+                // 应用属性级setter处理链
                 processedValue = setters.reduce(
                     (prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]),
                     value
@@ -275,15 +275,14 @@ function createGlobalProxy(instance: any, target: any): any {
  * Create property proxy for instance (intercept only decorated properties)
  * 为实例创建属性代理（只拦截被装饰的属性）
  */
-function createPropertyProxy(instance: any, target: any): any {
-    if (proxyInstances.has(instance)) {
-        return proxyInstances.get(instance);
-    }
+function createPropertyProxy(instance: any, prototype: any): any {
+    // 获取属性模式配置
+    const modes = propertyInterceptionModes.get(prototype) || new Map();
 
     const proxy = new Proxy(instance, {
         get(target, propertyKey, receiver) {
-            // 只拦截有处理器的属性
-            if (hasHandlersFor(target, propertyKey)) {
+            // 只拦截配置为Proxy模式的属性
+            if (modes.get(propertyKey) === "proxy") {
                 debugLogger(console.log, "Property Proxy getter triggered for", propertyKey);
                 let value = Reflect.get(target, propertyKey, receiver);
                 return applyGetterHandlers(receiver, propertyKey, value);
@@ -294,8 +293,8 @@ function createPropertyProxy(instance: any, target: any): any {
         },
 
         set(target, propertyKey, value, receiver) {
-            // 只拦截有处理器的属性
-            if (hasHandlersFor(target, propertyKey)) {
+            // 只拦截配置为Proxy模式的属性
+            if (modes.get(propertyKey) === "proxy") {
                 debugLogger(console.log, "Property Proxy setter triggered for", propertyKey, "with value", value);
                 const processedValue = applySetterHandlers(receiver, propertyKey, value);
                 return Reflect.set(target, propertyKey, processedValue, receiver);
@@ -306,8 +305,25 @@ function createPropertyProxy(instance: any, target: any): any {
         },
     });
 
-    proxyInstances.set(instance, proxy);
-    originalInstances.set(proxy, instance);
+    // 为配置为Accessor模式的属性创建访问器
+    for (const [propertyKey, mode] of modes.entries()) {
+        if (mode === "accessor") {
+            let value = instance[propertyKey];
+
+            Object.defineProperty(proxy, propertyKey, {
+                get: () => {
+                    debugLogger(console.log, "Accessor getter triggered for", propertyKey);
+                    return applyGetterHandlers(proxy, propertyKey, value);
+                },
+                set: (newValue) => {
+                    debugLogger(console.log, "Accessor setter triggered for", propertyKey, "with value", newValue);
+                    value = applySetterHandlers(proxy, propertyKey, newValue);
+                },
+                enumerable: true,
+                configurable: true,
+            });
+        }
+    }
 
     return proxy;
 }
@@ -350,31 +366,10 @@ function createAccessorInterception(instance: any, targetPrototype: any): any {
  * Decorator factory: creates adaptive decorator with multiple mode implementation
  * 装饰器工厂：使用多模式实现创建自适应装饰器
  */
-export const $$init = <T = any, R = T>(
-    initialSetters: rd_SetterHandle[] = [],
-    initialGetters: rd_GetterHandle[] = [],
-    mode: "global-proxy" | "property-proxy" | "accessor" | "auto" = "auto"
-) => {
+export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], initialGetters: rd_GetterHandle[] = []) => {
     return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
-        // 确定最终要使用的模式
-        let finalMode: "global-proxy" | "property-proxy" | "accessor";
-
-        if (mode === "auto") {
-            // 自动模式选择
-            const propertyCount = getDecoratedPropertyCount(target);
-            finalMode = modeSelector(target, propertyCount);
-        } else {
-            // 使用显式指定的模式
-            finalMode = mode;
-        }
-
-        debugLogger(console.log, "$$init decorator applied with mode:", finalMode);
-
-        // 存储类的模式配置
-        classModes.set(target, finalMode);
-        if (typeof target === "function" && target.prototype) {
-            classModes.set(target.prototype, finalMode);
-        }
+        // 只注册处理器，不处理模式选择
+        debugLogger(console.log, "$$init decorator applied to:", target?.name || target, propertyKey, descriptor);
 
         // 初始化handlers
         const initHandlers = (map: WeakMap<any, any>, t: any) => !map.has(t) && map.set(t, new Map());
@@ -395,19 +390,13 @@ export const $$init = <T = any, R = T>(
                         super(...args);
                         debugLogger(console.log, "Decorated class constructor called");
 
-                        // 根据模式返回相应的实例
-                        const mode = classModes.get(target.prototype) || finalMode;
-                        debugLogger(console.log, "Using mode:", mode);
-
-                        switch (mode) {
-                            case "global-proxy":
-                                return createGlobalProxy(this, target.prototype);
-                            case "property-proxy":
-                                return createPropertyProxy(this, target.prototype);
-                            case "accessor":
-                                return createAccessorInterception(this, target.prototype);
-                            default:
-                                return this;
+                        // 根据是否启用全局Proxy选择创建方式
+                        if (globalProxyEnabled.get(target.prototype)) {
+                            debugLogger(console.log, "Using global proxy mode");
+                            return createGlobalProxy(this, target.prototype);
+                        } else {
+                            debugLogger(console.log, "Using property-level interception mode");
+                            return createPropertyProxy(this, target.prototype);
                         }
                     }
                 };
@@ -438,29 +427,35 @@ export const $$init = <T = any, R = T>(
 
         if (!gettersMap.has(key)) gettersMap.set(key, [...initialGetters]);
 
-        // 对于 accessor 模式，需要返回修改后的属性描述符
-        if (finalMode === "accessor" && descriptor) {
-            const originalGet = descriptor.get || (() => descriptor.value);
-            const originalSet =
-                descriptor.set ||
-                ((value: any) => {
-                    descriptor.value = value;
-                });
+        // 对于没有启用全局Proxy的情况，需要处理属性级拦截
+        if (!globalProxyEnabled.get(targetObj) && descriptor) {
+            // 获取属性模式（默认为Proxy）
+            const modes = propertyInterceptionModes.get(targetObj) || new Map();
+            const mode = modes.get(key) || "proxy";
 
-            return {
-                ...descriptor,
-                get() {
-                    const value = originalGet.call(this);
-                    return applyGetterHandlers(this, key, value);
-                },
-                set(value: any) {
-                    const processedValue = applySetterHandlers(this, key, value);
-                    originalSet.call(this, processedValue);
-                },
-            };
+            if (mode === "accessor") {
+                const originalGet = descriptor.get || (() => descriptor.value);
+                const originalSet =
+                    descriptor.set ||
+                    ((value: any) => {
+                        descriptor.value = value;
+                    });
+
+                return {
+                    ...descriptor,
+                    get() {
+                        const value = originalGet.call(this);
+                        return applyGetterHandlers(this, key, value);
+                    },
+                    set(value: any) {
+                        const processedValue = applySetterHandlers(this, key, value);
+                        originalSet.call(this, processedValue);
+                    },
+                };
+            }
         }
 
-        // 对于 proxy 模式，属性将通过Proxy处理
+        // 对于Proxy模式或启用全局Proxy的情况，属性将通过Proxy处理
         return descriptor;
     };
 };
@@ -595,3 +590,69 @@ export const $conditionalRead = <R = any, I = R>(
  */
 export * as rulerDecorators from "./rulesLibrary";
 export * from "./extraLibraries/extraMod.router";
+
+// ==================== 装饰器定义 ====================
+
+/**
+ * 全局Proxy类装饰器
+ * 显式启用全局代理拦截
+ */
+export function GlobalProxy(): ClassDecorator {
+    return function (target: any) {
+        // 标记该类启用全局Proxy
+        const prototype = target.prototype;
+        globalProxyEnabled.set(prototype, true);
+
+        // 返回修改后的类
+        return class extends target {
+            constructor(...args: any[]) {
+                super(...args);
+
+                // 创建全局代理实例
+                return createGlobalProxy(this, prototype);
+            }
+        } as any;
+    };
+}
+
+/**
+ * 属性级Proxy装饰器
+ * 为特定属性启用Proxy模式拦截
+ */
+export function PropertyProxy(): PropertyDecorator {
+    return function (target: any, propertyKey: string | symbol) {
+        // 标记该属性使用Proxy模式
+        const propertyModes = getPropertyModes(target);
+        propertyModes.set(propertyKey, "proxy");
+    };
+}
+
+/**
+ * 属性级Accessor装饰器
+ * 为特定属性启用Accessor模式拦截
+ */
+export function PropertyAccessor(): PropertyDecorator {
+    return function (target: any, propertyKey: string | symbol) {
+        // 标记该属性使用Accessor模式
+        const propertyModes = getPropertyModes(target);
+        propertyModes.set(propertyKey, "accessor");
+    };
+}
+
+// ==================== 存储结构 ====================
+
+// 存储全局Proxy启用状态
+const globalProxyEnabled = new WeakMap<any, boolean>();
+
+// 存储每个类的属性拦截模式
+const propertyInterceptionModes = new WeakMap<any, Map<string | symbol, "proxy" | "accessor">>();
+
+// 获取或创建属性模式映射
+function getPropertyModes(target: any): Map<string | symbol, "proxy" | "accessor"> {
+    let modes = propertyInterceptionModes.get(target);
+    if (!modes) {
+        modes = new Map();
+        propertyInterceptionModes.set(target, modes);
+    }
+    return modes;
+}
