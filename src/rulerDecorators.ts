@@ -40,6 +40,68 @@ const proxyInstances = new WeakMap<object, object>();
 const classModes = new WeakMap<object, "global-proxy" | "property-proxy" | "accessor">();
 
 /**
+ * Automatic mode selector for rulerDecorators
+ * 根据配置和运行时条件自动选择最佳模式
+ */
+function modeSelector(target: any, propertyCount: number): "global-proxy" | "property-proxy" | "accessor" {
+    // 1. 检查是否强制禁用 Proxy
+    if (__Setting["Optimize.$$init.disableUsingProxy"]) {
+        debugLogger(console.log, "Mode selector: Proxy disabled by config, using accessor mode");
+        return "accessor";
+    }
+
+    // 2. 检查环境是否支持 Proxy
+    if (typeof Proxy === "undefined") {
+        debugLogger(console.log, "Mode selector: Proxy not supported in environment, using accessor mode");
+        return "accessor";
+    }
+
+    // 3. 检查是否超过属性数量阈值
+    const threshold = Number(__Setting["Optimize.$$init.autoUseProxyWhenRuledKeysMoreThan"]);
+    if (propertyCount > threshold) {
+        debugLogger(
+            console.log,
+            `Mode selector: ${propertyCount} properties exceed threshold ${threshold}, using global-proxy mode`
+        );
+        return "global-proxy";
+    }
+
+    // 4. 检查默认模式配置
+    const defaultMode = __Setting["Optimize.$$init.defaultMod"];
+    if (defaultMode !== "auto") {
+        debugLogger(console.log, `Mode selector: Using configured default mode: ${defaultMode}`);
+        return defaultMode as "global-proxy" | "property-proxy" | "accessor";
+    }
+
+    // 5. 基于启发式规则选择模式
+    // 如果是大型对象或需要高性能，使用属性局部 Proxy
+    if (propertyCount > 0 && propertyCount <= 5) {
+        debugLogger(console.log, `Mode selector: ${propertyCount} properties, using property-proxy mode`);
+        return "property-proxy";
+    }
+
+    // 6. 默认回退到属性局部 Proxy (平衡性能与功能)
+    debugLogger(console.log, "Mode selector: Using fallback property-proxy mode");
+    return "property-proxy";
+}
+
+/**
+ * Get the count of decorated properties for a target
+ * 获取目标对象上被装饰的属性数量
+ */
+function getDecoratedPropertyCount(target: any): number {
+    if (!target) return 0;
+
+    const setters = setterHandlers.get(target) || new Map();
+    const getters = getterHandlers.get(target) || new Map();
+
+    // 合并所有有处理器的属性键
+    const allKeys = new Set<string | symbol>([...setters.keys(), ...getters.keys()]);
+
+    return allKeys.size;
+}
+
+/**
  * Add setter handler to specified property
  * 添加 setter 句柄到指定属性
  */
@@ -291,15 +353,27 @@ function createAccessorInterception(instance: any, targetPrototype: any): any {
 export const $$init = <T = any, R = T>(
     initialSetters: rd_SetterHandle[] = [],
     initialGetters: rd_GetterHandle[] = [],
-    mode: "global-proxy" | "property-proxy" | "accessor" = "property-proxy"
+    mode: "global-proxy" | "property-proxy" | "accessor" | "auto" = "auto"
 ) => {
     return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
-        debugLogger(console.log, "$$init decorator applied to:", target?.name || target, propertyKey, descriptor, "Mode:", mode);
+        // 确定最终要使用的模式
+        let finalMode: "global-proxy" | "property-proxy" | "accessor";
+
+        if (mode === "auto") {
+            // 自动模式选择
+            const propertyCount = getDecoratedPropertyCount(target);
+            finalMode = modeSelector(target, propertyCount);
+        } else {
+            // 使用显式指定的模式
+            finalMode = mode;
+        }
+
+        debugLogger(console.log, "$$init decorator applied with mode:", finalMode);
 
         // 存储类的模式配置
-        classModes.set(target, mode);
+        classModes.set(target, finalMode);
         if (typeof target === "function" && target.prototype) {
-            classModes.set(target.prototype, mode);
+            classModes.set(target.prototype, finalMode);
         }
 
         // 初始化handlers
@@ -322,7 +396,7 @@ export const $$init = <T = any, R = T>(
                         debugLogger(console.log, "Decorated class constructor called");
 
                         // 根据模式返回相应的实例
-                        const mode = classModes.get(target.prototype) || "property-proxy";
+                        const mode = classModes.get(target.prototype) || finalMode;
                         debugLogger(console.log, "Using mode:", mode);
 
                         switch (mode) {
@@ -365,8 +439,7 @@ export const $$init = <T = any, R = T>(
         if (!gettersMap.has(key)) gettersMap.set(key, [...initialGetters]);
 
         // 对于 accessor 模式，需要返回修改后的属性描述符
-        mode = classModes.get(targetObj) || "property-proxy";
-        if (mode === "accessor" && descriptor) {
+        if (finalMode === "accessor" && descriptor) {
             const originalGet = descriptor.get || (() => descriptor.value);
             const originalSet =
                 descriptor.set ||

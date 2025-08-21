@@ -30,6 +30,9 @@ export declare const __Setting: {
      * @see readme#headlineWarn
      */
     veryStrict: boolean;
+    "Optimize.$$init.defaultMod": "global-proxy" | "property-proxy" | "accessor" | "auto";
+    "Optimize.$$init.disableUsingProxy": boolean;
+    "Optimize.$$init.autoUseProxyWhenRuledKeysMoreThan": bigint;
     /**
      * Global switch of warn or ignore when trying to change read-only property
      */

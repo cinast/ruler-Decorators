@@ -37,6 +37,10 @@ export const __Setting: {
      */
     veryStrict: boolean;
 
+    "Optimize.$$init.defaultMod": "global-proxy" | "property-proxy" | "accessor" | "auto";
+    "Optimize.$$init.disableUsingProxy": boolean;
+    "Optimize.$$init.autoUseProxyWhenRuledKeysMoreThan": bigint;
+
     /**
      * Global switch of warn or ignore when trying to change read-only property
      */
@@ -69,6 +73,9 @@ export const __Setting: {
     godMod: () => void;
 } = {
     veryStrict: false,
+    "Optimize.$$init.autoUseProxyWhenRuledKeysMoreThan": 10n,
+    "Optimize.$$init.defaultMod": "global-proxy",
+    "Optimize.$$init.disableUsingProxy": false,
     "$conditionalWR.defaultErrorType": "Error",
     "debugLogger.logInnerDetails": false,
     "$debug.allowUsing": true,
