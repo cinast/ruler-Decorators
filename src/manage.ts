@@ -25,7 +25,7 @@ export function getDescriptor(target: object, propertyKey: string | symbol): rd_
     let descriptor = targetMap.get(propertyKey);
     if (!descriptor) {
         descriptor = {
-            interceptionEnabled: false,
+            interceptionEnabled: true,
             interceptionModes: "accessor",
             setters: [],
             getters: [],
@@ -233,7 +233,9 @@ export function createClassProxy(instance: any, prototype: any): any {
 export function $addSetterHandler(target: object, propertyKey: string | symbol, handler: rd_SetterHandle): void {
     const descriptor = getDescriptor(target, propertyKey);
     descriptor.setters = [...(descriptor.setters || []), handler];
+    console.log("desss", descriptor);
     setDescriptor(target, propertyKey, descriptor);
+    console.log("reaa", getDescriptor(target, propertyKey));
 }
 
 /**

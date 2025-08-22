@@ -6,16 +6,36 @@ import { $interceptionModes, $setter, decoratorType, Storage } from "./rulerDeco
 
 /** Identifies decorator type from arguments */
 export function getDecoratorType(args: any[]): decoratorType | "UNKNOWN" {
-    switch (args.length) {
-        case 1:
-            return "ClassDecorator";
-        case 2:
-            return "PropertyDecorator";
-        case 3:
-            return typeof args[2] === "number" ? "ParameterDecorator" : "MethodDecorator";
-        default:
-            return "UNKNOWN";
+    console.log("getDecoratorType args:", args);
+
+    // 检查参数长度和类型
+    if (args.length === 1 && typeof args[0] === "function") {
+        return "ClassDecorator";
     }
+
+    if (args.length === 2 && typeof args[0] === "object" && (typeof args[1] === "string" || typeof args[1] === "symbol")) {
+        return "PropertyDecorator";
+    }
+
+    if (
+        args.length === 3 &&
+        typeof args[0] === "object" &&
+        (typeof args[1] === "string" || typeof args[1] === "symbol") &&
+        (args[2] === undefined || (args[2] && typeof args[2] === "object"))
+    ) {
+        return "MethodDecorator";
+    }
+
+    if (
+        args.length === 3 &&
+        typeof args[0] === "object" &&
+        (typeof args[1] === "string" || typeof args[1] === "symbol") &&
+        typeof args[2] === "number"
+    ) {
+        return "ParameterDecorator";
+    }
+
+    return "UNKNOWN";
 }
 
 /**

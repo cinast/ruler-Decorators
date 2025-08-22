@@ -1,4 +1,5 @@
 import { rd_GetterHandle, rd_SetterHandle, filterHandler, rejectionHandler, paramHandler, paramRejectionHandler } from "./type.handles";
+import { rd_ProxyHandler } from "./types";
 export declare type drivingMod = "proxy" | "accessor";
 export declare type drivingModeWithAuto = drivingMod | "auto";
 /**
@@ -37,7 +38,19 @@ export declare type rd_Descriptor = {
  * 统一的存储
  */
 export declare const Storage: WeakMap<object, Map<string | symbol, rd_Descriptor>>;
-export declare function $$init<T = any, R = T>(...args: any[]): (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => any;
+/**
+ * Initiate Decorator: do sth before apply rules
+ * 初始化（隐/明性调用）装饰器
+ */
+export declare function $$init<T = any, R = T>(): ClassDecorator & PropertyDecorator & ClassDecorator;
+export declare function $$init<T = any, R = T>(mode: drivingModeWithAuto, ProxyHandlers: rd_ProxyHandler<any>): ClassDecorator;
+export declare function $$init<T = any, R = T>(ProxyHandlers: rd_ProxyHandler<any>): ClassDecorator;
+export declare function $$init<T = any, R = T>(mode: drivingModeWithAuto, initialSetters: rd_SetterHandle[], initialGetters: rd_GetterHandle[]): PropertyDecorator;
+export declare function $$init<T = any, R = T>(initialSetters: rd_SetterHandle[], initialGetters: rd_GetterHandle[]): PropertyDecorator;
+export declare function $$init<T = any, R = T>(mode: drivingModeWithAuto, ProxyHandlers: rd_ProxyHandler<any>): PropertyDecorator;
+export declare function $$init<T = any, R = T>(ProxyHandlers: rd_ProxyHandler<any>): PropertyDecorator;
+export declare function $$init<T = any, R = T>(mode: drivingModeWithAuto, initialParamHandler: paramHandler[], initialParamRejectionHandler?: paramRejectionHandler[]): MethodDecorator;
+export declare function $$init<T = any, R = T>(initialParamHandler: paramHandler[], initialParamRejectionHandler?: paramRejectionHandler[]): MethodDecorator;
 /**
  * 全局Proxy类装饰器
  * 显式启用全局代理拦截

@@ -169,8 +169,8 @@ export function $$init<T = any, R = T>(...args: any[]) {
         const { mode, handlers } = parseArgs(args);
 
         // 确定装饰器类型
-        const detectedDecoratorType = getDecoratorType([target, propertyKey, descriptor].filter(Boolean));
-
+        const detectedDecoratorType = getDecoratorType([target, propertyKey, descriptor]);
+        console.log("detectedDecoratorType:", detectedDecoratorType);
         // 自动选择模式
         let selectedMode = mode;
         if (mode === "auto" && detectedDecoratorType !== "UNKNOWN") {
@@ -249,6 +249,8 @@ export function $$init<T = any, R = T>(...args: any[]) {
 
         // 验证兼容性
         const finalDecoratorType = getDecoratorType(target);
+        console.log("type", finalDecoratorType);
+
         if (finalDecoratorType === "UNKNOWN") {
             return descriptor;
         }
@@ -270,6 +272,8 @@ export function $$init<T = any, R = T>(...args: any[]) {
                     const processedArgs = applyParamHandlers(this, key, originalMethod, args);
                     return originalMethod.apply(this, processedArgs);
                 };
+                console.log("proxyjjsjsksjkjs");
+
                 return descriptor;
             }
 
@@ -282,19 +286,26 @@ export function $$init<T = any, R = T>(...args: any[]) {
                     ((value: any) => {
                         descriptor.value = value;
                     });
+                console.log("acccc");
+
                 return {
                     ...descriptor,
                     get() {
+                        console.log("gettt");
+
                         const value = originalGet.call(this);
                         return applyGetterHandlers(this, key, value);
                     },
                     set(value: any) {
+                        console.log("settt");
+
                         const processedValue = applySetterHandlers(this, key, value);
                         originalSet.call(this, processedValue);
                     },
                 };
             }
         }
+        console.log("def");
 
         return descriptor;
     };
@@ -345,6 +356,7 @@ export function $PropertyProxy(): PropertyDecorator {
 export function $setter<R = any, I = R>(handle: rd_SetterHandle<R, I>): PropertyDecorator & MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
         $addSetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
+            console.log(288293833444444);
             return handle(thisArg, key, value, lastResult, index, handlers);
         });
     };
@@ -396,6 +408,7 @@ export const $conditionalWrite = <R = any, I = R>(
     rejectHandlers?: rejectionHandler[]
 ) => {
     return $setter<R, I>((thisArg, key, newVal, lastResult: I, index, handlers) => {
+        console.log(9949202920);
         debugLogger(console.log, "83493403");
         const handlersArray = [...conditionHandles];
         const callResult = handlersArray.reduce<{ approached: boolean; output: any }>(

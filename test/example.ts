@@ -123,6 +123,7 @@ for (const key in t2) {
     }
 }
 
+console.log(getDescriptor(test.prototype, "num"), Object.getOwnPropertyDescriptor(test.prototype, "num"));
 // // class TestClass {
 //     // Simplified approach: Use onlyTheClassCanWrite for write protection
 
