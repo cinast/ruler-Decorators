@@ -388,10 +388,9 @@ export const $conditionalWrite = <R = any, I = R>(
                     throw new Error(`🚫 ${warningMsg}`);
             }
         }
-        return (thisArg as any)[key];
+        return lastResult; // 修改这里，返回 lastResult 而不是 (thisArg as any)[key]
     });
 };
-
 /**
  * Conditional read decorator factory
  * 条件读取装饰器工厂

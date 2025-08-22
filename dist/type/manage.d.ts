@@ -1,6 +1,11 @@
 import { rd_Descriptor } from "./rulerDecorators";
 import { rd_SetterHandle, rd_GetterHandle, paramHandler, paramRejectionHandler } from "./type.handles";
 /**
+ * Get or create target map for storage
+ * 获取或创建目标存储映射
+ */
+export declare function getOrCreateTargetMap(target: object): Map<string | symbol, rd_Descriptor>;
+/**
  * Get or create descriptor for target property
  * 获取或创建目标属性的描述符
  */
@@ -60,5 +65,8 @@ export declare function $addParamHandler(target: object, methodKey: string | sym
  * 添加参数拒绝处理器到指定方法
  */
 export declare function $addParamRejectionHandler(target: object, methodKey: string | symbol, handler: paramRejectionHandler): void;
+/**
+ * 获取或创建属性模式映射
+ */
 export declare function getPropertyModes(target: any): Map<string | symbol, "proxy" | "accessor">;
 //# sourceMappingURL=manage.d.ts.map

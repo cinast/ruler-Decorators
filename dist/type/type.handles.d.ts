@@ -1,3 +1,5 @@
+export declare type rd_operation = ["setterI", "getterI", "deleteI"];
+export declare type rd_processing = ["filterII", "rejectII", "paramFilterII", "paramRejectII"];
 /**
  * @handle_I
  * Core setter handler type for factoryI (base level)
@@ -8,15 +10,7 @@
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
  */
-export type rd_SetterHandle<R = any, I = any> = (
-    target: any,
-    attr: string | symbol,
-    value: any,
-    lastResult: I,
-    index: number,
-    handlers: rd_SetterHandle[],
-    ...args: any[]
-) => R;
+export type rd_SetterHandle<R = any, I = any> = (target: any, attr: string | symbol, value: any, lastResult: I, index: number, handlers: rd_SetterHandle[], ...args: any[]) => R;
 /**
  * @handle_I
  * Core getter handler type for factoryI (base level)
@@ -27,15 +21,7 @@ export type rd_SetterHandle<R = any, I = any> = (
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
  */
-export type rd_GetterHandle<R = any, I = any> = (
-    target: any,
-    attr: string | symbol,
-    value: any,
-    lastResult: I,
-    index: number,
-    handlers: rd_GetterHandle[],
-    ...args: any[]
-) => R;
+export type rd_GetterHandle<R = any, I = any> = (target: any, attr: string | symbol, value: any, lastResult: I, index: number, handlers: rd_GetterHandle[], ...args: any[]) => R;
 /**
  * @handle_II
  * Condition handler type for factoryII (conditional level)
@@ -55,22 +41,13 @@ export type rd_GetterHandle<R = any, I = any> = (
  * @Waring Returns true/approached without processing will override value
  * @Waring 如果返回true/approached但未处理值，将直接覆盖原值
  */
-export type FilterHandler = (
-    thisArg: any,
-    key: string | symbol,
-    value: any,
-    prevResult: {
-        approached: boolean;
-        output: any;
-    },
-    currentIndex: number,
-    handlers: FilterHandler[]
-) =>
-    | {
-          approached: boolean;
-          output: any;
-      }
-    | boolean;
+export type filterHandler = (thisArg: any, key: string | symbol, value: any, prevResult: {
+    approached: boolean;
+    output: any;
+}, currentIndex: number, handlers: filterHandler[]) => {
+    approached: boolean;
+    output: any;
+} | boolean;
 /**
  * @handle_II
  * Rejection handler type for factoryII (conditional level)
@@ -90,27 +67,21 @@ export type FilterHandler = (
  * @Waring Returns true/approached without processing will keep original value
  * @Waring 如果返回true/approached但未处理值，将保持原值
  */
-export type rejectionHandler = (
-    thisArg: any,
-    key: string | symbol,
-    value: any,
-    conditionHandleLastOutput: any,
-    prevResult: {
-        approached: boolean;
-        output: any;
-    },
-    currentIndex: number,
-    handlers: rejectionHandler[]
-) =>
-    | {
-          approached: boolean;
-          output: any;
-      }
-    | boolean;
+export type rejectionHandler = (thisArg: any, key: string | symbol, value: any, conditionHandleLastOutput: any, prevResult: {
+    approached: boolean;
+    output: any;
+}, currentIndex: number, handlers: rejectionHandler[]) => {
+    approached: boolean;
+    output: any;
+} | boolean;
 /**
  * @handle_II
  * Parameter handler type for function-param-accessor mode
  * 函数参数访问器模式的参数处理器类型
+ *
+ * @tip param类句柄有特殊的调用模式，他只在参数输入原函数前调用
+ *      由于参数的操作模式不多，最多也就是限制和预处理，所以没有一阶句柄
+ *      就设计成了二级句柄，不过调用是当做一阶句柄直接用的
  *
  * @template R type of return, processed arguments or boolean for condition
  *          返回类型，处理后的参数或布尔值用于条件判断
@@ -120,47 +91,30 @@ export type rejectionHandler = (
  * @Waring Returns true/approached without processing will allow original call
  * @Waring 如果返回true/approached但未处理参数，将允许原始调用
  */
-export type paramHandler = (
-    thisArg: any,
-    methodName: string | symbol,
-    method: Function,
-    args: any[],
-    prevResult: {
-        approached: boolean;
-        output: any[];
-    },
-    currentIndex: number,
-    handlers: paramHandler[]
-) =>
-    | {
-          approached: boolean;
-          output: any[];
-      }
-    | boolean;
+export type paramHandler = (thisArg: any, methodName: string | symbol, method: Function, args: any[], prevResult: {
+    approached: boolean;
+    output: any[];
+}, currentIndex: number, handlers: paramHandler[]) => {
+    approached: boolean;
+    output: any[];
+} | boolean;
 /**
  * @handle_II
  * Parameter rejection handler type for function-param-accessor mode
  * 函数参数访问器模式的参数拒绝处理器类型
  *
+ * @tip param类句柄有特殊的调用模式，他只在参数输入原函数前调用
+ *      由于参数的操作模式不多，最多也就是限制和预处理，所以没有一阶句柄
+ *      就设计成了二级句柄，不过调用是当做一阶句柄直接用的
+ *
  * @tip Used when parameter conditions fail in function-param-accessor mode
  * @tip 用于函数参数访问器模式中参数条件失败时的处理
  */
-export type paramRejectionHandler = (
-    thisArg: any,
-    methodName: string | symbol,
-    method: Function,
-    args: any[],
-    conditionHandleLastOutput: any,
-    prevResult: {
-        approached: boolean;
-        output: any[];
-    },
-    currentIndex: number,
-    handlers: paramRejectionHandler[]
-) =>
-    | {
-          approached: boolean;
-          output: any[];
-      }
-    | boolean;
+export type paramRejectionHandler = (thisArg: any, methodName: string | symbol, method: Function, args: any[], conditionHandleLastOutput: any, prevResult: {
+    approached: boolean;
+    output: any[];
+}, currentIndex: number, handlers: paramRejectionHandler[]) => {
+    approached: boolean;
+    output: any[];
+} | boolean;
 //# sourceMappingURL=type.handles.d.ts.map

@@ -1,11 +1,6 @@
-import {
-    rd_GetterHandle,
-    rd_SetterHandle,
-    FilterHandler,
-    rejectionHandler,
-    paramHandler,
-    paramRejectionHandler,
-} from "./type.handles";
+import { rd_GetterHandle, rd_SetterHandle, filterHandler, rejectionHandler, paramHandler, paramRejectionHandler } from "./type.handles";
+export declare type drivingMod = "proxy" | "accessor";
+export declare type drivingModeWithAuto = drivingMod | "auto";
 /**
  * mod list
  * - proxy     (class proxy)
@@ -42,24 +37,17 @@ export declare type rd_Descriptor = {
  * 统一的存储
  */
 export declare const Storage: WeakMap<object, Map<string | symbol, rd_Descriptor>>;
-/**
- * Decorator factory: creates adaptive decorator with multiple mode implementation
- * 装饰器工厂：使用多模式实现创建自适应装饰器
- */
-export declare const $$init: <T = any, R = T>(
-    initialSetters?: rd_SetterHandle[],
-    initialGetters?: rd_GetterHandle[]
-) => (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => any;
+export declare function $$init<T = any, R = T>(...args: any[]): (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => any;
 /**
  * 全局Proxy类装饰器
  * 显式启用全局代理拦截
  */
-export declare function ClassProxy(): ClassDecorator;
+export declare function $ClassProxy(): ClassDecorator;
 /**
  * 属性级Proxy装饰器
  * 为特定属性启用Proxy模式拦截
  */
-export declare function PropertyProxy(): PropertyDecorator;
+export declare function $PropertyProxy(): PropertyDecorator;
 /**
  * Setter handler decorator factory
  * Setter句柄装饰器工厂
@@ -79,20 +67,12 @@ export declare function $paramChecker(handle: paramHandler, rejectHandle?: param
  * Conditional write decorator factory
  * 条件写入装饰器工厂
  */
-export declare const $conditionalWrite: <R = any, I = R>(
-    errorType: "ignore" | "Warn" | "Error",
-    conditionHandles: FilterHandler[],
-    rejectHandlers?: rejectionHandler[]
-) => PropertyDecorator & MethodDecorator;
+export declare const $conditionalWrite: <R = any, I = R>(errorType: "ignore" | "Warn" | "Error", conditionHandles: filterHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
 /**
  * Conditional read decorator factory
  * 条件读取装饰器工厂
  */
-export declare const $conditionalRead: <R = any, I = R>(
-    errorType: "ignore" | "Warn" | "Error",
-    conditionHandles: FilterHandler[],
-    rejectHandlers?: rejectionHandler[]
-) => PropertyDecorator & MethodDecorator;
+export declare const $conditionalRead: <R = any, I = R>(errorType: "ignore" | "Warn" | "Error", conditionHandles: filterHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
 /**
  * types
  */

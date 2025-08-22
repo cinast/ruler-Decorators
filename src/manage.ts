@@ -78,7 +78,8 @@ export function createAccessorInterception(instance: any, targetPrototype: any):
     }
 
     for (const propertyKey of handlerProperties) {
-        let value = instance[propertyKey];
+        // 获取初始值并应用setter处理器
+        let value = applySetterHandlers(instance, propertyKey, instance[propertyKey]);
 
         Object.defineProperty(instance, propertyKey, {
             get: () => {
