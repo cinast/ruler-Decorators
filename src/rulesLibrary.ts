@@ -162,7 +162,8 @@ export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
                     : v > min,
         ],
         [
-            () => {
+            (_, __, v, p) => {
+                console.log(v, "pr:", p);
                 return {
                     approached: true,
                     output: min,

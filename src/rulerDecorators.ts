@@ -99,28 +99,13 @@ if (typeof Proxy === "undefined") {
     __Setting["Optimize.$$init.defaultMod"] = "accessor";
 }
 
-/**
- * 解析参数，返回模式和处理器数组
- */
-function parseArgs(args: any[]): { mode: drivingModeWithAuto; handlers: any[] } {
-    let mode: drivingModeWithAuto = "auto";
-    let handlers: any[] = [];
-
-    if (args.length > 0 && typeof args[0] === "string" && (args[0] === "proxy" || args[0] === "accessor" || args[0] === "auto")) {
-        mode = args[0];
-        handlers = args.slice(1);
-    } else {
-        handlers = args;
-    }
-
-    return { mode, handlers };
-}
-
 // =========== initialize 初始化 =============
 /**
  * Initiate Decorator: do sth before apply rules
  * 初始化（隐/明性调用）装饰器
  */
+export function $$init<T = any, R = T>(): ClassDecorator & PropertyDecorator & ClassDecorator;
+
 // ClassDecorator 重载 (2套)
 export function $$init<T = any, R = T>(mode: drivingModeWithAuto, ProxyHandlers: rd_ProxyHandler<any>): ClassDecorator;
 export function $$init<T = any, R = T>(ProxyHandlers: rd_ProxyHandler<any>): ClassDecorator;
@@ -158,6 +143,26 @@ export function $$init<T = any, R = T>(...args: any[]) {
             Storage.set(target.prototype, new Map());
         }
 
+        /**
+         * 解析参数，返回模式和处理器数组
+         */
+        function parseArgs(args: any[]): { mode: drivingModeWithAuto; handlers: any[] } {
+            let mode: drivingModeWithAuto = "auto";
+            let handlers: any[] = [];
+
+            if (
+                args.length > 0 &&
+                typeof args[0] === "string" &&
+                (args[0] === "proxy" || args[0] === "accessor" || args[0] === "auto")
+            ) {
+                mode = args[0];
+                handlers = args.slice(1);
+            } else {
+                handlers = args;
+            }
+
+            return { mode, handlers };
+        }
         // 解析参数
         const { mode, handlers } = parseArgs(args);
 
