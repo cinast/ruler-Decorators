@@ -30,7 +30,7 @@ export declare const __Setting: {
      * @see readme#headlineWarn
      */
     veryStrict: boolean;
-    "Optimize.$$init.defaultMod": "global-proxy" | "property-proxy" | "accessor" | "auto";
+    "Optimize.$$init.defaultMod": "proxy" | "accessor";
     "Optimize.$$init.disableUsingProxy": boolean;
     "Optimize.$$init.autoUseProxyWhenRuledKeysMoreThan": bigint;
     /**

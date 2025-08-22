@@ -1,4 +1,7 @@
-import { __Setting } from "./moduleMeta";
+import { __Setting, thisSymbols } from "./moduleMeta";
+
+export declare type rd_operation = ["setterI", "getterI", "deleteI"];
+export declare type rd_processing = ["filterII", "rejectII", "paramFilterII", "paramRejectII"];
 
 /**
  * @handle_I
@@ -59,13 +62,13 @@ export type rd_GetterHandle<R = any, I = any> = (
  * @Waring Returns true/approached without processing will override value
  * @Waring 如果返回true/approached但未处理值，将直接覆盖原值
  */
-export type conditionHandler = (
+export type filterHandler = (
     thisArg: any,
     key: string | symbol,
     value: any,
     prevResult: { approached: boolean; output: any },
     currentIndex: number,
-    handlers: conditionHandler[]
+    handlers: filterHandler[]
 ) =>
     | {
           approached: boolean;
@@ -107,12 +110,14 @@ export type rejectionHandler = (
       }
     | boolean;
 
-type PreciseTuple<T, U, V> = [first: T, ...middle: U[], last: V];
-
 /**
  * @handle_II
  * Parameter handler type for function-param-accessor mode
  * 函数参数访问器模式的参数处理器类型
+ *
+ * @tip param类句柄有特殊的调用模式，他只在参数输入原函数前调用
+ *      由于参数的操作模式不多，最多也就是限制和预处理，所以没有一阶句柄
+ *      就设计成了二级句柄，不过调用是当做一阶句柄直接用的
  *
  * @template R type of return, processed arguments or boolean for condition
  *          返回类型，处理后的参数或布尔值用于条件判断
@@ -141,6 +146,10 @@ export type paramHandler = (
  * @handle_II
  * Parameter rejection handler type for function-param-accessor mode
  * 函数参数访问器模式的参数拒绝处理器类型
+ *
+ * @tip param类句柄有特殊的调用模式，他只在参数输入原函数前调用
+ *      由于参数的操作模式不多，最多也就是限制和预处理，所以没有一阶句柄
+ *      就设计成了二级句柄，不过调用是当做一阶句柄直接用的
  *
  * @tip Used when parameter conditions fail in function-param-accessor mode
  * @tip 用于函数参数访问器模式中参数条件失败时的处理

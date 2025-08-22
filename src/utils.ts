@@ -5,14 +5,14 @@ import { $interceptionModes, $setter, decoratorType, Storage } from "./rulerDeco
 ("use strict");
 
 /** Identifies decorator type from arguments */
-export function getDecoratorType(args: any[]): string {
+export function getDecoratorType(args: any[]): decoratorType | "UNKNOWN" {
     switch (args.length) {
         case 1:
-            return "CLASS";
+            return "ClassDecorator";
         case 2:
-            return "PROPERTY";
+            return "PropertyDecorator";
         case 3:
-            return typeof args[2] === "number" ? "PARAMETER" : "METHOD";
+            return typeof args[2] === "number" ? "ParameterDecorator" : "MethodDecorator";
         default:
             return "UNKNOWN";
     }

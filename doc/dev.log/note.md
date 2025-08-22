@@ -33,7 +33,6 @@
 -   **ClassDecorator**:
 
     -   class-proxy (默认/显式)
-    -   accessor (配置回退)
 
 -   **PropertyDecorator**:
 
@@ -42,8 +41,7 @@
 
 -   **MethodDecorator**:
 
-    -   function-param-accessor (默认)
-    -   accessor (理论可行，但需谨慎)
+    -   function-param-accessor (默认/显式)
 
 -   **ParameterDecorator**:
     -   待标准完善

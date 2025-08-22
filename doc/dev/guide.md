@@ -196,7 +196,7 @@ export type rd_GetterHandle = (
 然而直接不好描述，以`$conditionalWrite`为例
 
 ```ts
-export const $conditionalWrite = <T = any>(conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) =>
+export const $conditionalWrite = <T = any>(conditionHandles: FilterHandler[], rejectHandlers?: rejectionHandler[]) =>
     $setter<T>((thisArg, key, newVal) => { ... } )
 ```
 
@@ -234,7 +234,7 @@ export const alwaysPositive = $conditionalWrite<bigint | number>(
 ~~实在不行还可以欺骗欺骗 tsc~~
 
 ```ts
-export const $conditionalWrite = <T = any>(conditionHandles: conditionHandler[], rejectHandlers?: rejectionHandler[]) =>{
+export const $conditionalWrite = <T = any>(conditionHandles: FilterHandler[], rejectHandlers?: rejectionHandler[]) =>{
     return $getter((thisArg, key, value) => {
         const callResult = conditionHandles.reduce(
             (lastProcess, handler, idx, arr) => {

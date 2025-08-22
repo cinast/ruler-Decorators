@@ -15,11 +15,11 @@
  * @tip tsc needs 5.2+
  */
 ("use strict");
-import { __Setting } from "./moduleMeta";
+import { __Setting, thisSymbols } from "./moduleMeta";
 import {
     rd_GetterHandle,
     rd_SetterHandle,
-    conditionHandler,
+    filterHandler,
     rejectionHandler,
     paramHandler,
     paramRejectionHandler,
@@ -30,15 +30,26 @@ import {
     $addParamHandler,
     $addParamRejectionHandler,
     $addSetterHandler,
-    createGlobalProxy,
+    createClassProxy,
     createPropertyProxy,
-    determineDecoratorType,
     getDescriptor,
     getPropertyModes,
     setDescriptor,
 } from "./manage";
-import { applyGetterHandlers, applyParamHandlers, applySetterHandlers, isModeCompatible } from "./utils";
+import {
+    applyGetterHandlers,
+    applyParamHandlers,
+    applySetterHandlers,
+    getDecoratorType,
+    isModeCompatible,
+    getDecoratedPropertyCount,
+    rd_executeModeSelector,
+} from "./utils";
+import { createAccessorInterception } from "./manage";
+import { rd_ProxyHandler } from "./types";
 
+export declare type drivingMod = "proxy" | "accessor";
+export declare type drivingModeWithAuto = drivingMod | "auto";
 /**
  * mod list
  * - proxy     (class proxy)
@@ -60,7 +71,7 @@ export declare type rd_Descriptor = {
     interceptionEnabled: boolean;
     propertyMode?: "proxy" | "accessor";
     interceptionModes: $interceptionModes;
-    globalProxyEnabled?: boolean;
+    ClassProxyEnabled?: boolean;
 
     configurable?: boolean;
     enumerable?: boolean;
@@ -88,12 +99,46 @@ if (typeof Proxy === "undefined") {
 }
 
 /**
- * Decorator factory: creates adaptive decorator with multiple mode implementation
- * 装饰器工厂：使用多模式实现创建自适应装饰器
+ * Initiate Decorator: do sth before apply rules
+ * 初始化（隐/明性调用）装饰器
  */
-export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], initialGetters: rd_GetterHandle[] = []) => {
+// ClassDecorator 重载 (2套)
+export function $$init<T = any, R = T>(mode: drivingModeWithAuto, ProxyHandlers: rd_ProxyHandler<any>): ClassDecorator;
+export function $$init<T = any, R = T>(ProxyHandlers: rd_ProxyHandler<any>): ClassDecorator;
+
+// PropertyDecorator 重载 (2套)
+export function $$init<T = any, R = T>(
+    mode: drivingModeWithAuto,
+    initialSetters: rd_SetterHandle[],
+    initialGetters: rd_GetterHandle[]
+): PropertyDecorator;
+export function $$init<T = any, R = T>(initialSetters: rd_SetterHandle[], initialGetters: rd_GetterHandle[]): PropertyDecorator;
+export function $$init<T = any, R = T>(mode: drivingModeWithAuto, ProxyHandlers: rd_ProxyHandler<any>): PropertyDecorator;
+export function $$init<T = any, R = T>(ProxyHandlers: rd_ProxyHandler<any>): PropertyDecorator;
+
+// MethodDecorator 重载 (2套)
+export function $$init<T = any, R = T>(
+    mode: drivingModeWithAuto,
+    initialParamHandler: paramHandler[],
+    initialParamRejectionHandler?: paramRejectionHandler[]
+): MethodDecorator;
+export function $$init<T = any, R = T>(
+    initialParamHandler: paramHandler[],
+    initialParamRejectionHandler?: paramRejectionHandler[]
+): MethodDecorator;
+
+export function $$init<T = any, R = T>(
+    ...args: (
+        | drivingModeWithAuto
+        | rd_ProxyHandler<any>
+        | rd_SetterHandle[]
+        | rd_GetterHandle[]
+        | paramHandler[]
+        | paramRejectionHandler[]
+    )[]
+) {
     return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
-        // 只注册处理器，不处理模式选择
+        // 解析参数，处理模式选择
         debugLogger(console.log, "$$init decorator applied to:", target?.name || target, propertyKey, descriptor);
 
         // 初始化Storage
@@ -105,6 +150,39 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
             Storage.set(target.prototype, new Map());
         }
 
+        // 解析参数，确定模式和处理器
+        let mode: drivingModeWithAuto = "auto";
+        let handlers: any[] = [];
+
+        // 检查第一个参数是否为模式
+        if (
+            args.length > 0 &&
+            typeof args[0] === "string" &&
+            (args[0] === "proxy" || args[0] === "accessor" || args[0] === "auto")
+        ) {
+            mode = args[0] as drivingModeWithAuto;
+            handlers = args.slice(1) as any[];
+        } else {
+            handlers = args as any[];
+        }
+
+        // 确定装饰器类型
+        const detectedDecoratorType = getDecoratorType([target, propertyKey, descriptor].filter(Boolean));
+
+        // 如果是auto模式，使用自动选择器
+        let finalMode = mode;
+        if (mode === "auto" && detectedDecoratorType !== "UNKNOWN") {
+            const decoratedCount = getDecoratedPropertyCount(target);
+            finalMode =
+                rd_executeModeSelector(
+                    detectedDecoratorType as Exclude<decoratorType, "ParameterDecorator">,
+                    target,
+                    decoratedCount
+                ) === "class-proxy"
+                    ? "proxy"
+                    : "accessor";
+        }
+
         // === 类装饰器处理 ===
         if (typeof propertyKey === "undefined") {
             // 检查target是否为可继承的类
@@ -114,18 +192,13 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
                         super(...args);
                         debugLogger(console.log, "Decorated class constructor called");
 
-                        // 根据是否启用全局Proxy选择创建方式
-                        const prototypeMap = Storage.get(target.prototype);
-                        const hasGlobalProxy = prototypeMap
-                            ? Array.from(prototypeMap.values()).some((d) => d.globalProxyEnabled)
-                            : false;
-
-                        if (hasGlobalProxy) {
-                            debugLogger(console.log, "Using global proxy mode");
-                            return createGlobalProxy(this, target.prototype);
+                        // 根据选择的模式创建实例
+                        if (finalMode === "proxy") {
+                            debugLogger(console.log, "Using Class Proxy mode");
+                            return createClassProxy(this, target.prototype);
                         } else {
-                            debugLogger(console.log, "Using property-level interception mode");
-                            return createPropertyProxy(this, target.prototype);
+                            debugLogger(console.log, "Using accessor mode");
+                            return createAccessorInterception(this, target.prototype);
                         }
                     }
                 };
@@ -138,32 +211,56 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
         const targetObj = target;
 
         // === 初始化句柄存储 ===
-        // 初始化 setter 句柄
         const rdDescriptor = getDescriptor(targetObj, key);
-        if (initialSetters.length > 0) {
-            rdDescriptor.setters = [...(rdDescriptor.setters || []), ...initialSetters];
-            setDescriptor(targetObj, key, rdDescriptor);
+
+        // 设置拦截模式
+        if (detectedDecoratorType === "ClassDecorator") {
+            rdDescriptor.interceptionModes = finalMode === "proxy" ? "class-proxy" : "accessor";
+        } else if (detectedDecoratorType === "PropertyDecorator") {
+            rdDescriptor.interceptionModes = finalMode === "proxy" ? "property-proxy" : "accessor";
+        } else if (detectedDecoratorType === "MethodDecorator") {
+            rdDescriptor.interceptionModes = "function-param-accessor";
         }
 
-        // 初始化 getter 句柄
-        if (initialGetters.length > 0) {
-            rdDescriptor.getters = [...(rdDescriptor.getters || []), ...initialGetters];
-            setDescriptor(targetObj, key, rdDescriptor);
-        }
+        // 处理处理器
+        handlers.forEach((handlerGroup) => {
+            if (Array.isArray(handlerGroup) && handlerGroup.length > 0) {
+                const firstHandler = handlerGroup[0];
+                if (typeof firstHandler === "function") {
+                    // 检查处理器类型
+                    if (firstHandler[thisSymbols]?.type === "setterI") {
+                        rdDescriptor.setters = [...(rdDescriptor.setters || []), ...(handlerGroup as rd_SetterHandle[])];
+                    } else if (firstHandler[thisSymbols]?.type === "getterI") {
+                        rdDescriptor.getters = [...(rdDescriptor.getters || []), ...(handlerGroup as rd_GetterHandle[])];
+                    } else if (detectedDecoratorType === "MethodDecorator") {
+                        // 方法装饰器的参数处理器
+                        rdDescriptor.paramHandlers = [...(rdDescriptor.paramHandlers || []), ...(handlerGroup as paramHandler[])];
+                    }
+                } else if (typeof firstHandler === "object" && "get" in firstHandler) {
+                    // Proxy handler
+                    rdDescriptor.propertyMode = finalMode === "proxy" ? "proxy" : "accessor";
+                }
+            }
+        });
+
+        setDescriptor(targetObj, key, rdDescriptor);
 
         // 验证装饰器类型和模式的兼容性
-        const decoratorType = determineDecoratorType(target, propertyKey, descriptor);
+        const finalDecoratorType = getDecoratorType(target);
+        if (finalDecoratorType === "UNKNOWN") {
+            return descriptor;
+        }
         const interceptionMode = rdDescriptor.interceptionModes || "accessor";
 
-        if (!isModeCompatible(decoratorType, interceptionMode)) {
-            console.warn(`警告：装饰器类型 ${decoratorType} 与拦截模式 ${interceptionMode} 不兼容`);
+        if (!isModeCompatible(finalDecoratorType, interceptionMode)) {
+            console.warn(`警告：装饰器类型 ${finalDecoratorType} 与拦截模式 ${interceptionMode} 不兼容`);
         }
 
         // 对于没有启用全局Proxy的情况，需要处理属性级拦截
         const targetMap = Storage.get(targetObj);
-        const hasGlobalProxy = targetMap ? Array.from(targetMap.values()).some((d) => d.globalProxyEnabled) : false;
+        const hasClassProxy = targetMap ? Array.from(targetMap.values()).some((d) => d.ClassProxyEnabled) : false;
 
-        if (!hasGlobalProxy && descriptor) {
+        if (!hasClassProxy && descriptor) {
             // 获取拦截模式
             const interceptionMode = rdDescriptor.interceptionModes || "accessor";
 
@@ -211,9 +308,9 @@ export const $$init = <T = any, R = T>(initialSetters: rd_SetterHandle[] = [], i
         // 对于Proxy模式或启用全局Proxy的情况，属性将通过Proxy处理
         return descriptor;
     };
-};
+}
 
-// ==================== 驱动模式 ====================
+// ==================== 注册装饰器 register decorator ====================
 
 /**
  * 全局Proxy类装饰器
@@ -223,9 +320,9 @@ export function ClassProxy(): ClassDecorator {
     return function (target: any) {
         // 标记该类启用全局Proxy
         const prototype = target.prototype;
-        const descriptor = getDescriptor(prototype, Symbol.for("globalProxy"));
-        descriptor.globalProxyEnabled = true;
-        setDescriptor(prototype, Symbol.for("globalProxy"), descriptor);
+        const descriptor = getDescriptor(prototype, Symbol.for("ClassProxy"));
+        descriptor.ClassProxyEnabled = true;
+        setDescriptor(prototype, Symbol.for("ClassProxy"), descriptor);
 
         // 返回修改后的类
         return class extends target {
@@ -233,7 +330,7 @@ export function ClassProxy(): ClassDecorator {
                 super(...args);
 
                 // 创建全局代理实例
-                return createGlobalProxy(this, prototype);
+                return createClassProxy(this, prototype);
             }
         } as any;
     };
@@ -305,7 +402,7 @@ export function $paramChecker(handle: paramHandler, rejectHandle?: paramRejectio
  */
 export const $conditionalWrite = <R = any, I = R>(
     errorType: "ignore" | "Warn" | "Error",
-    conditionHandles: conditionHandler[],
+    conditionHandles: filterHandler[],
     rejectHandlers?: rejectionHandler[]
 ) => {
     return $setter<R, I>((thisArg, key, newVal, lastResult: I, index, handlers) => {
@@ -354,7 +451,7 @@ export const $conditionalWrite = <R = any, I = R>(
  */
 export const $conditionalRead = <R = any, I = R>(
     errorType: "ignore" | "Warn" | "Error",
-    conditionHandles: conditionHandler[],
+    conditionHandles: filterHandler[],
     rejectHandlers?: rejectionHandler[]
 ) => {
     return $getter((thisArg, key, value, lastResult: I, index, handlers) => {
@@ -397,7 +494,26 @@ export const $conditionalRead = <R = any, I = R>(
 };
 
 /**
+ * types
+ */
+export * from "./type.handles";
+/**
+ * operation fn
+ */
+export * from "./manage";
+/*
  * rulers & libSetting
  */
 export * as rulerDecorators from "./rulesLibrary";
+/**
+ * extra mods
+ */
 export * from "./extraLibraries/extraMod.router";
+/**
+ * test tools
+ */
+export * from "./api.test";
+/**
+ * utils
+ */
+export * from "./utils";

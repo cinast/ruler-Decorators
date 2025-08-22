@@ -172,10 +172,10 @@ export function createPropertyProxy(instance: any, prototype: any): any {
     return proxy;
 }
 /**
- * Create global proxy for instance (intercept all properties)
+ * Create Class Proxy for instance (intercept all properties)
  * 为实例创建全局代理（拦截所有属性）
  */
-export function createGlobalProxy(instance: any, prototype: any): any {
+export function createClassProxy(instance: any, prototype: any): any {
     // 检查是否已经有代理实例
     const allDescriptors = getAllDescriptors(prototype);
     if (allDescriptors) {
@@ -191,7 +191,7 @@ export function createGlobalProxy(instance: any, prototype: any): any {
 
     const proxy = new Proxy(instance, {
         get(target, propertyKey, receiver) {
-            debugLogger(console.log, "Global Proxy getter triggered for", propertyKey);
+            debugLogger(console.log, "Class Proxy getter triggered for", propertyKey);
 
             // 获取原始值
             let value = Reflect.get(target, propertyKey, receiver);
@@ -217,7 +217,7 @@ export function createGlobalProxy(instance: any, prototype: any): any {
         },
 
         set(target, propertyKey, value, receiver) {
-            debugLogger(console.log, "Global Proxy setter triggered for", propertyKey, "with value", value);
+            debugLogger(console.log, "Class Proxy setter triggered for", propertyKey, "with value", value);
 
             // 检查是否有属性级处理器
             const descriptor = getDescriptor(prototype, propertyKey);
@@ -249,7 +249,7 @@ export function createGlobalProxy(instance: any, prototype: any): any {
     }
 
     return proxy;
-} //#region
+}
 /**
  * Add setter handler to specified property
  * 添加 setter 句柄到指定属性
@@ -337,28 +337,4 @@ export function getPropertyModes(target: any): Map<string | symbol, "proxy" | "a
         }
     }
     return modes;
-}
-/**
- * Determine decorator type based on parameters
- * 根据参数确定装饰器类型
- */
-
-export function determineDecoratorType(
-    target: any,
-    propertyKey: string | symbol | undefined,
-    descriptor: PropertyDescriptor | undefined
-): decoratorType {
-    if (typeof propertyKey === "undefined") {
-        return "ClassDecorator";
-    }
-
-    if (descriptor && typeof descriptor.value === "function") {
-        return "MethodDecorator";
-    }
-
-    if (descriptor && (descriptor.get || descriptor.set)) {
-        return "PropertyDecorator";
-    }
-
-    return "PropertyDecorator";
 }
