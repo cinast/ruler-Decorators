@@ -50,6 +50,7 @@ import { rd_ProxyHandler } from "./types";
 
 export declare type drivingMod = "proxy" | "accessor";
 export declare type drivingModeWithAuto = drivingMod | "auto";
+
 /**
  * mod list
  * - proxy     (class proxy)
@@ -115,11 +116,37 @@ function parseArgs(args: any[]): { mode: drivingModeWithAuto; handlers: any[] } 
     return { mode, handlers };
 }
 
-// ... 其他代码 ...
+// =========== initialize 初始化 =============
+/**
+ * Initiate Decorator: do sth before apply rules
+ * 初始化（隐/明性调用）装饰器
+ */
+// ClassDecorator 重载 (2套)
+export function $$init<T = any, R = T>(mode: drivingModeWithAuto, ProxyHandlers: rd_ProxyHandler<any>): ClassDecorator;
+export function $$init<T = any, R = T>(ProxyHandlers: rd_ProxyHandler<any>): ClassDecorator;
 
+// PropertyDecorator 重载 (2套)
 export function $$init<T = any, R = T>(
-    ...args: any[] // 使用 any[] 来避免重载签名错误，实际处理中会检查类型
-) {
+    mode: drivingModeWithAuto,
+    initialSetters: rd_SetterHandle[],
+    initialGetters: rd_GetterHandle[]
+): PropertyDecorator;
+export function $$init<T = any, R = T>(initialSetters: rd_SetterHandle[], initialGetters: rd_GetterHandle[]): PropertyDecorator;
+export function $$init<T = any, R = T>(mode: drivingModeWithAuto, ProxyHandlers: rd_ProxyHandler<any>): PropertyDecorator;
+export function $$init<T = any, R = T>(ProxyHandlers: rd_ProxyHandler<any>): PropertyDecorator;
+
+// MethodDecorator 重载 (2套)
+export function $$init<T = any, R = T>(
+    mode: drivingModeWithAuto,
+    initialParamHandler: paramHandler[],
+    initialParamRejectionHandler?: paramRejectionHandler[]
+): MethodDecorator;
+export function $$init<T = any, R = T>(
+    initialParamHandler: paramHandler[],
+    initialParamRejectionHandler?: paramRejectionHandler[]
+): MethodDecorator;
+
+export function $$init<T = any, R = T>(...args: any[]) {
     return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
         debugLogger(console.log, "$$init decorator applied to:", target?.name || target, propertyKey, descriptor);
 
@@ -257,7 +284,7 @@ export function $$init<T = any, R = T>(
     };
 }
 
-// ==================== 注册装饰器 register decorator ====================
+// ==================== 装载装饰器 register decorator ====================
 
 /**
  * 全局Proxy类装饰器
