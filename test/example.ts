@@ -1,4 +1,12 @@
-import { $$init, $conditionalRead, $conditionalWrite, $setter, rulerDecorators, valueRecorder } from "../src/rulerDecorators";
+import {
+    $$init,
+    $conditionalRead,
+    $conditionalWrite,
+    $setter,
+    getDescriptor,
+    rulerDecorators,
+    valueRecorder,
+} from "../src/rulerDecorators";
 
 rulerDecorators.__Setting.dev();
 class test {
@@ -101,6 +109,19 @@ console.log("redo t2.a", t2.a);
 valueRecorder.redo(t2, "a");
 console.log("redo t2.a", t2.a);
 valueRecorder.redo(t2, "a");
+
+for (const key in t) {
+    if (Object.prototype.hasOwnProperty.call(t, key)) {
+        const de = getDescriptor(t, key);
+        console.log(`t.${key}:`, de);
+    }
+}
+for (const key in t2) {
+    if (Object.prototype.hasOwnProperty.call(t, key)) {
+        const de = getDescriptor(t, key);
+        console.log(`t.${key}:`, de);
+    }
+}
 
 // // class TestClass {
 //     // Simplified approach: Use onlyTheClassCanWrite for write protection

@@ -45,9 +45,11 @@ import {
     getDecoratedPropertyCount,
     rd_executeModeSelector,
 } from "./utils";
+
 import { createAccessorInterception } from "./manage";
 import { rd_ProxyHandler } from "./types";
 
+__Setting["debugLogger.logInnerDetails"] = true;
 export declare type drivingMod = "proxy" | "accessor";
 export declare type drivingModeWithAuto = drivingMod | "auto";
 
@@ -385,6 +387,7 @@ export const $conditionalWrite = <R = any, I = R>(
     rejectHandlers?: rejectionHandler[]
 ) => {
     return $setter<R, I>((thisArg, key, newVal, lastResult: I, index, handlers) => {
+        debugLogger(console.log, "83493403");
         const handlersArray = [...conditionHandles];
         const callResult = handlersArray.reduce<{ approached: boolean; output: any }>(
             (lastProcess, handler, idx, arr) => {
