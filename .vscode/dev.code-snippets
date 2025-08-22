@@ -13,5 +13,10 @@
 			"debugLogger(console.log,$1);",
 			"$2"
 		],
+	},
+	"rulerDecorators": {
+		"scope": "javascript,typescript",
+		"prefix": ["rd","rulerDecorators"],
+		"body": "rulerDecorators",
 	}
 }

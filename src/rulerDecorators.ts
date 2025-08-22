@@ -172,10 +172,10 @@ export function $$init<T = any, R = T>(...args: any[]) {
         const detectedDecoratorType = getDecoratorType([target, propertyKey, descriptor].filter(Boolean));
 
         // 自动选择模式
-        let finalMode = mode;
+        let selectedMode = mode;
         if (mode === "auto" && detectedDecoratorType !== "UNKNOWN") {
             const decoratedCount = getDecoratedPropertyCount(target);
-            finalMode =
+            selectedMode =
                 rd_executeModeSelector(
                     detectedDecoratorType as Exclude<decoratorType, "ParameterDecorator">,
                     target,
@@ -192,7 +192,7 @@ export function $$init<T = any, R = T>(...args: any[]) {
                     constructor(...args: any[]) {
                         super(...args);
                         debugLogger(console.log, "Decorated class constructor called");
-                        if (finalMode === "proxy") {
+                        if (selectedMode === "proxy") {
                             debugLogger(console.log, "Using Class Proxy mode");
                             return createClassProxy(this, target.prototype);
                         } else {
@@ -208,16 +208,25 @@ export function $$init<T = any, R = T>(...args: any[]) {
         const key = propertyKey as string | symbol;
         const targetObj = target;
         const rdDescriptor = getDescriptor(targetObj, key);
-
         // 设置拦截模式
-        if (detectedDecoratorType === "ClassDecorator") {
-            rdDescriptor.interceptionModes = finalMode === "proxy" ? "class-proxy" : "accessor";
-        } else if (detectedDecoratorType === "PropertyDecorator") {
-            rdDescriptor.interceptionModes = finalMode === "proxy" ? "property-proxy" : "accessor";
-        } else if (detectedDecoratorType === "MethodDecorator") {
-            rdDescriptor.interceptionModes = "function-param-accessor";
+        switch (detectedDecoratorType) {
+            case "ClassDecorator":
+                rdDescriptor.interceptionModes = selectedMode === "proxy" ? "class-proxy" : "accessor";
+                break;
+            case "PropertyDecorator":
+                rdDescriptor.interceptionModes = selectedMode === "proxy" ? "property-proxy" : "accessor";
+                break;
+            case "MethodDecorator":
+                rdDescriptor.interceptionModes = "function-param-accessor";
+                break;
+            case "ParameterDecorator":
+                throw "rulerDecorators now not suppose ParameterDecorator";
+            // break;
+            case "UNKNOWN":
+                throw "rulerDecorators now not suppose this kind of Decorator";
+            default:
+                break;
         }
-
         // 处理处理器
         handlers.forEach((handlerGroup) => {
             if (Array.isArray(handlerGroup) && handlerGroup.length > 0) {
@@ -231,7 +240,7 @@ export function $$init<T = any, R = T>(...args: any[]) {
                         rdDescriptor.paramHandlers = [...(rdDescriptor.paramHandlers || []), ...(handlerGroup as paramHandler[])];
                     }
                 } else if (typeof firstHandler === "object" && "get" in firstHandler) {
-                    rdDescriptor.propertyMode = finalMode === "proxy" ? "proxy" : "accessor";
+                    rdDescriptor.propertyMode = selectedMode === "proxy" ? "proxy" : "accessor";
                 }
             }
         });
