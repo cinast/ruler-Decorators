@@ -89,7 +89,7 @@ export declare type rd_Descriptor = {
  * 统一的存储
  */
 export const descriptorStorage = new WeakMap<object, Map<string | symbol, rd_Descriptor>>();
-export const Storage = new WeakMap<object, Map<string | symbol, any>>();
+export const valueStorage = new WeakMap<object, Map<string | symbol, any>>();
 
 // 检查环境是否支持 Proxy
 if (typeof Proxy === "undefined") {
@@ -235,27 +235,33 @@ export function $$init<T = any>(...args: any[]) {
 
                 // 处理属性描述符
                 if (!classProxyDescriptor.ClassProxyEnabled) {
+                    // 初始化值存储
+                    if (!valueStorage.has(targetObj)) {
+                        valueStorage.set(targetObj, new Map());
+                    }
+                    const valueMap = valueStorage.get(targetObj)!;
+
+                    // 保存初始值
+                    if (descriptor && descriptor.value !== undefined) {
+                        valueMap.set(key, descriptor.value);
+                    } else if (!valueMap.has(key)) {
+                        valueMap.set(key, undefined);
+                    }
+
                     if (descriptor) {
                         const modes = getPropertyModes(targetObj);
                         const mode = modes.get(key) || "proxy";
 
                         if (mode === "accessor") {
-                            const originalGet = descriptor.get || (() => descriptor.value);
-                            const originalSet =
-                                descriptor.set ||
-                                ((value: any) => {
-                                    descriptor.value = value;
-                                });
-
                             return {
                                 ...descriptor,
                                 get() {
-                                    const value = originalGet.call(target);
-                                    return $applyGetterHandlers(target, key, value);
+                                    const value = valueMap.get(key);
+                                    return $applyGetterHandlers(this, key, value);
                                 },
                                 set(value: any) {
-                                    const processedValue = $applySetterHandlers(target, key, value);
-                                    originalSet.call(target, processedValue);
+                                    const processedValue = $applySetterHandlers(this, key, value);
+                                    valueMap.set(key, processedValue);
                                 },
                             };
                         }
@@ -263,17 +269,20 @@ export function $$init<T = any>(...args: any[]) {
                         $defineProperty({
                             [key]: {
                                 get() {
-                                    return $applyGetterHandlers(target, key, getDescriptor(target, key).originalInstance);
+                                    const value = valueMap.get(key);
+                                    return $applyGetterHandlers(this, key, value);
                                 },
                                 set(value: any) {
-                                    $applySetterHandlers(target, key, value);
+                                    const processedValue = $applySetterHandlers(this, key, value);
+                                    valueMap.set(key, processedValue);
                                 },
+                                enumerable: true,
+                                configurable: true,
                             },
-                        })(target, key);
+                        })(targetObj, key);
                     }
                 }
                 break;
-
             case "MethodDecorator":
                 // 注册句柄
                 rdDescriptor.interceptionModes = "function-param-accessor";
