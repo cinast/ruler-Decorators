@@ -155,7 +155,7 @@ export function $$init<T = any>(...args: any[]) {
         console.log("detectedDecoratorType:", whoIsThisDecorator);
         if (whoIsThisDecorator === "UNKNOWN") throw "rulerDecorators now not suppose this kind of Decorator";
 
-        let [driveMod, handlers]: [$interceptionModes | "auto", Function[]] =
+        const [interceptionMode, handlers]: [$interceptionModes, Function[]] =
             args.length > 0
                 ? [
                       rd_executeModeSelector(
@@ -175,20 +175,20 @@ export function $$init<T = any>(...args: any[]) {
                       ),
                       args as Function[],
                   ];
-
+        const driveMod = interceptionMode === "accessor" || interceptionMode === "function-param-accessor" ? "accessor" : "proxy";
         const key = propertyKey as string | symbol;
         const targetObj = target;
         const rdDescriptor = getDescriptor(targetObj, key);
         // 设置拦截模式
         switch (whoIsThisDecorator) {
             case "ClassDecorator":
-                rdDescriptor.interceptionModes = driveMode;
+                rdDescriptor.interceptionModes = interceptionMode;
                 // 类装饰器处理
                 return typeof target === "function" && target.prototype
                     ? class extends target {
                           constructor(...args: any[]) {
                               super(...args);
-                              if (driveMode === "proxy") {
+                              if (driveMod === "proxy") {
                                   return createClassProxy(this, target.prototype);
                               } else {
                                   return createAccessorInterception(this, target.prototype);
@@ -198,36 +198,38 @@ export function $$init<T = any>(...args: any[]) {
                     : target;
 
             case "PropertyDecorator":
-                rdDescriptor.interceptionModes = driveMode === "proxy" ? "property-proxy" : "accessor";
-                switch (driveMode) {
-                    case value:
-                        rdDescriptor.setters = [...(rdDescriptor.setters || []), ...(handlers[0] as rd_SetterHandle[])];
-                        rdDescriptor.getters = [...(rdDescriptor.getters || []), ...(handlers[1] as rd_GetterHandle[])];
+                rdDescriptor.interceptionModes = interceptionMode;
+                switch (driveMod) {
+                    case "accessor":
+                        rdDescriptor.setters = [
+                            ...(rdDescriptor.setters || []),
+                            ...(handlers[0] as unknown as rd_SetterHandle[]),
+                        ];
+                        rdDescriptor.getters = [
+                            ...(rdDescriptor.getters || []),
+                            ...(handlers[1] as unknown as rd_GetterHandle[]),
+                        ];
+                        break;
+                    case "proxy":
                         break;
                 }
 
                 break;
             case "MethodDecorator":
                 rdDescriptor.interceptionModes = "function-param-accessor";
+                rdDescriptor.paramHandlers = [
+                    ...(rdDescriptor.paramHandlers || []),
+                    ...(handlers[0] as unknown as paramHandler[]),
+                ];
+                rdDescriptor.paramRejectHandlers = [
+                    ...(rdDescriptor.paramRejectHandlers || []),
+                    ...(handlers[0] as unknown as paramRejectionHandler[]),
+                ];
+
                 break;
             case "ParameterDecorator":
                 throw "rulerDecorators now not suppose ParameterDecorator";
         }
-        // 处理处理器
-
-        handlers.forEach((handlerGroup) => {
-            if (Array.isArray(handlerGroup) && handlerGroup.length > 0) {
-                const firstHandler = handlerGroup[0];
-                if (typeof firstHandler === "function") {
-                    if (firstHandler[thisSymbols]?.type === "setterI") {
-                    } else if (whoIsThisDecorator === "MethodDecorator") {
-                        rdDescriptor.paramHandlers = [...(rdDescriptor.paramHandlers || []), ...(handlerGroup as paramHandler[])];
-                    }
-                } else if (typeof firstHandler === "object") {
-                    rdDescriptor.propertyMode = driveMode === "proxy" ? "proxy" : "accessor";
-                }
-            }
-        });
 
         setDescriptor(targetObj, key, rdDescriptor);
 
@@ -327,7 +329,6 @@ export function $PropertyProxy(): PropertyDecorator {
 export function $setter<R = any, I = R>(handle: rd_SetterHandle<R, I>): PropertyDecorator & MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
         $addSetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
-            console.log(288293833444444);
             return handle(thisArg, key, value, lastResult, index, handlers);
         });
     };
@@ -379,7 +380,6 @@ export const $conditionalWrite = <R = any, I = R>(
     rejectHandlers?: rejectionHandler[]
 ) => {
     return $setter<R, I>((thisArg, key, newVal, lastResult: I, index, handlers) => {
-        console.log(9949202920);
         debugLogger(console.log, "83493403");
         const handlersArray = [...conditionHandles];
         const callResult = handlersArray.reduce<{ approached: boolean; output: any }>(

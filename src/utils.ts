@@ -6,8 +6,6 @@ import { $interceptionModes, $setter, decoratorType, Storage } from "./rulerDeco
 
 /** Identifies decorator type from arguments */
 export function getDecoratorType(args: any[]): decoratorType | "UNKNOWN" {
-    console.log("getDecoratorType args:", args);
-
     // 检查参数长度和类型
     if (typeof args[0] === "function") {
         return "ClassDecorator";
