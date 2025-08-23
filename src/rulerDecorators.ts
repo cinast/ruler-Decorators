@@ -6,8 +6,8 @@
  *
  * @author cinast
  * @since 2022-11-29
- * @update 2025-8-8
- * @version 2.5.0
+ * @update 2025-8-23
+ * @version 2.9.0
  *
  * @notice Decorators type: experimental stage 2
  * @warning tsconfig `experimentalDecorators` must be `true`
@@ -214,6 +214,7 @@ export function $$init<T = any>(...args: any[]) {
 
                 switch (driveMod) {
                     case "accessor":
+                        // 注册句柄
                         rdDescriptor.setters = [
                             ...(rdDescriptor.setters || []),
                             ...(handlers.length > 0 ? (handlers[0] as unknown as rd_SetterHandle[]) : []),
@@ -258,6 +259,7 @@ export function $$init<T = any>(...args: any[]) {
                 break;
 
             case "MethodDecorator":
+                // 注册句柄
                 rdDescriptor.interceptionModes = "function-param-accessor";
                 rdDescriptor.paramHandlers = [
                     ...(rdDescriptor.paramHandlers || []),

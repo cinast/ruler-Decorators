@@ -1,11 +1,4 @@
-import {
-    rd_GetterHandle,
-    rd_SetterHandle,
-    filterHandler,
-    rejectionHandler,
-    paramHandler,
-    paramRejectionHandler,
-} from "./type.handles";
+import { rd_GetterHandle, rd_SetterHandle, filterHandler, rejectionHandler, paramHandler, paramRejectionHandler } from "./type.handles";
 import { rd_ProxyHandler } from "./types";
 export declare type drivingMod = "proxy" | "accessor";
 export declare type drivingModeWithAuto = drivingMod | "auto";
@@ -30,6 +23,7 @@ export declare type rd_Descriptor = {
     propertyMode?: "proxy" | "accessor";
     interceptionModes: $interceptionModes;
     ClassProxyEnabled?: boolean;
+    managedByClassProxy?: boolean;
     configurable?: boolean;
     enumerable?: boolean;
     writable?: boolean;
@@ -49,29 +43,17 @@ export declare const Storage: WeakMap<object, Map<string | symbol, rd_Descriptor
  * Initiate Decorator: do sth before apply rules
  * 初始化（隐/明性调用）装饰器
  */
-export declare function $$init<T = any, R = T>(): ClassDecorator & PropertyDecorator & ClassDecorator;
-export declare function $$init<T = any, R = T>(mode: drivingModeWithAuto, ProxyHandlers: rd_ProxyHandler<T>): ClassDecorator;
-export declare function $$init<T = any, R = T>(ProxyHandlers: rd_ProxyHandler<T>): ClassDecorator;
-export declare function $$init<T = any, R = T>(
-    mode: drivingModeWithAuto,
-    initialSetters: rd_SetterHandle[],
-    initialGetters: rd_GetterHandle[]
-): PropertyDecorator;
-export declare function $$init<T = any, R = T>(
-    initialSetters: rd_SetterHandle[],
-    initialGetters: rd_GetterHandle[]
-): PropertyDecorator;
-export declare function $$init<T = any, R = T>(mode: drivingModeWithAuto, ProxyHandlers: rd_ProxyHandler<T>): PropertyDecorator;
-export declare function $$init<T = any, R = T>(ProxyHandlers: rd_ProxyHandler<T>): PropertyDecorator;
-export declare function $$init<T = any, R = T>(
-    mode: drivingModeWithAuto,
-    initialParamHandler: paramHandler[],
-    initialParamRejectionHandler?: paramRejectionHandler[]
-): MethodDecorator;
-export declare function $$init<T = any, R = T>(
-    initialParamHandler: paramHandler[],
-    initialParamRejectionHandler?: paramRejectionHandler[]
-): MethodDecorator;
+export declare function $$init<T = any>(): ClassDecorator & PropertyDecorator & MethodDecorator;
+export declare function $$init<T = any>(...handlers: Function[]): ClassDecorator & PropertyDecorator & MethodDecorator;
+export declare function $$init<T = any>(mode: $interceptionModes, ...handlers: Function[]): ClassDecorator & PropertyDecorator & MethodDecorator;
+export declare function $$init<T = any>(mode: "class-proxy", ProxyHandlers: rd_ProxyHandler<T>): ClassDecorator;
+export declare function $$init<T = any>(ProxyHandlers: rd_ProxyHandler<T>): ClassDecorator;
+export declare function $$init<T = any>(mode: "accessor", initialSetters: rd_SetterHandle[], initialGetters: rd_GetterHandle[]): PropertyDecorator;
+export declare function $$init<T = any>(initialSetters: rd_SetterHandle[], initialGetters: rd_GetterHandle[]): PropertyDecorator;
+export declare function $$init<T = any>(mode: "property-proxy", ProxyHandlers: rd_ProxyHandler<T>): PropertyDecorator;
+export declare function $$init<T = any>(ProxyHandlers: rd_ProxyHandler<T>): PropertyDecorator;
+export declare function $$init<T = any>(mode: "function-param-accessor", initialParamHandler: paramHandler[], initialParamRejectionHandler?: paramRejectionHandler[]): MethodDecorator & PropertyDecorator;
+export declare function $$init<T = any>(initialParamHandler: paramHandler[], initialParamRejectionHandler?: paramRejectionHandler[]): MethodDecorator & PropertyDecorator;
 /**
  * 全局Proxy类装饰器
  * 显式启用全局代理拦截
@@ -101,20 +83,12 @@ export declare function $paramChecker(handle: paramHandler, rejectHandle?: param
  * Conditional write decorator factory
  * 条件写入装饰器工厂
  */
-export declare const $conditionalWrite: <R = any, I = R>(
-    errorType: "ignore" | "Warn" | "Error",
-    conditionHandles: filterHandler[],
-    rejectHandlers?: rejectionHandler[]
-) => PropertyDecorator & MethodDecorator;
+export declare const $conditionalWrite: <R = any, I = R>(errorType: "ignore" | "Warn" | "Error", conditionHandles: filterHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
 /**
  * Conditional read decorator factory
  * 条件读取装饰器工厂
  */
-export declare const $conditionalRead: <R = any, I = R>(
-    errorType: "ignore" | "Warn" | "Error",
-    conditionHandles: filterHandler[],
-    rejectHandlers?: rejectionHandler[]
-) => PropertyDecorator & MethodDecorator;
+export declare const $conditionalRead: <R = any, I = R>(errorType: "ignore" | "Warn" | "Error", conditionHandles: filterHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
 /**
  * types
  */

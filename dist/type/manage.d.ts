@@ -1,25 +1,48 @@
 import { rd_Descriptor } from "./rulerDecorators";
 import { rd_SetterHandle, rd_GetterHandle, paramHandler, paramRejectionHandler } from "./type.handles";
 /**
- * Get or create target map for storage
- * 获取或创建目标存储映射
+ * 标记属性由类代理管理
  */
-export declare function getOrCreateTargetMap(target: object): Map<string | symbol, rd_Descriptor>;
+export declare function $markPropertyAsClassProxyManaged(target: object, propertyKey: string | symbol): void;
 /**
- * Get or create descriptor for target property
- * 获取或创建目标属性的描述符
+ * 检查属性是否由类代理管理
  */
-export declare function getDescriptor(target: object, propertyKey: string | symbol): rd_Descriptor;
+export declare function isPropertyManagedByClassProxy(target: object, propertyKey: string | symbol): boolean;
+export declare function hasHandlersFor(target: object, propertyKey: string | symbol): boolean;
 /**
  * Set descriptor for target property
  * 设置目标属性的描述符
  */
 export declare function setDescriptor(target: object, propertyKey: string | symbol, descriptor: rd_Descriptor): void;
 /**
+ * Check if target has any descriptors
+ * 检查目标是否有任何描述符
+ */
+export declare function hasDescriptors(target: object): boolean;
+/**
  * Get all descriptors for target
  * 获取目标的所有描述符
  */
 export declare function getAllDescriptors(target: object): Map<string | symbol, rd_Descriptor> | undefined;
+/**
+ * Get or create descriptor for target property
+ * 获取或创建目标属性的描述符
+ */
+export declare function getDescriptor(target: object, propertyKey: string | symbol): rd_Descriptor;
+/**
+ * Get the count of decorated properties for a target
+ * 获取目标对象上被装饰的属性数量
+ */
+export declare function getDecoratedPropertyCount(target: any): number;
+/**
+ * 获取或创建属性模式映射
+ */
+export declare function getPropertyModes(target: any): Map<string | symbol, "proxy" | "accessor">;
+/**
+ * Get or create target map for storage
+ * 获取或创建目标存储映射
+ */
+export declare function getOrCreateTargetMap(target: object): Map<string | symbol, rd_Descriptor>;
 /**
  * Create accessor-based interception (traditional getter/setter)
  * 创建基于访问器的拦截（传统 getter/setter）
@@ -66,7 +89,23 @@ export declare function $addParamHandler(target: object, methodKey: string | sym
  */
 export declare function $addParamRejectionHandler(target: object, methodKey: string | symbol, handler: paramRejectionHandler): void;
 /**
- * 获取或创建属性模式映射
+ * Apply getter handlers for a property
+ * 应用属性的 getter 处理器
  */
-export declare function getPropertyModes(target: any): Map<string | symbol, "proxy" | "accessor">;
+export declare function $applyGetterHandlers(receiver: any, propertyKey: string | symbol, value: any): any;
+/**
+ * Apply setter handlers for a property
+ * 应用属性的 setter 处理器
+ */
+export declare function $applySetterHandlers(receiver: any, propertyKey: string | symbol, value: any): any;
+/**
+ * Apply parameter handlers for a method
+ * 应用方法的参数处理器
+ */
+export declare function $applyParamHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[]): any[];
+/**
+ * Apply parameter rejection handlers for a method
+ * 应用方法的参数拒绝处理器
+ */
+export declare function $applyParamRejectionHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[], conditionResult: any): any[];
 //# sourceMappingURL=manage.d.ts.map

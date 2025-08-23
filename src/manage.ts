@@ -384,6 +384,8 @@ export function $applyGetterHandlers(receiver: any, propertyKey: string | symbol
  * 应用属性的 setter 处理器
  */
 export function $applySetterHandlers(receiver: any, propertyKey: string | symbol, value: any): any {
+    console.log(83982947);
+
     const prototype = Object.getPrototypeOf(receiver);
     const descriptor = getDescriptor(prototype, propertyKey);
     const setters = descriptor.setters || [];
