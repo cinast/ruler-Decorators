@@ -1,3 +1,4 @@
+import { Storage } from "./../src/rulerDecorators";
 import {
     $$init,
     $conditionalRead,
@@ -110,20 +111,16 @@ valueRecorder.redo(t2, "a");
 console.log("redo t2.a", t2.a);
 valueRecorder.redo(t2, "a");
 
-for (const key in t) {
-    if (Object.prototype.hasOwnProperty.call(t, key)) {
-        const de = getDescriptor(t, key);
-        console.log(`t.${key}:`, de);
-    }
-}
-for (const key in t2) {
-    if (Object.prototype.hasOwnProperty.call(t, key)) {
-        const de = getDescriptor(t, key);
-        console.log(`t.${key}:`, de);
-    }
-}
+// for (const key in test.prototype) {
+//     const de = getDescriptor(test.prototype, key);
+//     console.log(`t.${key}:`, de);
+// }
 
-console.log(getDescriptor(test.prototype, "num"), Object.getOwnPropertyDescriptor(test.prototype, "num"));
+// for (const key in t2) {
+//     const de = getDescriptor(t, key);
+//     console.log(`t.${key}:`, de);
+// }
+console.log(Storage.get(test.prototype));
 // // class TestClass {
 //     // Simplified approach: Use onlyTheClassCanWrite for write protection
 

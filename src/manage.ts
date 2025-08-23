@@ -66,7 +66,7 @@ export function setDescriptor(target: object, propertyKey: string | symbol, desc
  * Check if target has any descriptors
  * 检查目标是否有任何描述符
  */
-function hasDescriptors(target: object): boolean {
+export function hasDescriptors(target: object): boolean {
     const targetMap = Storage.get(target);
     return !!targetMap && targetMap.size > 0;
 }
