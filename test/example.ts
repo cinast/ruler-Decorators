@@ -1,4 +1,4 @@
-import { processIt, Storage } from "./../src/rulerDecorators";
+import { processIt, descriptorStorage } from "./../src/rulerDecorators";
 import {
     $$init,
     $conditionalRead,
@@ -10,6 +10,13 @@ import {
 } from "../src/rulerDecorators";
 
 rulerDecorators.__Setting.dev();
+
+let a = { num: 0 };
+$$init("accessor", (t, k, v) => {
+    console.log(v);
+})(a, "num");
+console.log(a);
+
 class test {
     @$$init()
     @rulerDecorators.minimum(-5)
@@ -115,7 +122,7 @@ valueRecorder.redo(t2, "a");
 //     const de = getDescriptor(t, key);
 //     console.log(`t.${key}:`, de);
 // }
-console.log(Storage.get(test.prototype));
+console.log(descriptorStorage.get(test.prototype));
 
 for (const key in t) {
     const de = Object.getOwnPropertyDescriptor(t, key);

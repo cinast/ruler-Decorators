@@ -37,7 +37,7 @@ import {
     setDescriptor,
 } from "./manage";
 import { getPropertyModes } from "./manage";
-import { getDecoratorType, isModeCompatible, rd_executeModeSelector } from "./utils";
+import { $defineProperty, getDecoratorType, isModeCompatible, rd_executeModeSelector } from "./utils";
 import { getDecoratedPropertyCount } from "./manage";
 import { $applyGetterHandlers, $applyParamHandlers, $applySetterHandlers } from "./manage";
 
@@ -88,7 +88,8 @@ export declare type rd_Descriptor = {
  * Unified Storage for decorated things
  * 统一的存储
  */
-export const Storage = new WeakMap<object, Map<string | symbol, rd_Descriptor>>();
+export const descriptorStorage = new WeakMap<object, Map<string | symbol, rd_Descriptor>>();
+export const Storage = new WeakMap<object, Map<string | symbol, any>>();
 
 // 检查环境是否支持 Proxy
 if (typeof Proxy === "undefined") {
@@ -140,10 +141,10 @@ export function $$init<T = any>(...args: any[]) {
         debugLogger(console.log, "$$init decorator applied to:", target?.name || target, propertyKey, descriptor);
 
         // 初始化Storage
-        if (!Storage.has(target)) Storage.set(target, new Map());
+        if (!descriptorStorage.has(target)) descriptorStorage.set(target, new Map());
 
-        if (typeof target === "function" && target.prototype && !Storage.has(target.prototype)) {
-            Storage.set(target.prototype, new Map());
+        if (typeof target === "function" && target.prototype && !descriptorStorage.has(target.prototype)) {
+            descriptorStorage.set(target.prototype, new Map());
         }
 
         // 确定装饰器类型
@@ -186,7 +187,7 @@ export function $$init<T = any>(...args: any[]) {
                           constructor(...args: any[]) {
                               super(...args);
                               // 标记所有已装饰的属性由类代理管理
-                              const targetMap = Storage.get(target.prototype);
+                              const targetMap = descriptorStorage.get(target.prototype);
                               if (targetMap) {
                                   for (const propertyKey of targetMap.keys()) {
                                       $markPropertyAsClassProxyManaged(target.prototype, propertyKey);
@@ -223,6 +224,7 @@ export function $$init<T = any>(...args: any[]) {
                             ...(rdDescriptor.getters || []),
                             ...(handlers.length > 1 ? (handlers[1] as unknown as rd_GetterHandle[]) : []),
                         ];
+
                         break;
                     case "proxy":
                         // 属性代理模式下，设置属性模式
@@ -232,28 +234,42 @@ export function $$init<T = any>(...args: any[]) {
                 }
 
                 // 处理属性描述符
-                if (descriptor && !classProxyDescriptor.ClassProxyEnabled) {
-                    const modes = getPropertyModes(targetObj);
-                    const mode = modes.get(key) || "proxy";
-                    if (mode === "accessor") {
-                        const originalGet = descriptor.get || (() => descriptor.value);
-                        const originalSet =
-                            descriptor.set ||
-                            ((value: any) => {
-                                descriptor.value = value;
-                            });
+                if (!classProxyDescriptor.ClassProxyEnabled) {
+                    if (descriptor) {
+                        const modes = getPropertyModes(targetObj);
+                        const mode = modes.get(key) || "proxy";
 
-                        return {
-                            ...descriptor,
-                            get() {
-                                const value = originalGet.call(this);
-                                return $applyGetterHandlers(this, key, value);
+                        if (mode === "accessor") {
+                            const originalGet = descriptor.get || (() => descriptor.value);
+                            const originalSet =
+                                descriptor.set ||
+                                ((value: any) => {
+                                    descriptor.value = value;
+                                });
+
+                            return {
+                                ...descriptor,
+                                get() {
+                                    const value = originalGet.call(target);
+                                    return $applyGetterHandlers(target, key, value);
+                                },
+                                set(value: any) {
+                                    const processedValue = $applySetterHandlers(target, key, value);
+                                    originalSet.call(target, processedValue);
+                                },
+                            };
+                        }
+                    } else {
+                        $defineProperty({
+                            [key]: {
+                                get() {
+                                    return $applyGetterHandlers(target, key, getDescriptor(target, key).originalInstance);
+                                },
+                                set(value: any) {
+                                    $applySetterHandlers(target, key, value);
+                                },
                             },
-                            set(value: any) {
-                                const processedValue = $applySetterHandlers(this, key, value);
-                                originalSet.call(this, processedValue);
-                            },
-                        };
+                        })(target, key);
                     }
                 }
                 break;
@@ -274,8 +290,8 @@ export function $$init<T = any>(...args: any[]) {
                 if (descriptor && typeof descriptor.value === "function") {
                     const originalMethod = descriptor.value;
                     descriptor.value = function (...args: any[]) {
-                        const processedArgs = $applyParamHandlers(this, key, originalMethod, args);
-                        return originalMethod.apply(this, processedArgs);
+                        const processedArgs = $applyParamHandlers(target, key, originalMethod, args);
+                        return originalMethod.apply(target, processedArgs);
                     };
                     return descriptor;
                 }
@@ -309,7 +325,7 @@ export function $ClassProxy(): ClassDecorator {
                 super(...args);
 
                 // 标记所有已装饰的属性由类代理管理
-                const targetMap = Storage.get(prototype);
+                const targetMap = descriptorStorage.get(prototype);
                 if (targetMap) {
                     for (const propertyKey of targetMap.keys()) {
                         $markPropertyAsClassProxyManaged(prototype, propertyKey);

@@ -1,5 +1,5 @@
 import { debugLogger } from "./api.test";
-import { rd_Descriptor, Storage } from "./rulerDecorators";
+import { rd_Descriptor, descriptorStorage } from "./rulerDecorators";
 import { rd_SetterHandle, rd_GetterHandle, paramHandler, paramRejectionHandler } from "./type.handles";
 
 /**
@@ -42,7 +42,7 @@ export function setDescriptor(target: object, propertyKey: string | symbol, desc
  * 检查目标是否有任何描述符
  */
 export function hasDescriptors(target: object): boolean {
-    const targetMap = Storage.get(target);
+    const targetMap = descriptorStorage.get(target);
     return !!targetMap && targetMap.size > 0;
 }
 
@@ -51,7 +51,7 @@ export function hasDescriptors(target: object): boolean {
  * 获取目标的所有描述符
  */
 export function getAllDescriptors(target: object): Map<string | symbol, rd_Descriptor> | undefined {
-    return Storage.get(target);
+    return descriptorStorage.get(target);
 }
 
 /**
@@ -80,7 +80,7 @@ export function getDescriptor(target: object, propertyKey: string | symbol): rd_
 export function getDecoratedPropertyCount(target: any): number {
     if (!target) return 0;
 
-    const targetMap = Storage.get(target);
+    const targetMap = descriptorStorage.get(target);
     if (!targetMap) return 0;
 
     // 计算有处理器的属性数量
@@ -98,7 +98,7 @@ export function getDecoratedPropertyCount(target: any): number {
  * 获取或创建属性模式映射
  */
 export function getPropertyModes(target: any): Map<string | symbol, "proxy" | "accessor"> {
-    const targetMap = Storage.get(target);
+    const targetMap = descriptorStorage.get(target);
     if (!targetMap) {
         return new Map();
     }
@@ -116,10 +116,10 @@ export function getPropertyModes(target: any): Map<string | symbol, "proxy" | "a
  * 获取或创建目标存储映射
  */
 export function getOrCreateTargetMap(target: object): Map<string | symbol, rd_Descriptor> {
-    let targetMap = Storage.get(target);
+    let targetMap = descriptorStorage.get(target);
     if (!targetMap) {
         targetMap = new Map();
-        Storage.set(target, targetMap);
+        descriptorStorage.set(target, targetMap);
     }
     return targetMap;
 }
@@ -130,7 +130,7 @@ export function getOrCreateTargetMap(target: object): Map<string | symbol, rd_De
  */
 export function createAccessorInterception(instance: any, targetPrototype: any): any {
     const handlerProperties = new Set<string | symbol>();
-    const targetMap = Storage.get(targetPrototype);
+    const targetMap = descriptorStorage.get(targetPrototype);
 
     if (targetMap) {
         for (const [propertyKey, descriptor] of targetMap.entries()) {
@@ -200,7 +200,7 @@ export function createPropertyProxy(instance: any, prototype: any): any {
         },
     });
 
-    const targetMap = Storage.get(prototype);
+    const targetMap = descriptorStorage.get(prototype);
     if (targetMap) {
         for (const [propertyKey, descriptor] of targetMap.entries()) {
             if (descriptor.propertyMode === "accessor") {
@@ -288,7 +288,7 @@ export function createClassProxy(instance: any, prototype: any): any {
         },
     });
 
-    const targetMap = Storage.get(prototype);
+    const targetMap = descriptorStorage.get(prototype);
     if (targetMap) {
         for (const [propertyKey, descriptor] of targetMap.entries()) {
             descriptor.proxyInstance = proxy;
@@ -384,8 +384,6 @@ export function $applyGetterHandlers(receiver: any, propertyKey: string | symbol
  * 应用属性的 setter 处理器
  */
 export function $applySetterHandlers(receiver: any, propertyKey: string | symbol, value: any): any {
-    console.log(83982947);
-
     const prototype = Object.getPrototypeOf(receiver);
     const descriptor = getDescriptor(prototype, propertyKey);
     const setters = descriptor.setters || [];
