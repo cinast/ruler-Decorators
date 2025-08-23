@@ -4,6 +4,24 @@ import { applyGetterHandlers, applySetterHandlers } from "./utils";
 import { rd_SetterHandle, rd_GetterHandle, paramHandler, paramRejectionHandler } from "./type.handles";
 
 /**
+ * 标记属性由类代理管理
+ */
+export function markPropertyAsClassProxyManaged(target: object, propertyKey: string | symbol): void {
+    const descriptor = getDescriptor(target, propertyKey);
+    descriptor.managedByClassProxy = true;
+    descriptor.propertyMode = "proxy"; // 统一使用代理模式
+    setDescriptor(target, propertyKey, descriptor);
+}
+
+/**
+ * 检查属性是否由类代理管理
+ */
+export function isPropertyManagedByClassProxy(target: object, propertyKey: string | symbol): boolean {
+    const descriptor = getDescriptor(target, propertyKey);
+    return !!descriptor.managedByClassProxy;
+}
+
+/**
  * Get or create target map for storage
  * 获取或创建目标存储映射
  */
@@ -185,14 +203,19 @@ export function createClassProxy(instance: any, prototype: any): any {
         get(target, propertyKey, receiver) {
             debugLogger(console.log, "Class Proxy getter triggered for", propertyKey);
             let value = Reflect.get(target, propertyKey, receiver);
+
+            // 检查属性是否由类代理管理
             const descriptor = getDescriptor(prototype, propertyKey);
-            const getters = descriptor.getters || [];
-            if (getters.length > 0) {
-                value = getters.reduce(
-                    (prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]),
-                    value
-                );
+            if (descriptor.managedByClassProxy) {
+                const getters = descriptor.getters || [];
+                if (getters.length > 0) {
+                    value = getters.reduce(
+                        (prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]),
+                        value
+                    );
+                }
             }
+
             if (typeof value === "function") {
                 return value.bind(receiver);
             }
@@ -201,15 +224,21 @@ export function createClassProxy(instance: any, prototype: any): any {
 
         set(target, propertyKey, value, receiver) {
             debugLogger(console.log, "Class Proxy setter triggered for", propertyKey, "with value", value);
+
+            // 检查属性是否由类代理管理
             const descriptor = getDescriptor(prototype, propertyKey);
-            const setters = descriptor.setters || [];
             let processedValue = value;
-            if (setters.length > 0) {
-                processedValue = setters.reduce(
-                    (prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]),
-                    value
-                );
+
+            if (descriptor.managedByClassProxy) {
+                const setters = descriptor.setters || [];
+                if (setters.length > 0) {
+                    processedValue = setters.reduce(
+                        (prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]),
+                        value
+                    );
+                }
             }
+
             return Reflect.set(target, propertyKey, processedValue, receiver);
         },
     });

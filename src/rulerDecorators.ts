@@ -34,6 +34,7 @@ import {
     createPropertyProxy,
     getDescriptor,
     getPropertyModes,
+    markPropertyAsClassProxyManaged,
     setDescriptor,
 } from "./manage";
 import {
@@ -63,7 +64,6 @@ export declare type drivingModeWithAuto = drivingMod | "auto";
  */
 export declare type $interceptionModes = "class-proxy" | "property-proxy" | "accessor" | "function-param-accessor";
 export declare type decoratorType = "ClassDecorator" | "PropertyDecorator" | "MethodDecorator" | "ParameterDecorator";
-
 export declare type rd_Descriptor = {
     proxyInstance?: object;
     originalInstance?: object;
@@ -75,6 +75,8 @@ export declare type rd_Descriptor = {
     propertyMode?: "proxy" | "accessor";
     interceptionModes: $interceptionModes;
     ClassProxyEnabled?: boolean;
+    // 添加类代理管理标记
+    managedByClassProxy?: boolean;
 
     configurable?: boolean;
     enumerable?: boolean;
@@ -179,6 +181,7 @@ export function $$init<T = any>(...args: any[]) {
         const key = propertyKey as string | symbol;
         const targetObj = target;
         const rdDescriptor = getDescriptor(targetObj, key);
+
         // 设置拦截模式
         switch (whoIsThisDecorator) {
             case "ClassDecorator":
@@ -188,6 +191,14 @@ export function $$init<T = any>(...args: any[]) {
                     ? class extends target {
                           constructor(...args: any[]) {
                               super(...args);
+                              // 标记所有已装饰的属性由类代理管理
+                              const targetMap = Storage.get(target.prototype);
+                              if (targetMap) {
+                                  for (const propertyKey of targetMap.keys()) {
+                                      markPropertyAsClassProxyManaged(target.prototype, propertyKey);
+                                  }
+                              }
+
                               if (driveMod === "proxy") {
                                   return createClassProxy(this, target.prototype);
                               } else {
@@ -199,6 +210,14 @@ export function $$init<T = any>(...args: any[]) {
 
             case "PropertyDecorator":
                 rdDescriptor.interceptionModes = interceptionMode;
+
+                // 检查是否已启用类代理
+                const classProxyDescriptor = getDescriptor(targetObj, Symbol.for("ClassProxy"));
+                if (classProxyDescriptor.ClassProxyEnabled) {
+                    // 如果已启用类代理，则标记属性由类代理管理
+                    markPropertyAsClassProxyManaged(targetObj, key);
+                }
+
                 switch (driveMod) {
                     case "accessor":
                         rdDescriptor.setters = [
@@ -211,10 +230,39 @@ export function $$init<T = any>(...args: any[]) {
                         ];
                         break;
                     case "proxy":
+                        // 属性代理模式下，设置属性模式
+                        const propertyModes = getPropertyModes(targetObj);
+                        propertyModes.set(key, "proxy");
                         break;
                 }
 
+                // 处理属性描述符
+                if (descriptor && !classProxyDescriptor.ClassProxyEnabled) {
+                    const modes = getPropertyModes(targetObj);
+                    const mode = modes.get(key) || "proxy";
+                    if (mode === "accessor") {
+                        const originalGet = descriptor.get || (() => descriptor.value);
+                        const originalSet =
+                            descriptor.set ||
+                            ((value: any) => {
+                                descriptor.value = value;
+                            });
+
+                        return {
+                            ...descriptor,
+                            get() {
+                                const value = originalGet.call(this);
+                                return applyGetterHandlers(this, key, value);
+                            },
+                            set(value: any) {
+                                const processedValue = applySetterHandlers(this, key, value);
+                                originalSet.call(this, processedValue);
+                            },
+                        };
+                    }
+                }
                 break;
+
             case "MethodDecorator":
                 rdDescriptor.interceptionModes = "function-param-accessor";
                 rdDescriptor.paramHandlers = [
@@ -223,67 +271,28 @@ export function $$init<T = any>(...args: any[]) {
                 ];
                 rdDescriptor.paramRejectHandlers = [
                     ...(rdDescriptor.paramRejectHandlers || []),
-                    ...(handlers[0] as unknown as paramRejectionHandler[]),
+                    ...(handlers[1] as unknown as paramRejectionHandler[]),
                 ];
 
+                // 处理方法描述符
+                if (descriptor && typeof descriptor.value === "function") {
+                    const originalMethod = descriptor.value;
+                    descriptor.value = function (...args: any[]) {
+                        const processedArgs = applyParamHandlers(this, key, originalMethod, args);
+                        return originalMethod.apply(this, processedArgs);
+                    };
+                    return descriptor;
+                }
                 break;
+
             case "ParameterDecorator":
                 throw "rulerDecorators now not suppose ParameterDecorator";
         }
 
         setDescriptor(targetObj, key, rdDescriptor);
-
-        // 处理没有全局Proxy的情况
-        const targetMap = Storage.get(targetObj);
-        const hasClassProxy = targetMap ? Array.from(targetMap.values()).some((d) => d.ClassProxyEnabled) : false;
-
-        if (!hasClassProxy && descriptor) {
-            const interceptionMode = rdDescriptor.interceptionModes || "accessor";
-            if (interceptionMode === "function-param-accessor" && typeof descriptor.value === "function") {
-                const originalMethod = descriptor.value;
-                descriptor.value = function (...args: any[]) {
-                    const processedArgs = applyParamHandlers(this, key, originalMethod, args);
-                    return originalMethod.apply(this, processedArgs);
-                };
-                console.log("proxyjjsjsksjkjs");
-
-                return descriptor;
-            }
-
-            const modes = getPropertyModes(targetObj);
-            const mode = modes.get(key) || "proxy";
-            if (mode === "accessor") {
-                const originalGet = descriptor.get || (() => descriptor.value);
-                const originalSet =
-                    descriptor.set ||
-                    ((value: any) => {
-                        descriptor.value = value;
-                    });
-                console.log("acccc");
-
-                return {
-                    ...descriptor,
-                    get() {
-                        console.log("gettt");
-
-                        const value = originalGet.call(this);
-                        return applyGetterHandlers(this, key, value);
-                    },
-                    set(value: any) {
-                        console.log("settt");
-
-                        const processedValue = applySetterHandlers(this, key, value);
-                        originalSet.call(this, processedValue);
-                    },
-                };
-            }
-        }
-        console.log("def");
-
         return descriptor;
     };
 }
-
 // ==================== 装载装饰器 register decorator ====================
 
 /**
@@ -303,6 +312,14 @@ export function $ClassProxy(): ClassDecorator {
             constructor(...args: any[]) {
                 super(...args);
 
+                // 标记所有已装饰的属性由类代理管理
+                const targetMap = Storage.get(prototype);
+                if (targetMap) {
+                    for (const propertyKey of targetMap.keys()) {
+                        markPropertyAsClassProxyManaged(prototype, propertyKey);
+                    }
+                }
+
                 // 创建全局代理实例
                 return createClassProxy(this, prototype);
             }
@@ -316,9 +333,16 @@ export function $ClassProxy(): ClassDecorator {
  */
 export function $PropertyProxy(): PropertyDecorator {
     return function (target: any, propertyKey: string | symbol) {
-        // 标记该属性使用Proxy模式
-        const propertyModes = getPropertyModes(target);
-        propertyModes.set(propertyKey, "proxy");
+        // 检查是否已启用类代理
+        const classProxyDescriptor = getDescriptor(target, Symbol.for("ClassProxy"));
+        if (classProxyDescriptor.ClassProxyEnabled) {
+            // 如果已启用类代理，则标记属性由类代理管理
+            markPropertyAsClassProxyManaged(target, propertyKey);
+        } else {
+            // 否则使用独立的属性代理
+            const propertyModes = getPropertyModes(target);
+            propertyModes.set(propertyKey, "proxy");
+        }
     };
 }
 
