@@ -154,7 +154,7 @@ export function $$init<T = any>(...args: any[]) {
 
         // 确定装饰器类型
         const whoIsThisDecorator = getDecoratorType([target, propertyKey, descriptor]);
-        console.log("detectedDecoratorType:", whoIsThisDecorator);
+        debugLogger(console.log, "detectedDecoratorType:", whoIsThisDecorator);
         if (whoIsThisDecorator === "UNKNOWN") throw "rulerDecorators now not suppose this kind of Decorator";
 
         const [interceptionMode, handlers]: [$interceptionModes, Function[]] =
@@ -222,11 +222,11 @@ export function $$init<T = any>(...args: any[]) {
                     case "accessor":
                         rdDescriptor.setters = [
                             ...(rdDescriptor.setters || []),
-                            ...(handlers[0] as unknown as rd_SetterHandle[]),
+                            ...(handlers.length > 0 ? (handlers[0] as unknown as rd_SetterHandle[]) : []),
                         ];
                         rdDescriptor.getters = [
                             ...(rdDescriptor.getters || []),
-                            ...(handlers[1] as unknown as rd_GetterHandle[]),
+                            ...(handlers.length > 1 ? (handlers[1] as unknown as rd_GetterHandle[]) : []),
                         ];
                         break;
                     case "proxy":
@@ -267,11 +267,11 @@ export function $$init<T = any>(...args: any[]) {
                 rdDescriptor.interceptionModes = "function-param-accessor";
                 rdDescriptor.paramHandlers = [
                     ...(rdDescriptor.paramHandlers || []),
-                    ...(handlers[0] as unknown as paramHandler[]),
+                    ...(handlers.length > 0 ? (handlers[0] as unknown as paramHandler[]) : []),
                 ];
                 rdDescriptor.paramRejectHandlers = [
                     ...(rdDescriptor.paramRejectHandlers || []),
-                    ...(handlers[1] as unknown as paramRejectionHandler[]),
+                    ...(handlers.length > 0 ? (handlers[1] as unknown as paramRejectionHandler[]) : []),
                 ];
 
                 // 处理方法描述符
@@ -404,7 +404,6 @@ export const $conditionalWrite = <R = any, I = R>(
     rejectHandlers?: rejectionHandler[]
 ) => {
     return $setter<R, I>((thisArg, key, newVal, lastResult: I, index, handlers) => {
-        debugLogger(console.log, "83493403");
         const handlersArray = [...conditionHandles];
         const callResult = handlersArray.reduce<{ approached: boolean; output: any }>(
             (lastProcess, handler, idx, arr) => {
