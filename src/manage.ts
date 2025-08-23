@@ -1,12 +1,11 @@
 import { debugLogger } from "./api.test";
-import { decoratorType, rd_Descriptor, Storage } from "./rulerDecorators";
-import { applyGetterHandlers, applySetterHandlers } from "./utils";
+import { rd_Descriptor, Storage } from "./rulerDecorators";
 import { rd_SetterHandle, rd_GetterHandle, paramHandler, paramRejectionHandler } from "./type.handles";
 
 /**
  * 标记属性由类代理管理
  */
-export function markPropertyAsClassProxyManaged(target: object, propertyKey: string | symbol): void {
+export function $markPropertyAsClassProxyManaged(target: object, propertyKey: string | symbol): void {
     const descriptor = getDescriptor(target, propertyKey);
     descriptor.managedByClassProxy = true;
     descriptor.propertyMode = "proxy"; // 统一使用代理模式
@@ -21,36 +20,12 @@ export function isPropertyManagedByClassProxy(target: object, propertyKey: strin
     return !!descriptor.managedByClassProxy;
 }
 
-/**
- * Get or create target map for storage
- * 获取或创建目标存储映射
- */
-export function getOrCreateTargetMap(target: object): Map<string | symbol, rd_Descriptor> {
-    let targetMap = Storage.get(target);
-    if (!targetMap) {
-        targetMap = new Map();
-        Storage.set(target, targetMap);
-    }
-    return targetMap;
-}
-
-/**
- * Get or create descriptor for target property
- * 获取或创建目标属性的描述符
- */
-export function getDescriptor(target: object, propertyKey: string | symbol): rd_Descriptor {
-    const targetMap = getOrCreateTargetMap(target);
-    let descriptor = targetMap.get(propertyKey);
-    if (!descriptor) {
-        descriptor = {
-            interceptionEnabled: true,
-            interceptionModes: "accessor",
-            setters: [],
-            getters: [],
-        };
-        targetMap.set(propertyKey, descriptor);
-    }
-    return descriptor;
+export function hasHandlersFor(target: object, propertyKey: string | symbol): boolean {
+    const descriptor = getDescriptor(target, propertyKey);
+    const hasSetter = Boolean(descriptor.setters?.length);
+    const hasGetter = Boolean(descriptor.getters?.length);
+    const hasParam = Boolean(descriptor.paramHandlers?.length);
+    return hasSetter || hasGetter || hasParam;
 }
 
 /**
@@ -80,6 +55,76 @@ export function getAllDescriptors(target: object): Map<string | symbol, rd_Descr
 }
 
 /**
+ * Get or create descriptor for target property
+ * 获取或创建目标属性的描述符
+ */
+export function getDescriptor(target: object, propertyKey: string | symbol): rd_Descriptor {
+    const targetMap = getOrCreateTargetMap(target);
+    let descriptor = targetMap.get(propertyKey);
+    if (!descriptor) {
+        descriptor = {
+            interceptionEnabled: true,
+            interceptionModes: "accessor",
+            setters: [],
+            getters: [],
+        };
+        targetMap.set(propertyKey, descriptor);
+    }
+    return descriptor;
+}
+
+/**
+ * Get the count of decorated properties for a target
+ * 获取目标对象上被装饰的属性数量
+ */
+export function getDecoratedPropertyCount(target: any): number {
+    if (!target) return 0;
+
+    const targetMap = Storage.get(target);
+    if (!targetMap) return 0;
+
+    // 计算有处理器的属性数量
+    let count = 0;
+    for (const descriptor of targetMap.values()) {
+        if (descriptor.setters?.length || descriptor.getters?.length) {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+/**
+ * 获取或创建属性模式映射
+ */
+export function getPropertyModes(target: any): Map<string | symbol, "proxy" | "accessor"> {
+    const targetMap = Storage.get(target);
+    if (!targetMap) {
+        return new Map();
+    }
+    const modes = new Map<string | symbol, "proxy" | "accessor">();
+    for (const [propertyKey, descriptor] of targetMap.entries()) {
+        if (descriptor.propertyMode) {
+            modes.set(propertyKey, descriptor.propertyMode);
+        }
+    }
+    return modes;
+}
+
+/**
+ * Get or create target map for storage
+ * 获取或创建目标存储映射
+ */
+export function getOrCreateTargetMap(target: object): Map<string | symbol, rd_Descriptor> {
+    let targetMap = Storage.get(target);
+    if (!targetMap) {
+        targetMap = new Map();
+        Storage.set(target, targetMap);
+    }
+    return targetMap;
+}
+
+/**
  * Create accessor-based interception (traditional getter/setter)
  * 创建基于访问器的拦截（传统 getter/setter）
  */
@@ -97,16 +142,16 @@ export function createAccessorInterception(instance: any, targetPrototype: any):
 
     for (const propertyKey of handlerProperties) {
         // 获取初始值并应用setter处理器
-        let value = applySetterHandlers(instance, propertyKey, instance[propertyKey]);
+        let value = $applySetterHandlers(instance, propertyKey, instance[propertyKey]);
 
         Object.defineProperty(instance, propertyKey, {
             get: () => {
                 debugLogger(console.log, "Accessor getter triggered for", propertyKey);
-                return applyGetterHandlers(instance, propertyKey, value);
+                return $applyGetterHandlers(instance, propertyKey, value);
             },
             set: (newValue) => {
                 debugLogger(console.log, "Accessor setter triggered for", propertyKey, "with value", newValue);
-                value = applySetterHandlers(instance, propertyKey, newValue);
+                value = $applySetterHandlers(instance, propertyKey, newValue);
             },
             enumerable: true,
             configurable: true,
@@ -139,7 +184,7 @@ export function createPropertyProxy(instance: any, prototype: any): any {
             if (descriptor.propertyMode === "proxy") {
                 debugLogger(console.log, "Property Proxy getter triggered for", propertyKey);
                 let value = Reflect.get(target, propertyKey, receiver);
-                return applyGetterHandlers(receiver, propertyKey, value);
+                return $applyGetterHandlers(receiver, propertyKey, value);
             }
             return Reflect.get(target, propertyKey, receiver);
         },
@@ -148,7 +193,7 @@ export function createPropertyProxy(instance: any, prototype: any): any {
             const descriptor = getDescriptor(prototype, propertyKey);
             if (descriptor.propertyMode === "proxy") {
                 debugLogger(console.log, "Property Proxy setter triggered for", propertyKey, "with value", value);
-                const processedValue = applySetterHandlers(receiver, propertyKey, value);
+                const processedValue = $applySetterHandlers(receiver, propertyKey, value);
                 return Reflect.set(target, propertyKey, processedValue, receiver);
             }
             return Reflect.set(target, propertyKey, value, receiver);
@@ -163,11 +208,11 @@ export function createPropertyProxy(instance: any, prototype: any): any {
                 Object.defineProperty(proxy, propertyKey, {
                     get: () => {
                         debugLogger(console.log, "Accessor getter triggered for", propertyKey);
-                        return applyGetterHandlers(proxy, propertyKey, value);
+                        return $applyGetterHandlers(proxy, propertyKey, value);
                     },
                     set: (newValue) => {
                         debugLogger(console.log, "Accessor setter triggered for", propertyKey, "with value", newValue);
-                        value = applySetterHandlers(proxy, propertyKey, newValue);
+                        value = $applySetterHandlers(proxy, propertyKey, newValue);
                     },
                     enumerable: true,
                     configurable: true,
@@ -322,20 +367,70 @@ export function $addParamRejectionHandler(target: object, methodKey: string | sy
     descriptor.paramRejectHandlers = [...(descriptor.paramRejectHandlers || []), handler];
     setDescriptor(target, methodKey, descriptor);
 }
-
 /**
- * 获取或创建属性模式映射
+ * Apply getter handlers for a property
+ * 应用属性的 getter 处理器
  */
-export function getPropertyModes(target: any): Map<string | symbol, "proxy" | "accessor"> {
-    const targetMap = Storage.get(target);
-    if (!targetMap) {
-        return new Map();
+export function $applyGetterHandlers(receiver: any, propertyKey: string | symbol, value: any): any {
+    const prototype = Object.getPrototypeOf(receiver);
+    const descriptor = getDescriptor(prototype, propertyKey);
+    const getters = descriptor.getters || [];
+    if (getters.length === 0) return value;
+
+    return getters.reduce((prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]), value);
+}
+/**
+ * Apply setter handlers for a property
+ * 应用属性的 setter 处理器
+ */
+export function $applySetterHandlers(receiver: any, propertyKey: string | symbol, value: any): any {
+    const prototype = Object.getPrototypeOf(receiver);
+    const descriptor = getDescriptor(prototype, propertyKey);
+    const setters = descriptor.setters || [];
+    if (setters.length === 0) return value;
+
+    return setters.reduce((prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]), value);
+}
+/**
+ * Apply parameter handlers for a method
+ * 应用方法的参数处理器
+ */
+export function $applyParamHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[]): any[] {
+    const prototype = Object.getPrototypeOf(receiver);
+    const descriptor = getDescriptor(prototype, methodKey);
+    const paramHandlers = descriptor.paramHandlers || [];
+    if (paramHandlers.length === 0) return args;
+
+    try {
+        return paramHandlers.reduce((prev, handler, idx, arr) => {
+            const result = handler(receiver, methodKey, method, args, { approached: false, output: prev }, idx, [...arr]);
+            return typeof result === "boolean" ? prev : result.output;
+        }, args);
+    } catch (error) {
+        debugLogger(console.error, "Parameter handler error for method", methodKey, ":", error);
+        return args; // 发生错误时返回原始参数
     }
-    const modes = new Map<string | symbol, "proxy" | "accessor">();
-    for (const [propertyKey, descriptor] of targetMap.entries()) {
-        if (descriptor.propertyMode) {
-            modes.set(propertyKey, descriptor.propertyMode);
-        }
-    }
-    return modes;
+}
+/**
+ * Apply parameter rejection handlers for a method
+ * 应用方法的参数拒绝处理器
+ */
+export function $applyParamRejectionHandlers(
+    receiver: any,
+    methodKey: string | symbol,
+    method: Function,
+    args: any[],
+    conditionResult: any
+): any[] {
+    const prototype = Object.getPrototypeOf(receiver);
+    const descriptor = getDescriptor(prototype, methodKey);
+    const rejectHandlers = descriptor.paramRejectHandlers || [];
+    if (rejectHandlers.length === 0) return args;
+
+    return rejectHandlers.reduce((prev, handler, idx, arr) => {
+        const result = handler(receiver, methodKey, method, args, conditionResult, { approached: false, output: prev }, idx, [
+            ...arr,
+        ]);
+        return typeof result === "boolean" ? prev : result.output;
+    }, args);
 }

@@ -33,19 +33,13 @@ import {
     createClassProxy,
     createPropertyProxy,
     getDescriptor,
-    getPropertyModes,
-    markPropertyAsClassProxyManaged,
+    $markPropertyAsClassProxyManaged,
     setDescriptor,
 } from "./manage";
-import {
-    applyGetterHandlers,
-    applyParamHandlers,
-    applySetterHandlers,
-    getDecoratorType,
-    isModeCompatible,
-    getDecoratedPropertyCount,
-    rd_executeModeSelector,
-} from "./utils";
+import { getPropertyModes } from "./manage";
+import { getDecoratorType, isModeCompatible, rd_executeModeSelector } from "./utils";
+import { getDecoratedPropertyCount } from "./manage";
+import { $applyGetterHandlers, $applyParamHandlers, $applySetterHandlers } from "./manage";
 
 import { createAccessorInterception } from "./manage";
 import { rd_ProxyHandler } from "./types";
@@ -195,7 +189,7 @@ export function $$init<T = any>(...args: any[]) {
                               const targetMap = Storage.get(target.prototype);
                               if (targetMap) {
                                   for (const propertyKey of targetMap.keys()) {
-                                      markPropertyAsClassProxyManaged(target.prototype, propertyKey);
+                                      $markPropertyAsClassProxyManaged(target.prototype, propertyKey);
                                   }
                               }
 
@@ -215,7 +209,7 @@ export function $$init<T = any>(...args: any[]) {
                 const classProxyDescriptor = getDescriptor(targetObj, Symbol.for("ClassProxy"));
                 if (classProxyDescriptor.ClassProxyEnabled) {
                     // 如果已启用类代理，则标记属性由类代理管理
-                    markPropertyAsClassProxyManaged(targetObj, key);
+                    $markPropertyAsClassProxyManaged(targetObj, key);
                 }
 
                 switch (driveMod) {
@@ -252,10 +246,10 @@ export function $$init<T = any>(...args: any[]) {
                             ...descriptor,
                             get() {
                                 const value = originalGet.call(this);
-                                return applyGetterHandlers(this, key, value);
+                                return $applyGetterHandlers(this, key, value);
                             },
                             set(value: any) {
-                                const processedValue = applySetterHandlers(this, key, value);
+                                const processedValue = $applySetterHandlers(this, key, value);
                                 originalSet.call(this, processedValue);
                             },
                         };
@@ -278,7 +272,7 @@ export function $$init<T = any>(...args: any[]) {
                 if (descriptor && typeof descriptor.value === "function") {
                     const originalMethod = descriptor.value;
                     descriptor.value = function (...args: any[]) {
-                        const processedArgs = applyParamHandlers(this, key, originalMethod, args);
+                        const processedArgs = $applyParamHandlers(this, key, originalMethod, args);
                         return originalMethod.apply(this, processedArgs);
                     };
                     return descriptor;
@@ -316,7 +310,7 @@ export function $ClassProxy(): ClassDecorator {
                 const targetMap = Storage.get(prototype);
                 if (targetMap) {
                     for (const propertyKey of targetMap.keys()) {
-                        markPropertyAsClassProxyManaged(prototype, propertyKey);
+                        $markPropertyAsClassProxyManaged(prototype, propertyKey);
                     }
                 }
 
@@ -337,7 +331,7 @@ export function $PropertyProxy(): PropertyDecorator {
         const classProxyDescriptor = getDescriptor(target, Symbol.for("ClassProxy"));
         if (classProxyDescriptor.ClassProxyEnabled) {
             // 如果已启用类代理，则标记属性由类代理管理
-            markPropertyAsClassProxyManaged(target, propertyKey);
+            $markPropertyAsClassProxyManaged(target, propertyKey);
         } else {
             // 否则使用独立的属性代理
             const propertyModes = getPropertyModes(target);

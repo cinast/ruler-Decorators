@@ -1,8 +1,13 @@
-import { debugLogger } from "./api.test";
-import { getDescriptor } from "./manage";
 import { __Setting } from "./moduleMeta";
-import { $interceptionModes, $setter, decoratorType, Storage } from "./rulerDecorators";
+import { $interceptionModes, $setter, decoratorType } from "./rulerDecorators";
 ("use strict");
+
+export const byTheWay = (re: any, doSth: Function[]) => {
+    doSth.forEach((f) => f());
+    return re;
+};
+
+export const processIt = (input: any, doSth: Function[]) => doSth.reduce((p, f) => f(p));
 
 /** Identifies decorator type from arguments */
 export function getDecoratorType(args: any[]): decoratorType | "UNKNOWN" {
@@ -42,11 +47,48 @@ export function getDecoratorType(args: any[]): decoratorType | "UNKNOWN" {
  * @param props
  * @returns
  */
-export function $defineProperty<T>(...props: any[]): PropertyDecorator {
-    return function (target: any, attr: string | symbol) {
-        Object.defineProperty(target, attr, props);
-    };
+export function $defineProperty(props: Record<string, PropertyDescriptor>): PropertyDecorator & MethodDecorator & ClassDecorator {
+    return function (target: any, attr?: string | symbol, desc?: PropertyDescriptor): any {
+        const whoIsThis = getDecoratorType([target, attr, desc]);
+        for (const key in props) {
+            if (Object.prototype.hasOwnProperty.call(props, key)) {
+                const element = props[key];
+                switch (whoIsThis) {
+                    case "ClassDecorator":
+                        if (typeof target === "function") {
+                            // 对于类装饰器，返回一个新的类
+                            return class extends target {
+                                constructor(...args: any[]) {
+                                    super(...args);
+                                    Object.defineProperty(this, key, element);
+                                }
+                            };
+                        } else {
+                            // 如果不是构造函数，直接修改原型
+                            Object.defineProperty(target, key, element);
+                            return target;
+                        }
+                    case "PropertyDecorator":
+                        Object.defineProperty(target, key, element);
+                        break;
+                    case "MethodDecorator":
+                        if (desc) {
+                            // 对于方法装饰器，可以返回新的描述符
+                            return Object.assign({}, desc, element);
+                        }
+                        break;
+                }
+            }
+        }
+
+        // 对于属性和方法装饰器，如果没有返回新值，应该返回 undefined 或原描述符
+        if (whoIsThis === "MethodDecorator" && desc) {
+            return desc;
+        }
+        return undefined;
+    } as any; // 使用类型断言来解决复杂的类型问题
 }
+
 /**
  * Check if decorator type is compatible with interception mode
  * 检查装饰器类型是否与拦截模式兼容
@@ -105,107 +147,4 @@ export function rd_executeModeSelector(
 
     // 6. 回退到默认值
     return __Setting["Optimize.$$init.defaultMod"] == "proxy" ? "property-proxy" : "accessor";
-}
-/**
- * Get the count of decorated properties for a target
- * 获取目标对象上被装饰的属性数量
- */
-
-export function getDecoratedPropertyCount(target: any): number {
-    if (!target) return 0;
-
-    const targetMap = Storage.get(target);
-    if (!targetMap) return 0;
-
-    // 计算有处理器的属性数量
-    let count = 0;
-    for (const descriptor of targetMap.values()) {
-        if (descriptor.setters?.length || descriptor.getters?.length) {
-            count++;
-        }
-    }
-
-    return count;
-}
-/**
- * Check if a property has handlers
- * 检查属性是否有处理器
- */
-
-export function hasHandlersFor(target: object, propertyKey: string | symbol): boolean {
-    const descriptor = getDescriptor(target, propertyKey);
-    const hasSetter = Boolean(descriptor.setters?.length);
-    const hasGetter = Boolean(descriptor.getters?.length);
-    const hasParam = Boolean(descriptor.paramHandlers?.length);
-    return hasSetter || hasGetter || hasParam;
-}
-/**
- * Apply getter handlers for a property
- * 应用属性的 getter 处理器
- */
-
-export function applyGetterHandlers(receiver: any, propertyKey: string | symbol, value: any): any {
-    const prototype = Object.getPrototypeOf(receiver);
-    const descriptor = getDescriptor(prototype, propertyKey);
-    const getters = descriptor.getters || [];
-    if (getters.length === 0) return value;
-
-    return getters.reduce((prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]), value);
-}
-/**
- * Apply setter handlers for a property
- * 应用属性的 setter 处理器
- */
-
-export function applySetterHandlers(receiver: any, propertyKey: string | symbol, value: any): any {
-    const prototype = Object.getPrototypeOf(receiver);
-    const descriptor = getDescriptor(prototype, propertyKey);
-    const setters = descriptor.setters || [];
-    if (setters.length === 0) return value;
-
-    return setters.reduce((prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]), value);
-}
-/**
- * Apply parameter handlers for a method
- * 应用方法的参数处理器
- */
-export function applyParamHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[]): any[] {
-    const prototype = Object.getPrototypeOf(receiver);
-    const descriptor = getDescriptor(prototype, methodKey);
-    const paramHandlers = descriptor.paramHandlers || [];
-    if (paramHandlers.length === 0) return args;
-
-    try {
-        return paramHandlers.reduce((prev, handler, idx, arr) => {
-            const result = handler(receiver, methodKey, method, args, { approached: false, output: prev }, idx, [...arr]);
-            return typeof result === "boolean" ? prev : result.output;
-        }, args);
-    } catch (error) {
-        debugLogger(console.error, "Parameter handler error for method", methodKey, ":", error);
-        return args; // 发生错误时返回原始参数
-    }
-}
-/**
- * Apply parameter rejection handlers for a method
- * 应用方法的参数拒绝处理器
- */
-
-export function applyParamRejectionHandlers(
-    receiver: any,
-    methodKey: string | symbol,
-    method: Function,
-    args: any[],
-    conditionResult: any
-): any[] {
-    const prototype = Object.getPrototypeOf(receiver);
-    const descriptor = getDescriptor(prototype, methodKey);
-    const rejectHandlers = descriptor.paramRejectHandlers || [];
-    if (rejectHandlers.length === 0) return args;
-
-    return rejectHandlers.reduce((prev, handler, idx, arr) => {
-        const result = handler(receiver, methodKey, method, args, conditionResult, { approached: false, output: prev }, idx, [
-            ...arr,
-        ]);
-        return typeof result === "boolean" ? prev : result.output;
-    }, args);
 }
