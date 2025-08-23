@@ -9,28 +9,29 @@ export function getDecoratorType(args: any[]): decoratorType | "UNKNOWN" {
     console.log("getDecoratorType args:", args);
 
     // 检查参数长度和类型
-    if (args.length === 1 && typeof args[0] === "function") {
+    if (typeof args[0] === "function") {
         return "ClassDecorator";
     }
 
-    if (args.length === 2 && typeof args[0] === "object" && (typeof args[1] === "string" || typeof args[1] === "symbol")) {
+    if (
+        typeof args[2] !== undefined ||
+        (typeof args[0] === "object" && (typeof args[1] === "string" || typeof args[1] === "symbol"))
+    ) {
         return "PropertyDecorator";
     }
 
     if (
-        args.length === 3 &&
+        typeof args[2] === "object" &&
         typeof args[0] === "object" &&
-        (typeof args[1] === "string" || typeof args[1] === "symbol") &&
-        (args[2] === undefined || (args[2] && typeof args[2] === "object"))
+        (typeof args[1] === "string" || typeof args[1] === "symbol")
     ) {
         return "MethodDecorator";
     }
 
     if (
-        args.length === 3 &&
+        typeof args[2] === "number" &&
         typeof args[0] === "object" &&
-        (typeof args[1] === "string" || typeof args[1] === "symbol") &&
-        typeof args[2] === "number"
+        (typeof args[1] === "string" || typeof args[1] === "symbol")
     ) {
         return "ParameterDecorator";
     }

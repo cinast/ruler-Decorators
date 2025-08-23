@@ -106,158 +106,130 @@ if (typeof Proxy === "undefined") {
  * Initiate Decorator: do sth before apply rules
  * 初始化（隐/明性调用）装饰器
  */
-export function $$init<T = any, R = T>(): ClassDecorator & PropertyDecorator & ClassDecorator;
+// auto 自动选择
+export function $$init<T = any>(): ClassDecorator & PropertyDecorator & MethodDecorator;
+export function $$init<T = any>(...handlers: Function[]): ClassDecorator & PropertyDecorator & MethodDecorator;
+export function $$init<T = any>(
+    mode: $interceptionModes,
+    ...handlers: Function[]
+): ClassDecorator & PropertyDecorator & MethodDecorator;
 
 // ClassDecorator 重载 (2套)
-export function $$init<T = any, R = T>(mode: drivingModeWithAuto, ProxyHandlers: rd_ProxyHandler<any>): ClassDecorator;
-export function $$init<T = any, R = T>(ProxyHandlers: rd_ProxyHandler<any>): ClassDecorator;
+export function $$init<T = any>(mode: "class-proxy", ProxyHandlers: rd_ProxyHandler<T>): ClassDecorator;
+export function $$init<T = any>(ProxyHandlers: rd_ProxyHandler<T>): ClassDecorator;
 
 // PropertyDecorator 重载 (2套)
-export function $$init<T = any, R = T>(
-    mode: drivingModeWithAuto,
+export function $$init<T = any>(
+    mode: "accessor",
     initialSetters: rd_SetterHandle[],
     initialGetters: rd_GetterHandle[]
 ): PropertyDecorator;
-export function $$init<T = any, R = T>(initialSetters: rd_SetterHandle[], initialGetters: rd_GetterHandle[]): PropertyDecorator;
-export function $$init<T = any, R = T>(mode: drivingModeWithAuto, ProxyHandlers: rd_ProxyHandler<any>): PropertyDecorator;
-export function $$init<T = any, R = T>(ProxyHandlers: rd_ProxyHandler<any>): PropertyDecorator;
+export function $$init<T = any>(initialSetters: rd_SetterHandle[], initialGetters: rd_GetterHandle[]): PropertyDecorator;
+export function $$init<T = any>(mode: "property-proxy", ProxyHandlers: rd_ProxyHandler<T>): PropertyDecorator;
+export function $$init<T = any>(ProxyHandlers: rd_ProxyHandler<T>): PropertyDecorator;
 
 // MethodDecorator 重载 (2套)
-export function $$init<T = any, R = T>(
-    mode: drivingModeWithAuto,
+export function $$init<T = any>(
+    mode: "function-param-accessor",
     initialParamHandler: paramHandler[],
     initialParamRejectionHandler?: paramRejectionHandler[]
-): MethodDecorator;
-export function $$init<T = any, R = T>(
+): MethodDecorator & PropertyDecorator;
+export function $$init<T = any>(
     initialParamHandler: paramHandler[],
     initialParamRejectionHandler?: paramRejectionHandler[]
-): MethodDecorator;
+): MethodDecorator & PropertyDecorator;
 
-export function $$init<T = any, R = T>(...args: any[]) {
+export function $$init<T = any>(...args: any[]) {
     return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
         debugLogger(console.log, "$$init decorator applied to:", target?.name || target, propertyKey, descriptor);
 
         // 初始化Storage
-        if (!Storage.has(target)) {
-            Storage.set(target, new Map());
-        }
+        if (!Storage.has(target)) Storage.set(target, new Map());
+
         if (typeof target === "function" && target.prototype && !Storage.has(target.prototype)) {
             Storage.set(target.prototype, new Map());
         }
 
-        /**
-         * 解析参数，返回模式和处理器数组
-         */
-        function parseArgs(args: any[]): { mode: drivingModeWithAuto; handlers: any[] } {
-            let mode: drivingModeWithAuto = "auto";
-            let handlers: any[] = [];
-
-            if (
-                args.length > 0 &&
-                typeof args[0] === "string" &&
-                (args[0] === "proxy" || args[0] === "accessor" || args[0] === "auto")
-            ) {
-                mode = args[0];
-                handlers = args.slice(1);
-            } else {
-                handlers = args;
-            }
-
-            return { mode, handlers };
-        }
-        // 解析参数
-        const { mode, handlers } = parseArgs(args);
-
         // 确定装饰器类型
-        const detectedDecoratorType = getDecoratorType([target, propertyKey, descriptor]);
-        console.log("detectedDecoratorType:", detectedDecoratorType);
-        // 自动选择模式
-        let selectedMode = mode;
-        if (mode === "auto" && detectedDecoratorType !== "UNKNOWN") {
-            const decoratedCount = getDecoratedPropertyCount(target);
-            selectedMode =
-                rd_executeModeSelector(
-                    detectedDecoratorType as Exclude<decoratorType, "ParameterDecorator">,
-                    target,
-                    decoratedCount
-                ) === "class-proxy"
-                    ? "proxy"
-                    : "accessor";
-        }
+        const whoIsThisDecorator = getDecoratorType([target, propertyKey, descriptor]);
+        console.log("detectedDecoratorType:", whoIsThisDecorator);
+        if (whoIsThisDecorator === "UNKNOWN") throw "rulerDecorators now not suppose this kind of Decorator";
 
-        // 类装饰器处理
-        if (typeof propertyKey === "undefined") {
-            if (typeof target === "function" && target.prototype) {
-                return class extends target {
-                    constructor(...args: any[]) {
-                        super(...args);
-                        debugLogger(console.log, "Decorated class constructor called");
-                        if (selectedMode === "proxy") {
-                            debugLogger(console.log, "Using Class Proxy mode");
-                            return createClassProxy(this, target.prototype);
-                        } else {
-                            debugLogger(console.log, "Using accessor mode");
-                            return createAccessorInterception(this, target.prototype);
-                        }
-                    }
-                };
-            }
-            return target;
-        }
+        let [driveMod, handlers]: [$interceptionModes | "auto", Function[]] =
+            args.length > 0
+                ? [
+                      rd_executeModeSelector(
+                          whoIsThisDecorator as Exclude<decoratorType, "ParameterDecorator">,
+                          target,
+                          getDecoratedPropertyCount(target)
+                      ),
+                      [],
+                  ]
+                : typeof args[0] === "string"
+                ? [args[0] as $interceptionModes, args.slice(1) as Function[]]
+                : [
+                      rd_executeModeSelector(
+                          whoIsThisDecorator as Exclude<decoratorType, "ParameterDecorator">,
+                          target,
+                          getDecoratedPropertyCount(target)
+                      ),
+                      args as Function[],
+                  ];
 
         const key = propertyKey as string | symbol;
         const targetObj = target;
         const rdDescriptor = getDescriptor(targetObj, key);
         // 设置拦截模式
-        switch (detectedDecoratorType) {
+        switch (whoIsThisDecorator) {
             case "ClassDecorator":
-                rdDescriptor.interceptionModes = selectedMode === "proxy" ? "class-proxy" : "accessor";
-                break;
+                rdDescriptor.interceptionModes = driveMode;
+                // 类装饰器处理
+                return typeof target === "function" && target.prototype
+                    ? class extends target {
+                          constructor(...args: any[]) {
+                              super(...args);
+                              if (driveMode === "proxy") {
+                                  return createClassProxy(this, target.prototype);
+                              } else {
+                                  return createAccessorInterception(this, target.prototype);
+                              }
+                          }
+                      }
+                    : target;
+
             case "PropertyDecorator":
-                rdDescriptor.interceptionModes = selectedMode === "proxy" ? "property-proxy" : "accessor";
+                rdDescriptor.interceptionModes = driveMode === "proxy" ? "property-proxy" : "accessor";
+                switch (driveMode) {
+                    case value:
+                        rdDescriptor.setters = [...(rdDescriptor.setters || []), ...(handlers[0] as rd_SetterHandle[])];
+                        rdDescriptor.getters = [...(rdDescriptor.getters || []), ...(handlers[1] as rd_GetterHandle[])];
+                        break;
+                }
+
                 break;
             case "MethodDecorator":
                 rdDescriptor.interceptionModes = "function-param-accessor";
                 break;
             case "ParameterDecorator":
                 throw "rulerDecorators now not suppose ParameterDecorator";
-            // break;
-            case "UNKNOWN":
-                throw "rulerDecorators now not suppose this kind of Decorator";
-            default:
-                break;
         }
         // 处理处理器
+
         handlers.forEach((handlerGroup) => {
             if (Array.isArray(handlerGroup) && handlerGroup.length > 0) {
                 const firstHandler = handlerGroup[0];
                 if (typeof firstHandler === "function") {
                     if (firstHandler[thisSymbols]?.type === "setterI") {
-                        rdDescriptor.setters = [...(rdDescriptor.setters || []), ...(handlerGroup as rd_SetterHandle[])];
-                    } else if (firstHandler[thisSymbols]?.type === "getterI") {
-                        rdDescriptor.getters = [...(rdDescriptor.getters || []), ...(handlerGroup as rd_GetterHandle[])];
-                    } else if (detectedDecoratorType === "MethodDecorator") {
+                    } else if (whoIsThisDecorator === "MethodDecorator") {
                         rdDescriptor.paramHandlers = [...(rdDescriptor.paramHandlers || []), ...(handlerGroup as paramHandler[])];
                     }
-                } else if (typeof firstHandler === "object" && "get" in firstHandler) {
-                    rdDescriptor.propertyMode = selectedMode === "proxy" ? "proxy" : "accessor";
+                } else if (typeof firstHandler === "object") {
+                    rdDescriptor.propertyMode = driveMode === "proxy" ? "proxy" : "accessor";
                 }
             }
         });
 
         setDescriptor(targetObj, key, rdDescriptor);
-
-        // 验证兼容性
-        const finalDecoratorType = getDecoratorType(target);
-        console.log("type", finalDecoratorType);
-
-        if (finalDecoratorType === "UNKNOWN") {
-            return descriptor;
-        }
-        const interceptionMode = rdDescriptor.interceptionModes || "accessor";
-        if (!isModeCompatible(finalDecoratorType, interceptionMode)) {
-            console.warn(`警告：装饰器类型 ${finalDecoratorType} 与拦截模式 ${interceptionMode} 不兼容`);
-        }
 
         // 处理没有全局Proxy的情况
         const targetMap = Storage.get(targetObj);
@@ -268,7 +240,6 @@ export function $$init<T = any, R = T>(...args: any[]) {
             if (interceptionMode === "function-param-accessor" && typeof descriptor.value === "function") {
                 const originalMethod = descriptor.value;
                 descriptor.value = function (...args: any[]) {
-                    debugLogger(console.log, "Function parameter accessor triggered for", key, "with args", args);
                     const processedArgs = applyParamHandlers(this, key, originalMethod, args);
                     return originalMethod.apply(this, processedArgs);
                 };
