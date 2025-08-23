@@ -439,3 +439,10 @@ ds 真的是拼了
 src="https://cdn.jsdelivr.net/gh/cinast/cinast.imgsStore/public-emoji/%E6%8D%82%E8%84%B8%E5%93%AD%E7%AC%91.png"
 style="height: 1rem; width: 1rem; border-radius: 50%; background: center, center"
 />
+
+## 2025-08-23
+
+快搞好了  
+proxy+访问器的模式确定了  
+三个装饰器类型，五个装饰器，四种装载模式  
+但是发现描述符装载不了了
