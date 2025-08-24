@@ -34,7 +34,7 @@ class test {
     @rulerDecorators.stringExcludes(["damn"])
     str = "default";
 
-    @$$init()
+    @$$init<number>()
     @$conditionalWrite<number>("ignore", [
         (_: any, __: string | symbol, ___: number) => {
             return { approached: false, output: "abcd" + ___ };
@@ -117,17 +117,6 @@ console.log("redo t2.a", t2.a);
 valueRecorder.redo(t2, "a");
 console.log("redo t2.a", t2.a);
 valueRecorder.redo(t2, "a");
-
-// for (const key in t2) {
-//     const de = getDescriptor(t, key);
-//     console.log(`t.${key}:`, de);
-// }
-console.log(descriptorStorage.get(test.prototype));
-
-for (const key in t) {
-    const de = Object.getOwnPropertyDescriptor(t, key);
-    console.log(`t.${key}:`, de);
-}
 
 // // class TestClass {
 //     // Simplified approach: Use onlyTheClassCanWrite for write protection

@@ -181,6 +181,7 @@ export function $$init<T = any>(...args: any[]) {
         switch (whoIsThisDecorator) {
             case "ClassDecorator":
                 rdDescriptor.interceptionModes = interceptionMode;
+                setDescriptor(targetObj, key, rdDescriptor);
                 // 类装饰器处理
                 return typeof target === "function" && target.prototype
                     ? class extends target {
@@ -205,6 +206,7 @@ export function $$init<T = any>(...args: any[]) {
 
             case "PropertyDecorator":
                 rdDescriptor.interceptionModes = interceptionMode;
+                setDescriptor(targetObj, key, rdDescriptor);
 
                 // 检查是否已启用类代理
                 const classProxyDescriptor = getDescriptor(targetObj, Symbol.for("ClassProxy"));
@@ -225,63 +227,60 @@ export function $$init<T = any>(...args: any[]) {
                             ...(handlers.length > 1 ? (handlers[1] as unknown as rd_GetterHandle[]) : []),
                         ];
 
+                        if (!classProxyDescriptor.ClassProxyEnabled) {
+                            // 初始化值存储
+                            if (!valueStorage.has(targetObj)) {
+                                valueStorage.set(targetObj, new Map());
+                            }
+                            const valueMap = valueStorage.get(targetObj)!;
+
+                            // 保存初始值
+                            if (descriptor && descriptor.value !== undefined) {
+                                valueMap.set(key, descriptor.value);
+                            } else if (!valueMap.has(key)) {
+                                valueMap.set(key, undefined);
+                            }
+
+                            // if (descriptor) {
+                            // return {
+                            //     ...descriptor,
+                            //     get() {
+                            //         const value = valueMap.get(key);
+                            //         return $applyGetterHandlers(this, key, value);
+                            //     },
+                            //     set(value: any) {
+                            //         const processedValue = $applySetterHandlers(this, key, value);
+                            //         valueMap.set(key, processedValue);
+                            //     },
+                            // };
+                            // } else {
+                            $defineProperty({
+                                [key]: {
+                                    get() {
+                                        const value = valueMap.get(key);
+                                        return $applyGetterHandlers(this, key, value);
+                                    },
+                                    set(value: any) {
+                                        const processedValue = $applySetterHandlers(this, key, value);
+                                        valueMap.set(key, processedValue);
+                                    },
+                                    enumerable: true,
+                                    configurable: true,
+                                },
+                            })(targetObj, key);
+                            // }
+                        }
                         break;
                     case "proxy":
                         // 属性代理模式下，设置属性模式
                         const propertyModes = getPropertyModes(targetObj);
                         propertyModes.set(key, "proxy");
+                        if (descriptor) {
+                            return descriptor;
+                        }
                         break;
                 }
 
-                // 处理属性描述符
-                if (!classProxyDescriptor.ClassProxyEnabled) {
-                    // 初始化值存储
-                    if (!valueStorage.has(targetObj)) {
-                        valueStorage.set(targetObj, new Map());
-                    }
-                    const valueMap = valueStorage.get(targetObj)!;
-
-                    // 保存初始值
-                    if (descriptor && descriptor.value !== undefined) {
-                        valueMap.set(key, descriptor.value);
-                    } else if (!valueMap.has(key)) {
-                        valueMap.set(key, undefined);
-                    }
-
-                    if (descriptor) {
-                        const modes = getPropertyModes(targetObj);
-                        const mode = modes.get(key) || "proxy";
-
-                        if (mode === "accessor") {
-                            return {
-                                ...descriptor,
-                                get() {
-                                    const value = valueMap.get(key);
-                                    return $applyGetterHandlers(this, key, value);
-                                },
-                                set(value: any) {
-                                    const processedValue = $applySetterHandlers(this, key, value);
-                                    valueMap.set(key, processedValue);
-                                },
-                            };
-                        }
-                    } else {
-                        $defineProperty({
-                            [key]: {
-                                get() {
-                                    const value = valueMap.get(key);
-                                    return $applyGetterHandlers(this, key, value);
-                                },
-                                set(value: any) {
-                                    const processedValue = $applySetterHandlers(this, key, value);
-                                    valueMap.set(key, processedValue);
-                                },
-                                enumerable: true,
-                                configurable: true,
-                            },
-                        })(targetObj, key);
-                    }
-                }
                 break;
             case "MethodDecorator":
                 // 注册句柄
@@ -294,6 +293,7 @@ export function $$init<T = any>(...args: any[]) {
                     ...(rdDescriptor.paramRejectHandlers || []),
                     ...(handlers.length > 0 ? (handlers[1] as unknown as paramRejectionHandler[]) : []),
                 ];
+                setDescriptor(targetObj, key, rdDescriptor);
 
                 // 处理方法描述符
                 if (descriptor && typeof descriptor.value === "function") {
@@ -310,7 +310,6 @@ export function $$init<T = any>(...args: any[]) {
                 throw "rulerDecorators now not suppose ParameterDecorator";
         }
 
-        setDescriptor(targetObj, key, rdDescriptor);
         return descriptor;
     };
 }
@@ -426,7 +425,15 @@ export const $conditionalWrite = <R = any, I = R>(
 ) => {
     return $setter<R, I>((thisArg, key, newVal, lastResult: I, index, handlers) => {
         const handlersArray = [...conditionHandles];
-        const callResult = handlersArray.reduce<{ approached: boolean; output: any }>(
+        const callResult:
+            | {
+                  approached: true;
+                  output: R;
+              }
+            | {
+                  approached: false;
+                  output: any;
+              } = handlersArray.reduce<{ approached: boolean; output: any }>(
             (lastProcess, handler, idx, arr) => {
                 const r = handler(thisArg, key, newVal, lastProcess, idx, conditionHandles);
                 return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
@@ -438,7 +445,15 @@ export const $conditionalWrite = <R = any, I = R>(
 
         if (rejectHandlers?.length) {
             const rejectHandlersArray = [...rejectHandlers];
-            const rejectResult = rejectHandlersArray.reduce<{ approached: boolean; output: any }>(
+            const rejectResult:
+                | {
+                      approached: true;
+                      output: R;
+                  }
+                | {
+                      approached: false;
+                      output: any;
+                  } = rejectHandlersArray.reduce<{ approached: boolean; output: any }>(
                 (lastProcess, handler, idx, arr) => {
                     const r = handler(thisArg, key, newVal, callResult, lastProcess, idx, rejectHandlers);
                     return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
@@ -460,7 +475,7 @@ export const $conditionalWrite = <R = any, I = R>(
                     throw new Error(`🚫 ${warningMsg}`);
             }
         }
-        return lastResult; // 修改这里，返回 lastResult 而不是 (thisArg as any)[key]
+        return thisArg[key];
     });
 };
 /**
@@ -474,7 +489,15 @@ export const $conditionalRead = <R = any, I = R>(
 ) => {
     return $getter((thisArg, key, value, lastResult: I, index, handlers) => {
         const handlersArray = [...conditionHandles];
-        const callResult = handlersArray.reduce<{ approached: boolean; output: any }>(
+        const callResult:
+            | {
+                  approached: true;
+                  output: R;
+              }
+            | {
+                  approached: false;
+                  output: any;
+              } = handlersArray.reduce<{ approached: boolean; output: any }>(
             (lastProcess, handler, idx, arr) => {
                 const r = handler(thisArg, key, value, lastProcess, idx, conditionHandles);
                 return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
@@ -486,7 +509,15 @@ export const $conditionalRead = <R = any, I = R>(
 
         if (rejectHandlers?.length) {
             const rejectHandlersArray = [...rejectHandlers];
-            const rejectResult = rejectHandlersArray.reduce<{ approached: boolean; output: any }>(
+            const rejectResult:
+                | {
+                      approached: true;
+                      output: R;
+                  }
+                | {
+                      approached: false;
+                      output: any;
+                  } = rejectHandlersArray.reduce<{ approached: boolean; output: any }>(
                 (lastProcess, handler, idx, arr) => {
                     const r = handler(thisArg, key, value, callResult, lastProcess, idx, rejectHandlers);
                     return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
