@@ -193,9 +193,7 @@ export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
                     : v > min,
         ],
         [
-            (_, __, v, conditionResult, p) => {
-                console.log("Value:", v, "Condition result:", conditionResult);
-                // 如果条件检查失败，返回最小值
+            (_, __, v, fp, p) => {
                 return { approached: true, output: min };
             },
         ]
