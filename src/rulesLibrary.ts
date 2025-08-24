@@ -238,7 +238,7 @@ export const range = (min: number, max: number) =>
  * @param replace - replace excluded string
  *                  替换排除的字符串
  */
-export const stringExcludes = (patten: (RegExp | string)[], replace?: string) =>
+export const stringExcludes = (patten: (RegExp | string)[], replace: string = "") =>
     $conditionalWrite(
         "Warn",
         [
@@ -246,7 +246,23 @@ export const stringExcludes = (patten: (RegExp | string)[], replace?: string) =>
                 typeof p.output == "string" &&
                 !patten.some((pat) => (typeof pat === "string" ? p.output.includes(pat) : pat.test(p.output))),
         ],
-        [(_, __, v, fp, p) => (replace ? patten.some((pat) => p.output.replace(pat, replace)) : false)]
+        [
+            (_, __, v, fp, p) => {
+                // 拒绝处理器 - 直接返回过滤后的值
+                if (typeof p.output === "string") {
+                    let result = p.output;
+                    for (const pattern of patten) {
+                        if (typeof pattern === "string") {
+                            result = result.replace(new RegExp(pattern, "g"), replace);
+                        } else {
+                            result = result.replace(pattern, replace);
+                        }
+                    }
+                    return { approached: true, output: result };
+                }
+                return false;
+            },
+        ]
     );
 
 /**

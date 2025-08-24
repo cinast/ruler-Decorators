@@ -36,7 +36,7 @@ class BasicTest {
     int = -22.7;
 
     @$$init()
-    @rulerDecorators.stringExcludes(["damn", "shit"], "")
+    @rulerDecorators.stringExcludes(["damn", "shit"])
     str = "default";
 
     @$$init()
@@ -74,7 +74,7 @@ basicTest.int = 15.3;
 console.log("int = 15.3 ->", basicTest.int, "预期被修正为 16 (ceil)");
 
 basicTest.str = "this is damn good";
-console.log("str = 'this is damn good' ->", basicTest.str, '预期被过滤为 "this is good"');
+console.log("str = 'this is damn good' ->", basicTest.str, '预期被过滤为 "this is  good"（有两个空格，因为只是删除了"damn"）');
 
 basicTest.percentage = 150;
 console.log("percentage = 150 ->", basicTest.percentage, "预期被修正为 100");
