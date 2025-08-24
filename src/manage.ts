@@ -408,13 +408,16 @@ export function $applyParamHandlers(receiver: any, methodKey: string | symbol, m
     try {
         return paramHandlers.reduce((prev, handler, idx, arr) => {
             const result = handler(receiver, methodKey, method, args, { approached: false, output: prev }, idx, [...arr]);
-            return typeof result === "boolean" ? prev : result.output;
+            // 确保返回处理后的参数数组
+
+            return typeof result === "object" && "output" in result ? result.output : prev;
         }, args);
     } catch (error) {
         debugLogger(console.error, "Parameter handler error for method", methodKey, ":", error);
         return args; // 发生错误时返回原始参数
     }
 }
+
 /**
  * Apply parameter rejection handlers for a method
  * 应用方法的参数拒绝处理器

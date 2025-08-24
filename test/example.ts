@@ -269,7 +269,6 @@ class MethodParamTest {
 
 console.log("创建 MethodParamTest 实例...");
 const methodParamTest = new MethodParamTest();
-
 // 测试方法参数处理
 console.log("\n测试方法参数处理...");
 methodParamTest.addValues(1, -2, 3, -4); // 负数预期被转为正数
@@ -383,7 +382,7 @@ valueRecorder.undo(valueRecorderTest, "limitedHistory");
 console.log("撤销两次 limitedHistory:", valueRecorderTest.limitedHistory, "预期是 2");
 
 valueRecorder.undo(valueRecorderTest, "limitedHistory");
-console.log("撤销三次 limitedHistory:", valueRecorderTest.limitedHistory, "预期是 2 (历史记录已满)");
+console.log("撤销三次 limitedHistory:", valueRecorderTest.limitedHistory, "预期是 1 (历史记录已满)");
 
 // ==================== 8. 混合模式测试 ====================
 console.log("\n8. 混合模式测试");
@@ -404,6 +403,8 @@ class MixedModeTest {
     @$$init()
     @$paramChecker((obj, methodName, method, args, prevResult) => {
         const processedArgs = args.map((arg) => (typeof arg === "number" ? Math.abs(arg) : arg));
+        console.log("44424", processedArgs);
+
         return { approached: true, output: processedArgs };
     })
     processData(...values: number[]): number[] {
@@ -424,10 +425,22 @@ mixedModeTest.proxiedValue = 150; // 预期被修正为 100
 console.log("proxiedValue = 150 ->", mixedModeTest.proxiedValue, "预期是 100");
 
 mixedModeTest.accessorValue = -50; // 预期被修正为 1
-console.log("accessorValue = -50 ->", mixedModeTest.accessorValue, "预期是 1");
+console.log("accessorValue = -50 ->", mixedModeTest.accessorValue, "预期是 100 (alwaysPositive条件写入拒绝)");
 
 mixedModeTest.accessorValue = 2000; // 预期触发警告
-console.log("accessorValue = 2000 ->", mixedModeTest.accessorValue, "预期是 1 (条件写入拒绝)");
+console.log("accessorValue = 2000 ->", mixedModeTest.accessorValue, "预期是 100 (小于1000条件写入拒绝)");
+
+console.log("proxiedValue", mixedModeTest.proxiedValue);
+mixedModeTest.proxiedValue = 200; // 预期触发警告
+console.log("proxiedValue = 200 ->", mixedModeTest.proxiedValue, "预期是 100 (小于1000条件写入拒绝)");
+mixedModeTest.proxiedValue = 30;
+console.log("proxiedValue = 30 ->", mixedModeTest.proxiedValue, "预期是 30 ");
+mixedModeTest.proxiedValue = 50;
+console.log("proxiedValue = 50 ->", mixedModeTest.proxiedValue, "预期是 50 ");
+valueRecorder.undo(mixedModeTest, "proxiedValue");
+console.log("proxiedValue undo", mixedModeTest.proxiedValue);
+valueRecorder.undo(mixedModeTest, "proxiedValue");
+console.log("proxiedValue undo", mixedModeTest.proxiedValue);
 
 // 测试方法参数处理
 console.log("\n测试方法参数处理...");

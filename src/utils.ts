@@ -17,18 +17,18 @@ export function getDecoratorType(args: any[]): decoratorType | "UNKNOWN" {
     }
 
     if (
-        typeof args[2] !== undefined ||
-        (typeof args[0] === "object" && (typeof args[1] === "string" || typeof args[1] === "symbol"))
-    ) {
-        return "PropertyDecorator";
-    }
-
-    if (
         typeof args[2] === "object" &&
         typeof args[0] === "object" &&
         (typeof args[1] === "string" || typeof args[1] === "symbol")
     ) {
         return "MethodDecorator";
+    }
+
+    if (
+        typeof args[2] === undefined ||
+        (typeof args[0] === "object" && (typeof args[1] === "string" || typeof args[1] === "symbol"))
+    ) {
+        return "PropertyDecorator";
     }
 
     if (

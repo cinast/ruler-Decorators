@@ -295,13 +295,27 @@ export function $$init<T = any>(...args: any[]) {
                 setDescriptor(targetObj, key, rdDescriptor);
 
                 // 处理方法描述符
-                if (descriptor && typeof descriptor.value === "function") {
-                    const originalMethod = descriptor.value;
-                    descriptor.value = function (...args: any[]) {
-                        const processedArgs = $applyParamHandlers(target, key, originalMethod, args);
-                        return originalMethod.apply(target, processedArgs);
-                    };
-                    return descriptor;
+                if (descriptor) {
+                    // 检查是否是方法（有 value 且是函数）
+                    if (typeof descriptor.value === "function") {
+                        const originalMethod = descriptor.value;
+                        descriptor.value = function (...args: any[]) {
+                            const processedArgs = $applyParamHandlers(this, key, originalMethod, args);
+                            return originalMethod.apply(this, processedArgs);
+                        };
+                        return descriptor;
+                    }
+                    // 检查是否是访问器（getter/setter）
+                    else if (typeof descriptor.get === "function" || typeof descriptor.set === "function") {
+                        // 对于访问器，可能需要不同的处理方式
+                        console.warn("Parameter decorators are not supported on accessors (getters/setters)");
+                        return descriptor;
+                    }
+                    // 其他情况
+                    else {
+                        console.warn("Method decorator applied to non-method property");
+                        return descriptor;
+                    }
                 }
                 break;
 
