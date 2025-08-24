@@ -452,32 +452,61 @@ console.log("检查 valueStorage...");
 console.log("ValueRecorderTest 值存储:", valueStorage.get(valueRecorderTest));
 
 // ==================== 10. 性能测试 ====================
-class pr0xytTest {
-    @$$init("property-proxy", {
-        set: [
-            (t, k, v) => {
-                v.a = 1000;
-                return v;
-            },
-        ],
+
+class Pr0xyTest {
+    @$$init("property-proxy")
+    @$setter((t, k, v) => {
+        console.log("Setting obj:", v);
+        // 确保返回的是一个新对象，而不是修改原对象
+        return { ...v, a: 1000 };
     })
-    obj = {
+    obj: any = {
         a: 0,
     };
-    @$$init("property-proxy", {
-        set: [
-            (t, k, ar) => {
-                ar.map((v) => (v % 2 === 0 ? v : v * 2));
-            },
-        ],
+
+    @$$init("property-proxy")
+    @$setter((t, k, arr) => {
+        console.log("Setting arr:", arr);
+        // 返回处理后的新数组
+        return arr.map((v) => (v % 2 === 0 ? v : v * 2));
     })
     arr = [1, 2, 4, 63, 2];
-    constructor() {}
+
+    constructor() {
+        console.log("Initial obj:", this.obj);
+        console.log("Initial arr:", this.arr);
+    }
 }
 
-const proxyTest = new pr0xytTest();
-console.log("proxyTest.arr", proxyTest.arr, "预期[2,2,4,126,2]");
-console.log("proxyTest.obj", proxyTest.obj, "预期{a:1000}");
+// 测试函数
+function testPropertyProxy() {
+    console.log("=== Property Proxy Test ===");
+
+    const instance = new Pr0xyTest();
+
+    // 测试对象属性
+    console.log("\n--- Testing Object Property ---");
+    console.log("Before setting:", instance.obj);
+    instance.obj = { a: 5, b: "test" };
+    console.log("After setting:", instance.obj);
+
+    // 测试数组属性
+    console.log("\n--- Testing Array Property ---");
+    console.log("Before setting:", instance.arr);
+    instance.arr = [3, 4, 5, 6];
+    console.log("After setting:", instance.arr);
+
+    // 测试直接修改属性（应该不会触发代理）
+    console.log("\n--- Testing Direct Modification ---");
+    console.log("Before direct modification:", instance.obj);
+    instance.obj.a = 999; // 这不会触发代理，因为代理只监控顶层属性赋值
+    console.log("After direct modification:", instance.obj);
+
+    return instance;
+}
+
+// 运行测试
+const testInstance = testPropertyProxy();
 
 // ==================== 11. 性能测试 ====================
 console.log("\n11. 性能测试");

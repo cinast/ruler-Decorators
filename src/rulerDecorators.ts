@@ -121,7 +121,13 @@ export function $$init<T = any>(
     initialGetters: rd_GetterHandle[]
 ): PropertyDecorator;
 export function $$init<T = any>(initialSetters: rd_SetterHandle[], initialGetters: rd_GetterHandle[]): PropertyDecorator;
+/**
+ * @deprecated
+ */
 export function $$init<T = any>(mode: "property-proxy", ProxyHandlers: rd_ProxyTraps<T>): PropertyDecorator;
+/**
+ * @deprecated
+ */
 export function $$init<T = any>(ProxyHandlers: rd_ProxyTraps<T>): PropertyDecorator;
 
 // MethodDecorator 重载 (2套)
