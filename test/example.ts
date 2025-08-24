@@ -197,12 +197,6 @@ class PropertyProxyTest {
     @rulerDecorators.alwaysPositive
     normalValue: number = -5;
 
-    @$$init()
-    // @rulerDecorators.range(-2, 10)
-    @((_, __) => {
-        console.log(_, __);
-    })
-    arr = [-4, -3, 0, 1, 4, 15, 16];
     constructor() {
         console.log("PropertyProxyTest 构造函数调用");
     }
@@ -255,7 +249,7 @@ class MethodParamTest {
                 const value = Math.max(0, Math.min(100, args[0]));
                 return { approached: true, output: [value] };
             }
-            return { approached: false, output: args };
+            return false;
         }
     )
     setPercentage(value: number): void {
@@ -403,8 +397,6 @@ class MixedModeTest {
     @$$init()
     @$paramChecker((obj, methodName, method, args, prevResult) => {
         const processedArgs = args.map((arg) => (typeof arg === "number" ? Math.abs(arg) : arg));
-        console.log("44424", processedArgs);
-
         return { approached: true, output: processedArgs };
     })
     processData(...values: number[]): number[] {
@@ -444,6 +436,8 @@ console.log("proxiedValue undo", mixedModeTest.proxiedValue);
 
 // 测试方法参数处理
 console.log("\n测试方法参数处理...");
+console.log(getDescriptor(mixedModeTest, "processData"));
+
 const result = mixedModeTest.processData(5, -10, 15);
 console.log("processData(5, -10, 15) ->", result, "预期是 [10, 20, 30]");
 
@@ -458,7 +452,38 @@ console.log("检查 valueStorage...");
 console.log("ValueRecorderTest 值存储:", valueStorage.get(valueRecorderTest));
 
 // ==================== 10. 性能测试 ====================
-console.log("\n10. 性能测试");
+class pr0xytTest {
+    @$$init("property-proxy", {
+        set: [
+            (t, k, v) => {
+                switch (k) {
+                    case "a":
+                        return 9990;
+                }
+                return;
+            },
+        ],
+    })
+    obj = {
+        a: 0,
+    };
+    @$$init("property-proxy", {
+        set: [
+            (t, k, v) => {
+                v % 2 === 0 ? v : v * 2;
+            },
+        ],
+    })
+    arr = [1, 2, 4, 63, 2];
+    constructor() {}
+}
+
+const proxyTest = new pr0xytTest();
+console.log("proxyTest.arr", proxyTest.arr, "预期[2,2,4,126,2]");
+console.log("proxyTest.obj", proxyTest.obj, "预期{a:9990}");
+
+// ==================== 11. 性能测试 ====================
+console.log("\n11. 性能测试");
 
 class PerformanceTest {
     @$$init()

@@ -249,16 +249,13 @@ export function createClassProxy(instance: any, prototype: any): any {
             debugLogger(console.log, "Class Proxy getter triggered for", propertyKey);
             let value = Reflect.get(target, propertyKey, receiver);
 
-            // 检查属性是否由类代理管理
             const descriptor = getDescriptor(prototype, propertyKey);
-            if (descriptor.managedByClassProxy) {
-                const getters = descriptor.getters || [];
-                if (getters.length > 0) {
-                    value = getters.reduce(
-                        (prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]),
-                        value
-                    );
-                }
+            const getters = descriptor.getters || [];
+            if (getters.length > 0) {
+                value = getters.reduce(
+                    (prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]),
+                    value
+                );
             }
 
             if (typeof value === "function") {
@@ -269,23 +266,15 @@ export function createClassProxy(instance: any, prototype: any): any {
 
         set(target, propertyKey, value, receiver) {
             debugLogger(console.log, "Class Proxy setter triggered for", propertyKey, "with value", value);
-
-            // 检查属性是否由类代理管理
-            const descriptor = getDescriptor(prototype, propertyKey);
             let processedValue = value;
 
-            if (descriptor.managedByClassProxy) {
-                const setters = descriptor.setters || [];
-
-                if (setters.length > 0) {
-                    // 应用 setter 处理器
-                    processedValue = setters.reduce((prev, handler, idx, arr) => {
-                        const result = handler(receiver, propertyKey, value, prev, idx, [...arr]);
-
-                        // 确保返回的是值而不是处理器结果对象
-                        return result && typeof result === "object" && "output" in result ? result.output : result;
-                    }, value);
-                }
+            const descriptor = getDescriptor(prototype, propertyKey);
+            const setters = descriptor.setters || [];
+            if (setters.length > 0) {
+                processedValue = setters.reduce(
+                    (prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]),
+                    value
+                );
             }
 
             return Reflect.set(target, propertyKey, processedValue, receiver);
@@ -400,15 +389,14 @@ export function $applySetterHandlers(receiver: any, propertyKey: string | symbol
  * 应用方法的参数处理器
  */
 export function $applyParamHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[]): any[] {
-    const prototype = Object.getPrototypeOf(receiver);
-    const descriptor = getDescriptor(prototype, methodKey);
+    // const prototype = Object.getPrototypeOf(receiver);
+    const descriptor = getDescriptor(receiver, methodKey);
     const paramHandlers = descriptor.paramHandlers || [];
     if (paramHandlers.length === 0) return args;
 
     try {
         return paramHandlers.reduce((prev, handler, idx, arr) => {
             const result = handler(receiver, methodKey, method, args, { approached: false, output: prev }, idx, [...arr]);
-            // 确保返回处理后的参数数组
 
             return typeof result === "object" && "output" in result ? result.output : prev;
         }, args);
@@ -429,8 +417,8 @@ export function $applyParamRejectionHandlers(
     args: any[],
     conditionResult: any
 ): any[] {
-    const prototype = Object.getPrototypeOf(receiver);
-    const descriptor = getDescriptor(prototype, methodKey);
+    // const prototype = Object.getPrototypeOf(receiver);
+    const descriptor = getDescriptor(receiver, methodKey);
     const rejectHandlers = descriptor.paramRejectHandlers || [];
     if (rejectHandlers.length === 0) return args;
 

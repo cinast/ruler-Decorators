@@ -42,7 +42,7 @@ import { getDecoratedPropertyCount } from "./manage";
 import { $applyGetterHandlers, $applyParamHandlers, $applySetterHandlers } from "./manage";
 
 import { createAccessorInterception } from "./manage";
-import { rd_ProxyHandler } from "./types";
+import { rd_ProxyTraps } from "./types";
 
 export declare type drivingMod = "proxy" | "accessor";
 export declare type drivingModeWithAuto = drivingMod | "auto";
@@ -111,8 +111,8 @@ export function $$init<T = any>(
 ): ClassDecorator & PropertyDecorator & MethodDecorator;
 
 // ClassDecorator 重载 (2套)
-export function $$init<T = any>(mode: "class-proxy", ProxyHandlers: rd_ProxyHandler<T>): ClassDecorator;
-export function $$init<T = any>(ProxyHandlers: rd_ProxyHandler<T>): ClassDecorator;
+export function $$init<T = any>(mode: "class-proxy", ProxyHandlers: rd_ProxyTraps<T>): ClassDecorator;
+export function $$init<T = any>(ProxyHandlers: rd_ProxyTraps<T>): ClassDecorator;
 
 // PropertyDecorator 重载 (2套)
 export function $$init<T = any>(
@@ -121,8 +121,8 @@ export function $$init<T = any>(
     initialGetters: rd_GetterHandle[]
 ): PropertyDecorator;
 export function $$init<T = any>(initialSetters: rd_SetterHandle[], initialGetters: rd_GetterHandle[]): PropertyDecorator;
-export function $$init<T = any>(mode: "property-proxy", ProxyHandlers: rd_ProxyHandler<T>): PropertyDecorator;
-export function $$init<T = any>(ProxyHandlers: rd_ProxyHandler<T>): PropertyDecorator;
+export function $$init<T = any>(mode: "property-proxy", ProxyHandlers: rd_ProxyTraps<T>): PropertyDecorator;
+export function $$init<T = any>(ProxyHandlers: rd_ProxyTraps<T>): PropertyDecorator;
 
 // MethodDecorator 重载 (2套)
 export function $$init<T = any>(
@@ -257,10 +257,10 @@ export function $$init<T = any>(...args: any[]) {
                                 [key]: {
                                     get() {
                                         const value = valueMap.get(key);
-                                        return $applyGetterHandlers(this, key, value);
+                                        return $applyGetterHandlers(target, key, value);
                                     },
                                     set(value: any) {
-                                        const processedValue = $applySetterHandlers(this, key, value);
+                                        const processedValue = $applySetterHandlers(target, key, value);
                                         valueMap.set(key, processedValue);
                                     },
                                     enumerable: true,
@@ -292,6 +292,8 @@ export function $$init<T = any>(...args: any[]) {
                     ...(rdDescriptor.paramRejectHandlers || []),
                     ...(handlers.length > 0 ? (handlers[1] as unknown as paramRejectionHandler[]) : []),
                 ];
+                console.log("this", rdDescriptor);
+
                 setDescriptor(targetObj, key, rdDescriptor);
 
                 // 处理方法描述符
@@ -300,9 +302,10 @@ export function $$init<T = any>(...args: any[]) {
                     if (typeof descriptor.value === "function") {
                         const originalMethod = descriptor.value;
                         descriptor.value = function (...args: any[]) {
-                            const processedArgs = $applyParamHandlers(this, key, originalMethod, args);
-                            return originalMethod.apply(this, processedArgs);
+                            const processedArgs = $applyParamHandlers(target, key, originalMethod, args);
+                            return originalMethod.apply(target, processedArgs);
                         };
+
                         return descriptor;
                     }
                     // 检查是否是访问器（getter/setter）

@@ -1,6 +1,6 @@
 import { paramFilterHandler, paramRejectionHandler, rd_GetterHandle, rd_SetterHandle } from "./type.handles";
 
-export interface rd_ProxyHandler<T extends any> {
+export interface rd_ProxyTraps<T extends any> {
     // apply: ((target: T, thisArg: any, argArray: any[]) => any)[];
 
     // construct?(target: T, argArray: any[], newTarget: Function): object;
@@ -9,7 +9,7 @@ export interface rd_ProxyHandler<T extends any> {
 
     // deleteProperty?(target: T, p: string | symbol): boolean;
 
-    get: rd_GetterHandle[];
+    get?: rd_GetterHandle[];
 
     // getOwnPropertyDescriptor?(target: T, p: string | symbol): PropertyDescriptor | undefined;
 
@@ -23,7 +23,7 @@ export interface rd_ProxyHandler<T extends any> {
 
     // preventExtensions?(target: T): boolean;
 
-    set: rd_SetterHandle[];
+    set?: rd_SetterHandle[];
 
     // setPrototypeOf?(target: T, v: object | null): boolean;
 }
