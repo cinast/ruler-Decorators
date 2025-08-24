@@ -312,5 +312,96 @@ class cls {
 
 > _哦，我我忘记写 return 了_ ![alt text](https://cdn.jsdelivr.net/gh/cinast/cinast.imgsStore/com.gh.rulerDecorators/err_conditionalWrite.png)
 
-——@cinast
-2025/8/10
+# 原理
+
+Assessor（访问器` get()``set() `对） 与 `Proxy(trap)` 作为触发驱动，  
+用定义时候就触发的装饰器把驱动函数装载入属性（assessor 模式）,或者注册对应的 proxy
+
+，并且注册对应操作的处理函数链
+
+## **驱动底层 | 规则注册装饰器**
+
+```ts
+@$$init()
+```
+
+这个库的效果大多数都是依靠 getter 和 setter 驱动的。通过装饰器隐式规定规则，getter/setter 作为执行机制。
+
+**初始化过程：**
+
+1. 将目标属性转换为一对 getter 和 setter
+2. 初始化四个 WeakMap 外部存储：
+    - `descriptorStorage: WeakMap<object, Map<string | symbol, rd_Descriptor>>` - 存储属性描述符配置
+    - `valueStorage: WeakMap<object, Map<string | symbol, any>>` - 存储属性实际值
+    - 其他内部存储用于管理句柄和状态
+
+## **多模式拦截机制**
+
+库支持四种拦截模式：
+
+### 1. Accessor 模式（默认）
+
+-   使用传统的 getter/setter
+-   值存储在闭包变量或 valueStorage 中
+-   适用于简单属性拦截
+
+### 2. Property-Proxy 模式
+
+-   为特定属性创建 Proxy
+-   值存储在原始对象上
+-   适用于需要深度监控的场景
+
+### 3. Class-Proxy 模式
+
+-   为整个类创建 Proxy
+-   统一管理所有属性拦截
+-   值存储在原始对象上
+
+### 4. Function-Param-Accessor 模式
+
+-   专门处理方法参数
+-   在函数调用前预处理参数
+
+## **值存储机制**
+
+不同模式下值的存储位置：
+
+| 模式                    | 值存储位置              | 访问方式                     |
+| ----------------------- | ----------------------- | ---------------------------- |
+| Accessor                | 闭包变量或 valueStorage | 通过 getter/setter           |
+| Property-Proxy          | 原始对象属性            | 通过 Reflect.get/Reflect.set |
+| Class-Proxy             | 原始对象属性            | 通过 Reflect.get/Reflect.set |
+| Function-Param-Accessor | 不存储（临时值）        | 函数调用时处理               |
+
+## **装饰器类型与模式对应关系**
+
+-   **ClassDecorator**: class-proxy (默认)
+-   **PropertyDecorator**:
+    -   property-proxy (显式配置)
+    -   accessor (默认)
+    -   function-param-accessor（针对函数属性）
+-   **MethodDecorator**: function-param-accessor (默认)
+-   **ParameterDecorator**: 暂不支持
+
+## **核心概念：处理对象**
+
+库中使用 `{ approached: boolean, output: any }` 结构作为处理对象：
+
+-   `approached`: 表示处理是否完成
+-   `output`: 处理后的值
+
+这种设计允许处理链中的每个处理器决定是否中断处理，以及提供处理后的值。
+
+## **注意事项**
+
+1. 不要直接使用 `target[key]`，使用处理器提供的 `value` 参数
+2. 类型检查在装饰器中受限，需要谨慎处理
+3. 避免在属性描述符中使用 `this`
+4. 描述符有 `get/set` 就没有 `value`（ES 规范）
+5. 不要混合使用不同模式
+6. 属性可能没有描述符（刚定义时）
+
+——@~~cinast~~ deepseek 代写
+2025/8/24
+
+_ps: 文档还没合二为一_
