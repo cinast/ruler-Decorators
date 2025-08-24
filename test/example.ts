@@ -456,11 +456,8 @@ class pr0xytTest {
     @$$init("property-proxy", {
         set: [
             (t, k, v) => {
-                switch (k) {
-                    case "a":
-                        return 9990;
-                }
-                return;
+                v.a = 1000;
+                return v;
             },
         ],
     })
@@ -469,8 +466,8 @@ class pr0xytTest {
     };
     @$$init("property-proxy", {
         set: [
-            (t, k, v) => {
-                v % 2 === 0 ? v : v * 2;
+            (t, k, ar) => {
+                ar.map((v) => (v % 2 === 0 ? v : v * 2));
             },
         ],
     })
@@ -480,7 +477,7 @@ class pr0xytTest {
 
 const proxyTest = new pr0xytTest();
 console.log("proxyTest.arr", proxyTest.arr, "预期[2,2,4,126,2]");
-console.log("proxyTest.obj", proxyTest.obj, "预期{a:9990}");
+console.log("proxyTest.obj", proxyTest.obj, "预期{a:1000}");
 
 // ==================== 11. 性能测试 ====================
 console.log("\n11. 性能测试");

@@ -52,13 +52,14 @@ _然而陷阱种类不止这两个，[mdn:Proxy](https://mdn.org.cn/en-US/docs/W
 -   值存储在闭包变量或 valueStorage 中
 -   适用于简单属性拦截
 
-### 2. Property-Proxy 模式
+### 2. ~~Property-Proxy 模式~~ （还要 debug）
 
 搭载于*PropertyDecorator*（需要显示配置）
 
 -   为特定属性创建 Proxy
 -   值存储在原始对象上
--   适用于需要深度监控的场景
+-   适用于需要深度监控的场景  
+    eg: 对象键，数组
 
 ### 3. Class-Proxy 模式
 
