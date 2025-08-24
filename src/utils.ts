@@ -2,8 +2,8 @@ import { __Setting } from "./moduleMeta";
 import { $interceptionModes, $setter, decoratorType } from "./rulerDecorators";
 ("use strict");
 
-export const byTheWay = (re: any, doSth: Function[]) => {
-    doSth.forEach((f) => f());
+export const byTheWay = (re: any, doSth: ((r: typeof re) => any)[]) => {
+    doSth.forEach((f) => f(re));
     return re;
 };
 

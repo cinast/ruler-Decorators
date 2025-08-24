@@ -276,10 +276,12 @@ export function createClassProxy(instance: any, prototype: any): any {
 
             if (descriptor.managedByClassProxy) {
                 const setters = descriptor.setters || [];
+
                 if (setters.length > 0) {
                     // 应用 setter 处理器
                     processedValue = setters.reduce((prev, handler, idx, arr) => {
                         const result = handler(receiver, propertyKey, value, prev, idx, [...arr]);
+
                         // 确保返回的是值而不是处理器结果对象
                         return result && typeof result === "object" && "output" in result ? result.output : result;
                     }, value);

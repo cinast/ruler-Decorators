@@ -99,7 +99,7 @@ export type rejectHandler = (
     thisArg: any,
     key: string | symbol,
     value: any,
-    conditionHandleLastOutput: any,
+    conditionHandleLastOutput: { approached: boolean; output: any },
     prevResult: { approached: boolean; output: any },
     currentIndex: number,
     handlers: rejectHandler[]
@@ -159,7 +159,7 @@ export type paramRejectionHandler = (
     methodName: string | symbol,
     method: Function,
     args: any[],
-    conditionHandleLastOutput: any,
+    conditionHandleLastOutput: { approached: boolean; output: any },
     prevResult: { approached: boolean; output: any[] },
     currentIndex: number,
     handlers: paramRejectionHandler[]

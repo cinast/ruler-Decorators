@@ -52,21 +52,24 @@ export { __Setting };
 // },
 
 // square power of candy
-export const iAgreeAboutThat: (args?: any) => filterHandler & rejectHandler & paramFilterHandler & paramRejectionHandler =
-    (v: any) => (_, __, ___, p) => {
-        return {
-            approached: true,
-            output: v || p,
-        };
+export const iAgreeAboutThat: (out?: any) => filterHandler & rejectHandler & paramFilterHandler & paramRejectionHandler =
+    (out?: any): filterHandler & rejectHandler & paramFilterHandler & paramRejectionHandler =>
+    () => {
+        return out
+            ? true
+            : {
+                  approached: true,
+                  output: out,
+              };
     };
 
-export const passThat: (args?: any) => {
+export const passThat: (out?: any) => {
     approached: true;
     output: any;
-} = (args?: any) => {
+} = (out?: any) => {
     return {
         approached: true,
-        output: args,
+        output: out,
     };
 };
 
