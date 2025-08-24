@@ -472,7 +472,7 @@ export const $conditionalWrite = <R = any, I = R>(
                     return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
                 },
                 {
-                    approached: true,
+                    approached: false,
                     output: lastResult,
                 }
             );
@@ -538,7 +538,7 @@ export const $conditionalRead = <R = any, I = R>(
                     return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
                 },
                 {
-                    approached: true,
+                    approached: false,
                     output: lastResult,
                 }
             );

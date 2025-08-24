@@ -185,14 +185,20 @@ export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
         [
             (_, __, v, p) =>
                 allowEqual
-                    ? typeof p.output == "number"
-                        ? Math.min(p.output, Number(min)) == min
-                        : p.output >= min
-                    : typeof p.output == "number"
-                    ? Math.min(p.output, Number(min)) == min && p.output !== Number(min)
-                    : p.output > min,
+                    ? typeof v == "number"
+                        ? v >= Number(min)
+                        : v >= min
+                    : typeof v == "number"
+                    ? v > Number(min)
+                    : v > min,
         ],
-        [iAgreeAboutThat(min)]
+        [
+            (_, __, v, conditionResult, p) => {
+                console.log("Value:", v, "Condition result:", conditionResult);
+                // 如果条件检查失败，返回最小值
+                return { approached: true, output: min };
+            },
+        ]
     );
 
 // coming-soon
