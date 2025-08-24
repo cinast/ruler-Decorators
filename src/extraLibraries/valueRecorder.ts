@@ -50,7 +50,6 @@ export namespace valueRecorder {
 
             const currentValue = thisArg[key];
             const history = storage[key];
-            console.log(String(key) + " history", history);
 
             // 保存旧值到历史记录
             history.recordList.push(currentValue);

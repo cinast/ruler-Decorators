@@ -9,7 +9,7 @@ import {
     valueRecorder,
 } from "../src/rulerDecorators";
 
-rulerDecorators.__Setting.dev();
+rulerDecorators.__Setting.godMod();
 
 let a = { num: 0 };
 $$init("accessor", (t, k, v) => {
@@ -117,6 +117,14 @@ console.log("redo t2.a", t2.a);
 valueRecorder.redo(t2, "a");
 console.log("redo t2.a", t2.a);
 valueRecorder.redo(t2, "a");
+
+valueRecorder.undo(t2, "a");
+valueRecorder.undo(t2, "a");
+console.log("undo*2 t2.a", t2.a);
+t2.a = 100;
+console.log("t2.a = 100", t2.a);
+valueRecorder.redo(t2, "a");
+console.log("try redo t2.a", t2.a);
 
 // // class TestClass {
 //     // Simplified approach: Use onlyTheClassCanWrite for write protection

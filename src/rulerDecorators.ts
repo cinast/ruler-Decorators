@@ -44,7 +44,6 @@ import { $applyGetterHandlers, $applyParamHandlers, $applySetterHandlers } from 
 import { createAccessorInterception } from "./manage";
 import { rd_ProxyHandler } from "./types";
 
-__Setting["debugLogger.logInnerDetails"] = true;
 export declare type drivingMod = "proxy" | "accessor";
 export declare type drivingModeWithAuto = drivingMod | "auto";
 
