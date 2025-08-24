@@ -5,7 +5,7 @@
 **尤其在处理句柄中，你甚至可以欺骗 ts 返回一个与原来完全不同的类型**  
 **这意味着你将回到 JS**  
 **如果你要用这个库，建议手动加类型注释，**
-**并且在开始和最后一个 conditionH/rejectH 处，加一个类型检查关口**  
+**并且在二级句柄链的 开始和最后一个 二级句柄 处，加一个类型检查关口**  
 因为这个库大部分是建立在 getter 和 setter 上的，一旦定义这两个东西，就必须另外加属性  
 然而这个库除了预定义 gtr/str 对，并不会额外定义新的属性（_你见过 Object.defineOwnProperty 能定义#字头私有属性么_）  
 属性实体是储存在外部`weakMap`储存的  
@@ -14,12 +14,6 @@
 有意大佬请 救————————
 
 _回到 JS 是一种什么样的感觉？_
-
-> ```ts
-> // 你说他会有用么
-> objStore[key] = result satisfies I;
-> // 哪里怪怪的
-> ```
 
 # 前情提要
 
@@ -40,7 +34,7 @@ _回到 JS 是一种什么样的感觉？_
 ## 📦 安装 --tag silly-pre
 
 ```bash
-npm install ruler-decorators
+npm install 1.0.0.1st-unsure
 ```
 
 ## 🛠️ 主要 API
@@ -121,6 +115,7 @@ class SecureData {
 ## 🤔 为什么选择这个库？
 
 1.  看不惯 get/set 极其麻烦的写法
+    必须一句话解决
 
     ```ts
     class name {
@@ -133,12 +128,6 @@ class SecureData {
         }
     }
     ```
-
-    这是我见过世界上无语的语法
-
-    ![ts2300 because I defined a prop v and a getter v](doc/img/ts2300.png)
-
-    \> _tsc & node 你不可以：标识符 v 重复_
 
     ## 对比
 
@@ -162,9 +151,7 @@ class SecureData {
     }
     ```
 
-2.  必须一句话解决
-
-3.  柔性类型限制
+2.  柔性类型限制
 
     ```ts
     class UserForm {
@@ -180,7 +167,7 @@ class SecureData {
     form.age = "25"; // 自动转换为数字25
     ```
 
-    2.  过分实用
+3.  过分实用
 
     ```ts
     class Product {
@@ -207,27 +194,206 @@ class SecureData {
     }
     ```
 
-    3.  小型语言模组
+## ~~快速上手~~ 基操
 
-    ```ts
-    class I18nStore {
-        // 自动返回当前语言版本
-        @$conditionalRead(
-            [(_, key) => currentLang in this.translations[key]],
-            [(_, key) => this.translations[key]["en"]] // 默认返回英文
-        )
-        getText(key: string): string {
-            return "";
-        }
+### 1. 先上帝后乞丐
 
-        private translations = {
-            welcome: {
-                en: "Welcome",
-                zh: "欢迎",
-            },
-        };
+```typescript
+import { rulerDecorators } from "ruler-decorators";
+
+// 不然你连哪里发生错误了都不知道
+rulerDecorators.__Setting.godMod();
+// 但是记得生产环境一定要关掉
+```
+
+### 2. 基本属性验证
+
+```typescript
+import { $$init, rulerDecorators } from "ruler-decorators";
+
+class Example {
+    @$$init()
+    @rulerDecorators.minimum(0)
+    positiveNumber = 5;
+
+    @$$init()
+    @rulerDecorators.stringExcludes(["badword"])
+    text = "hello";
+
+    @$$init()
+    @rulerDecorators.range(1, 100)
+    percentage = 50;
+}
+
+const example = new Example();
+example.positiveNumber = -10; // 自动修正为 0
+example.text = "badword content"; // 自动过滤为 " content"
+example.percentage = 150; // 自动修正为 100
+```
+
+### 3. 条件读写
+
+```typescript
+import { $$init, $conditionalWrite, $conditionalRead } from "ruler-decorators";
+
+class Example {
+    @$$init()
+    @$conditionalWrite("Warn", [
+        (obj, key, value) => value % 2 === 0, // 只允许偶数
+    ])
+    evenNumber = 2;
+
+    @$$init()
+    @$conditionalRead("Warn", [
+        (obj, key, value) => value > 100, // 只允许读取大于100的值
+    ])
+    largeNumber = 50;
+}
+
+const example = new Example();
+example.evenNumber = 3; // 警告，保持原值
+console.log(example.largeNumber); // 警告，返回 100
+```
+
+### 4. 类代理模式
+
+```typescript
+import { $$init, $ClassProxy, rulerDecorators } from "ruler-decorators";
+
+@$ClassProxy()
+class Example {
+    @$$init()
+    @rulerDecorators.minimum(0)
+    value = -5;
+
+    constructor() {
+        this.value = -10; // 自动修正为 0
     }
-    ```
+}
+
+const example = new Example();
+example.value = -15; // 自动修正为 0
+```
+
+### 5. 函数参数处理
+
+```typescript
+import { $$init, $paramChecker } from "ruler-decorators";
+
+class Example {
+    @$$init()
+    @$paramChecker((obj, methodName, method, args, prevResult) => {
+        // 将所有参数转换为正数
+        const processedArgs = prevResult.output.map((arg) => (typeof arg === "number" ? Math.abs(arg) : arg));
+        return { approached: true, output: processedArgs };
+    })
+    processNumbers(...numbers: number[]) {
+        return numbers.map((n) => n * 2);
+    }
+}
+
+const example = new Example();
+const result = example.processNumbers(1, -2, 3); // 参数自动转换为 [1, 2, 3]
+// result: [2, 4, 6]
+```
+
+### 6. 值记录器
+
+```typescript
+import { $$init, valueRecorder } from "ruler-decorators";
+
+class Example {
+    @$$init()
+    @valueRecorder.$recordThis()
+    value = 0;
+}
+
+const example = new Example();
+example.value = 1;
+example.value = 2;
+example.value = 3;
+
+valueRecorder.undo(example, "value"); // 回退到 2
+valueRecorder.redo(example, "value"); // 重做到 3
+```
+
+## ~~高级~~ 简单用法
+
+### 自定义规则
+
+```typescript
+import { $$init, $setter, $conditionalWrite } from "ruler-decorators";
+
+// 简单自定义规则
+export const doubleValue = $setter((target, key, value) => {
+    return value * 2;
+});
+
+// 条件自定义规则
+export const positiveOnly = $conditionalWrite(
+    "Error",
+    [(target, key, value) => value > 0],
+    [
+        (target, key, value, conditionResult) => 1, // 失败时返回 1
+    ]
+);
+
+class Example {
+    @$$init()
+    @doubleValue
+    @positiveOnly
+    value = 1;
+}
+
+const example = new Example();
+example.value = 5; // 10 (5 * 2)
+example.value = -3; // 1 (修正为正值)
+```
+
+### 模式选择
+
+```typescript
+import { $$init } from "ruler-decorators";
+
+class Example {
+    // 显式指定模式
+    @$$init("accessor")
+    accessorValue = 1;
+
+    @$$init("property-proxy")
+    proxyValue = 2;
+
+    @$$init("function-param-accessor")
+    method() {
+        // 方法实现
+    }
+
+    // 自动（属性访问器模式）
+    @$$init()
+    test = true;
+}
+```
+
+## 配置选项
+
+```typescript
+import { __Setting } from "ruler-decorators";
+
+// 禁用 Proxy 使用
+// 在降级环境中自动关闭
+__Setting["Optimize.$$init.disableUsingProxy"] = true;
+
+// 设置默认模式
+__Setting["Optimize.$$init.defaultMod"] = "accessor";
+
+// 设置属性数量阈值
+// 超过之后自动选择类代理模式
+__Setting["Optimize.$$init.autoUseProxyWhenRuledKeysMoreThan"] = 5;
+
+// 启用详细日志
+// @see debugLogger()
+__Setting["debugLogger.logInnerDetails"] = true;
+```
 
 ## 电子榨菜
 
@@ -235,13 +401,9 @@ class SecureData {
 
 ## 画饼时间
 
-0. 补完漏洞
 1. `src\api.test.ts` 测试用的接口
 2. 写点规则
-3. 考虑加上 mjs 版本
-4. npm publish v0.0.0
-
-<br>
+   <br>
 
 ---
 

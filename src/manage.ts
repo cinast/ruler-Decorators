@@ -364,7 +364,7 @@ export function $addParamHandler(target: object, methodKey: string | symbol, han
 
 /**
  * Add parameter rejection handler to specified method
- * 添加参数拒绝处理器到指定方法
+ * 添加参数回绝处理器到指定方法
  */
 export function $addParamRejectionHandler(target: object, methodKey: string | symbol, handler: paramRejectionHandler): void {
     const descriptor = getDescriptor(target, methodKey);
@@ -420,7 +420,7 @@ export function $applyParamHandlers(receiver: any, methodKey: string | symbol, m
 
 /**
  * Apply parameter rejection handlers for a method
- * 应用方法的参数拒绝处理器
+ * 应用方法的参数回绝处理器
  */
 export function $applyParamRejectionHandlers(
     receiver: any,

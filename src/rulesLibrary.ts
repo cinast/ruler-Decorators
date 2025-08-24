@@ -240,7 +240,7 @@ export const range = (min: number, max: number) =>
 //     -------- String  toy --------
 /**
  * Rejects strings containing specified patterns
- * 拒绝包含指定模式的字符串
+ * 回绝包含指定模式的字符串
  * @param patten - Patterns to exclude (string or RegExp)
  *                 要排除的模式(字符串或正则表达式)
  *
@@ -257,7 +257,7 @@ export const stringExcludes = (patten: (RegExp | string)[], replace: string = ""
         ],
         [
             (_, __, v, fp, p) => {
-                // 拒绝处理器 - 直接返回过滤后的值
+                // 回绝处理器 - 直接返回过滤后的值
                 if (typeof p.output === "string") {
                     let result = p.output;
                     for (const pattern of patten) {

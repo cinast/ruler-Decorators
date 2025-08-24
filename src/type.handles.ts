@@ -79,7 +79,7 @@ export type filterHandler = (
 /**
  * @handle_II
  * Rejection handler type for factoryII (conditional level)
- * 二阶工厂拒绝处理句柄类型
+ * 二阶工厂回绝处理句柄类型
  *
  * @template R type of return, whenever pass or not
  *          返回类型限制，不论通过与否
@@ -145,7 +145,7 @@ export type paramFilterHandler = (
 /**
  * @handle_II
  * Parameter rejection handler type for function-param-accessor mode
- * 函数参数访问器模式的参数拒绝处理器类型
+ * 函数参数访问器模式的参数回绝处理器类型
  *
  * @tip param类句柄有特殊的调用模式，他只在参数输入原函数前调用
  *      由于参数的操作模式不多，最多也就是限制和预处理，所以没有一阶句柄
