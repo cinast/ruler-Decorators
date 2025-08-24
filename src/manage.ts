@@ -1,6 +1,6 @@
 import { debugLogger } from "./api.test";
 import { rd_Descriptor, descriptorStorage } from "./rulerDecorators";
-import { rd_SetterHandle, rd_GetterHandle, paramHandler, paramRejectionHandler } from "./type.handles";
+import { rd_SetterHandle, rd_GetterHandle, paramFilterHandler, paramRejectionHandler } from "./type.handles";
 
 /**
  * 标记属性由类代理管理
@@ -352,7 +352,7 @@ export function $removeGetterHandler(target: object, propertyKey: string | symbo
  * Add parameter handler to specified method
  * 添加参数处理器到指定方法
  */
-export function $addParamHandler(target: object, methodKey: string | symbol, handler: paramHandler): void {
+export function $addParamHandler(target: object, methodKey: string | symbol, handler: paramFilterHandler): void {
     const descriptor = getDescriptor(target, methodKey);
     descriptor.paramHandlers = [...(descriptor.paramHandlers || []), handler];
     setDescriptor(target, methodKey, descriptor);

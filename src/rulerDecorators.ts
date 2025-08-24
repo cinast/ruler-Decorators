@@ -20,8 +20,8 @@ import {
     rd_GetterHandle,
     rd_SetterHandle,
     filterHandler,
-    rejectionHandler,
-    paramHandler,
+    rejectHandler,
+    paramFilterHandler,
     paramRejectionHandler,
 } from "./type.handles";
 import { debugLogger } from "./api.test";
@@ -62,7 +62,7 @@ export declare type rd_Descriptor = {
     originalInstance?: object;
     setters?: rd_SetterHandle[];
     getters?: rd_GetterHandle[];
-    paramHandlers?: paramHandler[];
+    paramHandlers?: paramFilterHandler[];
     paramRejectHandlers?: paramRejectionHandler[];
     interceptionEnabled: boolean;
     propertyMode?: "proxy" | "accessor";
@@ -127,11 +127,11 @@ export function $$init<T = any>(ProxyHandlers: rd_ProxyHandler<T>): PropertyDeco
 // MethodDecorator 重载 (2套)
 export function $$init<T = any>(
     mode: "function-param-accessor",
-    initialParamHandler: paramHandler[],
+    initialParamHandler: paramFilterHandler[],
     initialParamRejectionHandler?: paramRejectionHandler[]
 ): MethodDecorator & PropertyDecorator;
 export function $$init<T = any>(
-    initialParamHandler: paramHandler[],
+    initialParamHandler: paramFilterHandler[],
     initialParamRejectionHandler?: paramRejectionHandler[]
 ): MethodDecorator & PropertyDecorator;
 
@@ -286,7 +286,7 @@ export function $$init<T = any>(...args: any[]) {
                 rdDescriptor.interceptionModes = "function-param-accessor";
                 rdDescriptor.paramHandlers = [
                     ...(rdDescriptor.paramHandlers || []),
-                    ...(handlers.length > 0 ? (handlers[0] as unknown as paramHandler[]) : []),
+                    ...(handlers.length > 0 ? (handlers[0] as unknown as paramFilterHandler[]) : []),
                 ];
                 rdDescriptor.paramRejectHandlers = [
                     ...(rdDescriptor.paramRejectHandlers || []),
@@ -393,7 +393,7 @@ export function $getter<R = any, I = R>(handle: rd_GetterHandle<R, I>): Property
  * Parameter check handler decorator factory
  * 参数检查句柄装饰器工厂
  */
-export function $paramChecker(handle: paramHandler, rejectHandle?: paramRejectionHandler): MethodDecorator {
+export function $paramChecker(handle: paramFilterHandler, rejectHandle?: paramRejectionHandler): MethodDecorator {
     return function (target: any, methodKey: string | symbol, descriptor?: PropertyDescriptor) {
         $addParamHandler(target, methodKey, function (thisArg, key, method, args, prevResult, index, handlers) {
             return handle(thisArg, key, method, args, prevResult, index, handlers);
@@ -420,7 +420,7 @@ export function $paramChecker(handle: paramHandler, rejectHandle?: paramRejectio
 export const $conditionalWrite = <R = any, I = R>(
     errorType: "ignore" | "Warn" | "Error",
     conditionHandles: filterHandler[],
-    rejectHandlers?: rejectionHandler[]
+    rejectHandlers?: rejectHandler[]
 ) => {
     return $setter<R, I>((thisArg, key, newVal, lastResult: I, index, handlers) => {
         const handlersArray = [...conditionHandles];
@@ -465,7 +465,9 @@ export const $conditionalWrite = <R = any, I = R>(
 
             if (rejectResult.approached) return rejectResult.output;
 
-            const warningMsg = `Property '${String(key)}' write rejected. Final output: ${JSON.stringify(rejectResult.output)}`;
+            const warningMsg = `Property '${String(key)}' write rejected. Final output: ${JSON.stringify(
+                rejectResult.output
+            )}, and the value keep still.`;
             switch (errorType || __Setting["$conditionalWR.defaultErrorType"]) {
                 case "Warn":
                     console.warn(`⚠️ ${warningMsg}`);
@@ -484,7 +486,7 @@ export const $conditionalWrite = <R = any, I = R>(
 export const $conditionalRead = <R = any, I = R>(
     errorType: "ignore" | "Warn" | "Error",
     conditionHandles: filterHandler[],
-    rejectHandlers?: rejectionHandler[]
+    rejectHandlers?: rejectHandler[]
 ) => {
     return $getter((thisArg, key, value, lastResult: I, index, handlers) => {
         const handlersArray = [...conditionHandles];
@@ -528,7 +530,9 @@ export const $conditionalRead = <R = any, I = R>(
             );
             if (rejectResult.approached) return rejectResult.output;
 
-            const warningMsg = `Property '${String(key)}' read rejected. Final output: ${JSON.stringify(rejectResult.output)}`;
+            const warningMsg = `Property '${String(key)}' read rejected. Final output: ${JSON.stringify(
+                rejectResult.output
+            )}, this rule return nothing.`;
             switch (errorType || __Setting["$conditionalWR.defaultErrorType"]) {
                 case "Warn":
                     console.warn(`⚠️ ${warningMsg}`);

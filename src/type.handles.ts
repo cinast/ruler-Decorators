@@ -95,14 +95,14 @@ export type filterHandler = (
  * @Waring Returns true/approached without processing will keep original value
  * @Waring 如果返回true/approached但未处理值，将保持原值
  */
-export type rejectionHandler = (
+export type rejectHandler = (
     thisArg: any,
     key: string | symbol,
     value: any,
     conditionHandleLastOutput: any,
     prevResult: { approached: boolean; output: any },
     currentIndex: number,
-    handlers: rejectionHandler[]
+    handlers: rejectHandler[]
 ) =>
     | {
           approached: boolean;
@@ -127,14 +127,14 @@ export type rejectionHandler = (
  * @Waring Returns true/approached without processing will allow original call
  * @Waring 如果返回true/approached但未处理参数，将允许原始调用
  */
-export type paramHandler = (
+export type paramFilterHandler = (
     thisArg: any,
     methodName: string | symbol,
     method: Function,
     args: any[],
     prevResult: { approached: boolean; output: any[] },
     currentIndex: number,
-    handlers: paramHandler[]
+    handlers: paramFilterHandler[]
 ) =>
     | {
           approached: boolean;

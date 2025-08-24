@@ -32,7 +32,15 @@
  * @namespace rulerDecorators
  */
 
-import { $conditionalWrite, $conditionalRead, $setter } from "./rulerDecorators";
+import {
+    $conditionalWrite,
+    $conditionalRead,
+    $setter,
+    filterHandler,
+    rejectHandler,
+    paramFilterHandler,
+    paramRejectionHandler,
+} from "./rulerDecorators";
 import { __Setting } from "./moduleMeta";
 export { __Setting };
 ("use strict");
@@ -42,6 +50,26 @@ export { __Setting };
 //     console.log(p);
 //     return p.approached;
 // },
+
+// square power of candy
+export const iAgreeAboutThat: (args?: any) => filterHandler & rejectHandler & paramFilterHandler & paramRejectionHandler =
+    (v: any) => (_, __, ___, p) => {
+        return {
+            approached: true,
+            output: v || p,
+        };
+    };
+
+export const passThat: (args?: any) => {
+    approached: true;
+    output: any;
+} = (args?: any) => {
+    return {
+        approached: true,
+        output: args,
+    };
+};
+
 //     -------- script candy --------
 
 /**
@@ -88,21 +116,21 @@ export const watchSet = <T>(
 export const Int = (onError?: ((v: number | bigint, o?: unknown) => number) | "ceil" | "floor" | "round" | number) =>
     $conditionalWrite<number>(
         "Error",
-        [(_, __, v: number) => !v.toString().includes(".")],
+        [(_, __, v, p) => !p.output.toString().includes(".")],
         [
-            (_, __, v, o) =>
+            (_, __, v, fp, p) =>
                 onError
                     ? {
                           approached: true,
                           output:
                               typeof onError == "function"
-                                  ? onError(v, o)
+                                  ? onError(p.output, fp)
                                   : typeof onError == "number"
                                   ? onError
                                   : {
-                                        ceil: Math.ceil(v),
-                                        floor: Math.floor(v),
-                                        round: Math.round(v),
+                                        ceil: Math.ceil(p.output),
+                                        floor: Math.floor(p.output),
+                                        round: Math.round(p.output),
                                     }[onError],
                       }
                     : false,
@@ -120,7 +148,7 @@ export const Int = (onError?: ((v: number | bigint, o?: unknown) => number) | "c
  * @returns true if value is positive, false otherwise
  *          如果值为正数返回true，否则返回false
  */
-export const alwaysPositive = $conditionalWrite<bigint | number>("Warn", [(thisArg, key, v: bigint | number) => v > 0]);
+export const alwaysPositive = $conditionalWrite<bigint | number>("Warn", [(thisArg, key, v, p) => p.output > 0]);
 
 /**
  * Negative number validator decorator
@@ -133,7 +161,7 @@ export const alwaysPositive = $conditionalWrite<bigint | number>("Warn", [(thisA
  * @returns true if value is negative, false otherwise
  *          如果值为负数返回true，否则返回false
  */
-export const alwaysNegative = $conditionalWrite<bigint | number>("Warn", [(thisArg, key, v: bigint | number) => v < 0]);
+export const alwaysNegative = $conditionalWrite<bigint | number>("Warn", [(thisArg, key, v, p) => p.output < 0]);
 
 /**
  * Minimum value validator decorator
@@ -152,24 +180,16 @@ export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
     $conditionalWrite<number | bigint>(
         "ignore",
         [
-            (_, __, v) =>
+            (_, __, v, p) =>
                 allowEqual
-                    ? typeof v == "number"
-                        ? Math.min(v, Number(min)) == min
-                        : v >= min
-                    : typeof v == "number"
-                    ? Math.min(v, Number(min)) == min && v !== Number(min)
-                    : v > min,
+                    ? typeof p.output == "number"
+                        ? Math.min(p.output, Number(min)) == min
+                        : p.output >= min
+                    : typeof p.output == "number"
+                    ? Math.min(p.output, Number(min)) == min && p.output !== Number(min)
+                    : p.output > min,
         ],
-        [
-            (_, __, v, p) => {
-                console.log(v, "pr:", p);
-                return {
-                    approached: true,
-                    output: min,
-                };
-            },
-        ]
+        [iAgreeAboutThat(min)]
     );
 
 // coming-soon
@@ -193,24 +213,20 @@ export const maximum = (max: bigint | number, allowEqual: boolean = true) =>
     $conditionalWrite<number | bigint>(
         "ignore",
         [
-            (_, __, v) =>
+            (_, __, v, p) =>
                 allowEqual
-                    ? typeof v == "number"
-                        ? Math.max(v, Number(max)) == max
-                        : v <= max
-                    : typeof v == "number"
-                    ? Math.max(v, Number(max)) == max && v !== Number(max)
-                    : v < max,
+                    ? typeof p.output == "number"
+                        ? Math.max(p.output, Number(max)) == max
+                        : p.output <= max
+                    : typeof p.output == "number"
+                    ? Math.max(p.output, Number(max)) == max && p.output !== Number(max)
+                    : p.output < max,
         ],
-        [
-            () => {
-                return {
-                    approached: true,
-                    output: max,
-                };
-            },
-        ]
+        [iAgreeAboutThat(max)]
     );
+
+export const range = (min: number, max: number) =>
+    $conditionalWrite("ignore", [(_, __, v, p) => passThat(Math.min(Math.max(p.output, min), max))]);
 
 //     -------- String  toy --------
 /**
@@ -226,11 +242,11 @@ export const stringExcludes = (patten: (RegExp | string)[], replace?: string) =>
     $conditionalWrite(
         "Warn",
         [
-            (_, __, value) =>
-                typeof value == "string" &&
-                !patten.some((pat) => (typeof pat === "string" ? value.includes(pat) : pat.test(value))),
+            (_, __, v, p) =>
+                typeof p.output == "string" &&
+                !patten.some((pat) => (typeof pat === "string" ? p.output.includes(pat) : pat.test(p.output))),
         ],
-        [(_, __, v: string) => (replace ? !patten.some((pat) => v.replace(pat, replace)) : false)]
+        [(_, __, v, fp, p) => (replace ? patten.some((pat) => p.output.replace(pat, replace)) : false)]
     );
 
 /**
@@ -241,9 +257,14 @@ export const stringExcludes = (patten: (RegExp | string)[], replace?: string) =>
  */
 export const stringRequires = (...patten: (RegExp | string)[]) =>
     $conditionalWrite("Warn", [
-        (_, __, value) =>
-            typeof value == "string" && patten.every((pat) => (typeof pat == "string" ? value.includes(pat) : pat.test(value))),
+        (_, __, v, p) =>
+            typeof p.output == "string" &&
+            patten.every((pat) => (typeof pat == "string" ? p.output.includes(pat) : pat.test(p.output))),
     ]);
+
+// value limit
+
+export const oneOf = (list: any[]) => $conditionalWrite("Warn", [(_, __, v, p) => list.includes(v)]);
 
 //     -------- authority like --------
 
