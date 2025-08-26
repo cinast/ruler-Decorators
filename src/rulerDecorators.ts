@@ -24,7 +24,7 @@ import {
     paramFilterHandler,
     ParamFilterHandlerChain,
     ParamRejectHandlerChain,
-    paramRejectionHandler,
+    paramRejectHandler,
 } from "./type.handles";
 import { debugLogger } from "./api.test";
 import {
@@ -65,7 +65,7 @@ export declare type rd_Descriptor = {
     setters?: rd_SetterHandle[];
     getters?: rd_GetterHandle[];
     paramHandlers?: paramFilterHandler[];
-    paramRejectHandlers?: paramRejectionHandler[];
+    paramRejectHandlers?: paramRejectHandler[];
     interceptionEnabled: boolean;
     propertyMode?: "proxy" | "accessor";
     interceptionModes: $interceptionModes;
@@ -291,6 +291,8 @@ export function $$init<T = any>(...args: any[]) {
                 break;
             case "MethodDecorator":
                 // 注册句柄
+                console.log("handlers", handlers);
+
                 rdDescriptor.interceptionModes = "function-param-accessor";
                 rdDescriptor.paramHandlers = [
                     ...(rdDescriptor.paramHandlers || []),
@@ -298,7 +300,7 @@ export function $$init<T = any>(...args: any[]) {
                 ];
                 rdDescriptor.paramRejectHandlers = [
                     ...(rdDescriptor.paramRejectHandlers || []),
-                    ...(handlers.length > 0 ? (handlers[1] as unknown as paramRejectionHandler[]) : []),
+                    ...(handlers.length > 0 ? (handlers[1] as unknown as paramRejectHandler[]) : []),
                 ];
                 console.log("this", rdDescriptor);
 
@@ -419,7 +421,7 @@ export function $getter<R = any, I = R>(handle: rd_GetterHandle<R, I>): Property
  * Parameter check handler decorator factory
  * 参数检查句柄装饰器工厂
  */
-export function $paramChecker(handle: paramFilterHandler, rejectHandle?: paramRejectionHandler): MethodDecorator {
+export function $paramChecker(handle: paramFilterHandler, rejectHandle?: paramRejectHandler): MethodDecorator {
     return function (target: any, methodKey: string | symbol, descriptor?: PropertyDescriptor) {
         $addParamHandler(target, methodKey, function (thisArg, key, method, args, prevResult, index, handlers) {
             return handle(thisArg, key, method, args, prevResult, index, handlers);

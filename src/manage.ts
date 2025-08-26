@@ -6,8 +6,8 @@ import {
     ParamFilterHandlerChain,
     paramFilterHandler,
     ParamRejectHandlerChain,
-    paramRejectionHandler,
-    paramRejectionChainHandler,
+    paramRejectHandler,
+    paramRejectChainHandler,
     paramFilterChainHandler,
 } from "./type.handles";
 
@@ -379,7 +379,7 @@ export function $addParamHandler(target: object, methodKey: string | symbol, han
  * Add parameter rejection handler to specified method
  * 添加参数回绝处理器到指定方法
  */
-export function $addParamRejectionHandler(target: object, methodKey: string | symbol, handler: paramRejectionHandler): void;
+export function $addParamRejectionHandler(target: object, methodKey: string | symbol, handler: paramRejectHandler): void;
 export function $addParamRejectionHandler(target: object, methodKey: string | symbol, handlers: ParamRejectHandlerChain): void;
 export function $addParamRejectionHandler(target: object, methodKey: string | symbol, handlerOrHandlers: any): void {
     const descriptor = getDescriptor(target, methodKey);
@@ -394,7 +394,7 @@ export function $addParamRejectionHandler(target: object, methodKey: string | sy
         descriptor.paramRejectHandlers = [...(descriptor.paramRejectHandlers || []), wrapper];
     } else {
         // 单个处理器
-        descriptor.paramRejectHandlers = [...(descriptor.paramRejectHandlers || []), handlerOrHandlers as paramRejectionHandler];
+        descriptor.paramRejectHandlers = [...(descriptor.paramRejectHandlers || []), handlerOrHandlers as paramRejectHandler];
     }
 
     setDescriptor(target, methodKey, descriptor);
@@ -499,8 +499,8 @@ export const createParamWrapperFilter = (handlerChain: ParamFilterHandlerChain):
     };
 };
 
-export const createParamWrapperReject = (handlerChain: ParamRejectHandlerChain): paramRejectionHandler => {
-    let paramsChain: paramRejectionChainHandler[][] = [];
+export const createParamWrapperReject = (handlerChain: ParamRejectHandlerChain): paramRejectHandler => {
+    let paramsChain: paramRejectChainHandler[][] = [];
     if (!Array.isArray(handlerChain)) {
         const map = Object.entries(handlerChain);
         map.forEach((o, i, ar) => {

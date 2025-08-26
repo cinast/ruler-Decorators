@@ -154,7 +154,7 @@ export type paramFilterHandler = (
  * @tip Used when parameter conditions fail in function-param-accessor mode
  * @tip 用于函数参数访问器模式中参数条件失败时的处理
  */
-export type paramRejectionHandler = (
+export type paramRejectHandler = (
     thisArg: any,
     methodName: string | symbol,
     method: Function,
@@ -162,7 +162,7 @@ export type paramRejectionHandler = (
     conditionHandleLastOutput: { approached: boolean; output: any },
     prevResult: { approached: boolean; output: any[] },
     currentIndex: number,
-    handlers: paramRejectionHandler[]
+    handlers: paramRejectHandler[]
 ) =>
     | {
           approached: boolean;
@@ -186,7 +186,7 @@ export type paramFilterChainHandler = (
       }
     | boolean;
 
-export type paramRejectionChainHandler = (
+export type paramRejectChainHandler = (
     thisArg: any,
     methodName: string | symbol,
     method: Function,
@@ -195,7 +195,7 @@ export type paramRejectionChainHandler = (
     conditionHandleLastOutput: { approached: boolean; output: any },
     prevResult: { approached: boolean; output: any[] },
     currentIndex: number,
-    handlers: paramRejectionHandler[]
+    handlers: paramRejectHandler[]
 ) =>
     | {
           approached: boolean;
@@ -206,6 +206,7 @@ export type paramRejectionChainHandler = (
 /**
  * 参数处理器链类型定义
  * 支持数组格式和对象格式的处理器链
+ * 在实际使用中是被打包进一个paramFilterHandler句柄的
  */
 export type ParamFilterHandlerChain =
     | paramFilterChainHandler[][] // 数组格式: [param1_handlers, param2_handlers, ...]
@@ -214,5 +215,6 @@ export type ParamFilterHandlerChain =
 /**
  * 参数拒绝处理器链类型定义
  * 结构与ParamHandlerChain相同
+ * 在实际使用中是被打包进一个paramRejectHandler句柄的
  */
-export type ParamRejectHandlerChain = paramRejectionChainHandler[][] | Record<number, paramRejectionChainHandler[]>;
+export type ParamRejectHandlerChain = paramRejectChainHandler[][] | Record<number, paramRejectChainHandler[]>;
