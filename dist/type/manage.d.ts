@@ -1,5 +1,5 @@
 import { rd_Descriptor } from "./rulerDecorators";
-import { rd_SetterHandle, rd_GetterHandle, ParamFilterHandlerChain, paramFilterHandler, ParamRejectHandlerChain, paramRejectionHandler } from "./type.handles";
+import { rd_SetterHandle, rd_GetterHandle, ParamFilterHandlerChain, paramFilterHandler, ParamRejectHandlerChain, paramRejectHandler } from "./type.handles";
 /**
  * 标记属性由类代理管理
  */
@@ -88,7 +88,7 @@ export declare function $addParamHandler(target: object, methodKey: string | sym
  * Add parameter rejection handler to specified method
  * 添加参数回绝处理器到指定方法
  */
-export declare function $addParamRejectionHandler(target: object, methodKey: string | symbol, handler: paramRejectionHandler): void;
+export declare function $addParamRejectionHandler(target: object, methodKey: string | symbol, handler: paramRejectHandler): void;
 export declare function $addParamRejectionHandler(target: object, methodKey: string | symbol, handlers: ParamRejectHandlerChain): void;
 /**
  * Apply getter handlers for a property
@@ -104,12 +104,18 @@ export declare function $applySetterHandlers(receiver: any, propertyKey: string 
  * Apply parameter handlers for a method
  * 应用方法的参数处理器
  */
-export declare function $applyParamHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[]): any[];
+export declare function $applyParamHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[]): {
+    approached: boolean;
+    output: any;
+};
 /**
  * Apply parameter rejection handlers for a method
  * 应用方法的参数回绝处理器
  */
-export declare function $applyParamRejectionHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[], conditionResult: any): any[];
+export declare function $applyParamRejectionHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[], FilterLastOutput: any): {
+    approached: boolean;
+    output: any;
+};
 export declare const createParamWrapperFilter: (handlerChain: ParamFilterHandlerChain) => paramFilterHandler;
-export declare const createParamWrapperReject: (handlerChain: ParamRejectHandlerChain) => paramRejectionHandler;
+export declare const createParamWrapperReject: (handlerChain: ParamRejectHandlerChain) => paramRejectHandler;
 //# sourceMappingURL=manage.d.ts.map

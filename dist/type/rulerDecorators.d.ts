@@ -1,4 +1,4 @@
-import { rd_GetterHandle, rd_SetterHandle, filterHandler, rejectHandler, paramFilterHandler, ParamFilterHandlerChain, ParamRejectHandlerChain, paramRejectionHandler } from "./type.handles";
+import { rd_GetterHandle, rd_SetterHandle, filterHandler, rejectHandler, paramFilterHandler, ParamFilterHandlerChain, ParamRejectHandlerChain, paramRejectHandler } from "./type.handles";
 import { rd_ProxyTraps } from "./types";
 export declare type drivingMod = "proxy" | "accessor";
 export declare type drivingModeWithAuto = drivingMod | "auto";
@@ -18,7 +18,7 @@ export declare type rd_Descriptor = {
     setters?: rd_SetterHandle[];
     getters?: rd_GetterHandle[];
     paramHandlers?: paramFilterHandler[];
-    paramRejectHandlers?: paramRejectionHandler[];
+    paramRejectHandlers?: paramRejectHandler[];
     interceptionEnabled: boolean;
     propertyMode?: "proxy" | "accessor";
     interceptionModes: $interceptionModes;
@@ -85,7 +85,7 @@ export declare function $getter<R = any, I = R>(handle: rd_GetterHandle<R, I>): 
  * Parameter check handler decorator factory
  * 参数检查句柄装饰器工厂
  */
-export declare function $paramChecker(handle: paramFilterHandler, rejectHandle?: paramRejectionHandler): MethodDecorator;
+export declare function $paramChecker(handle: paramFilterHandler, rejectHandle?: paramRejectHandler): MethodDecorator;
 /**
  * Conditional write decorator factory
  * 条件写入装饰器工厂

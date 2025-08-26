@@ -441,8 +441,132 @@ console.log(getDescriptor(mixedModeTest, "processData"));
 const result = mixedModeTest.processData(5, -10, 15);
 console.log("processData(5, -10, 15) ->", result, "预期是 [10, 20, 30]");
 
-// ==================== 9. 存储系统检查 ====================
-console.log("\n9. 存储系统检查");
+// ==================== 9. function-param-accessor 检查 ====================
+console.log("\n9.function-param-accessor 检查");
+
+class TestClass {
+    @$$init(
+        "function-param-accessor",
+        [
+            // param1 的处理器链
+            [
+                // phase 1
+                (thisArg, methodName, method, argIdx, args, conditionResult, prevResult, currentIndex, handlers) => {
+                    console.log(`Param1 - Phase 1: argIdx=${argIdx}, value=${args[argIdx]}`);
+                    return { approached: false, output: prevResult.output };
+                },
+                // phase 2
+                (thisArg, methodName, method, argIdx, args, conditionResult, prevResult, currentIndex, handlers) => {
+                    console.log(`Param1 - Phase 2: argIdx=${argIdx}, value=${args[argIdx]}`);
+                    return {
+                        approached: true,
+                        output: `processed_${prevResult.output}`,
+                    };
+                },
+            ],
+            // param2 的处理器链
+            [
+                // phase 1
+                (thisArg, methodName, method, argIdx, args, conditionResult, prevResult, currentIndex, handlers) => {
+                    console.log(`Param2 - Phase 1: argIdx=${argIdx}, value=${args[argIdx]}`);
+                    return { approached: false, output: prevResult.output };
+                },
+                // phase 2
+                (thisArg, methodName, method, argIdx, args, conditionResult, prevResult, currentIndex, handlers) => {
+                    console.log(`Param2 - Phase 2: argIdx=${argIdx}, value=${args[argIdx]}`);
+                    return {
+                        approached: false,
+                        output: prevResult.output * 2,
+                    };
+                },
+            ],
+        ],
+        [
+            // param1 的拒绝处理器链
+            [
+                (thisArg, methodName, method, argIdx, args, inputArgs, FilterLastOutput, prevResult, currentIndex, handlers) => {
+                    console.log(`Param1 Reject - Phase 1: argIdx=${argIdx}`);
+                    return { approached: false, output: prevResult.output };
+                },
+            ],
+            // param2 的拒绝处理器链
+            [
+                (thisArg, methodName, method, argIdx, args, inputArgs, FilterLastOutput, prevResult, currentIndex, handlers) => {
+                    console.log(`Param2 Reject - Phase 1: argIdx=${argIdx}`);
+                    return { approached: false, output: prevResult.output };
+                },
+            ],
+        ]
+    )
+    testMethod(param1: string, param2: number): string {
+        return `Result: ${param1}, ${param2}`;
+    }
+
+    // 测试对象格式的处理器链
+    @$$init("function-param-accessor", {
+        0: [
+            // 第一个参数的处理器
+            (thisArg, methodName, method, argIdx, args, conditionResult, prevResult, currentIndex, handlers) => {
+                console.log(`Object Format - Param0: ${args[argIdx]}`);
+                return {
+                    approached: true,
+                    output: prevResult.output.toUpperCase(),
+                };
+            },
+        ],
+        2: [
+            // 第三个参数的处理器
+            (thisArg, methodName, method, argIdx, args, conditionResult, prevResult, currentIndex, handlers) => {
+                console.log(`Object Format - Param2: ${args[argIdx]}`);
+                return {
+                    approached: true,
+                    output: prevResult.output + "_suffix",
+                };
+            },
+        ],
+    })
+    testMethod2(param1: string, param2: number, param3: string): string {
+        return `Result: ${param1}, ${param2}, ${param3}`;
+    }
+}
+
+// 测试执行
+const testInstance = new TestClass();
+
+console.log("=== 测试数组格式的处理器链 ===");
+const result1 = testInstance.testMethod("hello", 10);
+console.log("Final Result:", result1);
+
+console.log("\n=== 测试对象格式的处理器链 ===");
+const result2 = testInstance.testMethod2("world", 20, "test");
+console.log("Final Result:", result2);
+
+// 测试空处理器链的情况
+class EmptyTestClass {
+    @$$init("function-param-accessor", [
+        [], // param1 无处理器
+        [
+            // param2 有处理器
+            (thisArg, methodName, method, argIdx, args, conditionResult, prevResult, currentIndex, handlers) => {
+                return {
+                    approached: true,
+                    output: prevResult.output * 3,
+                };
+            },
+        ],
+    ])
+    testMethod(param1: string, param2: number): string {
+        return `Empty Test: ${param1}, ${param2}`;
+    }
+}
+
+console.log("\n=== 测试空处理器链 ===");
+const emptyTestInstance = new EmptyTestClass();
+const result3 = emptyTestInstance.testMethod("test", 5);
+console.log("Empty Test Result:", result3);
+
+// ==================== 10. 存储系统检查 ====================
+console.log("\n10. 存储系统检查");
 
 console.log("检查 descriptorStorage...");
 console.log("BasicTest 描述符:", descriptorStorage.get(BasicTest.prototype));
@@ -450,63 +574,6 @@ console.log("ClassProxyTest 描述符:", descriptorStorage.get(ClassProxyTest.pr
 
 console.log("检查 valueStorage...");
 console.log("ValueRecorderTest 值存储:", valueStorage.get(valueRecorderTest));
-
-// ==================== 10. ====================
-
-// class Pr0xyTest {
-//     @$$init("property-proxy")
-//     @$setter((t, k, v) => {
-//         console.log("Setting obj:", v);
-//         // 确保返回的是一个新对象，而不是修改原对象
-//         return { ...v, a: 1000 };
-//     })
-//     obj: any = {
-//         a: 0,
-//     };
-
-//     @$$init("property-proxy")
-//     @$setter((t, k, arr) => {
-//         console.log("Setting arr:", arr);
-//         // 返回处理后的新数组
-//         return arr.map((v) => (v % 2 === 0 ? v : v * 2));
-//     })
-//     arr = [1, 2, 4, 63, 2];
-
-//     constructor() {
-//         console.log("Initial obj:", this.obj);
-//         console.log("Initial arr:", this.arr);
-//     }
-// }
-
-// // 测试函数
-// function testPropertyProxy() {
-//     console.log("=== Property Proxy Test ===");
-
-//     const instance = new Pr0xyTest();
-
-//     // 测试对象属性
-//     console.log("\n--- Testing Object Property ---");
-//     console.log("Before setting:", instance.obj);
-//     instance.obj = { a: 5, b: "test" };
-//     console.log("After setting:", instance.obj);
-
-//     // 测试数组属性
-//     console.log("\n--- Testing Array Property ---");
-//     console.log("Before setting:", instance.arr);
-//     instance.arr = [3, 4, 5, 6];
-//     console.log("After setting:", instance.arr);
-
-//     // 测试直接修改属性（应该不会触发代理）
-//     console.log("\n--- Testing Direct Modification ---");
-//     console.log("Before direct modification:", instance.obj);
-//     instance.obj.a = 999; // 这不会触发代理，因为代理只监控顶层属性赋值
-//     console.log("After direct modification:", instance.obj);
-
-//     return instance;
-// }
-
-// // 运行测试
-// const testInstance = testPropertyProxy();
 
 // ==================== 11. 性能测试 ====================
 console.log("\n11. 性能测试");

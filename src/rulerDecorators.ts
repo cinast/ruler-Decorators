@@ -39,6 +39,7 @@ import {
     setDescriptor,
     createParamWrapperFilter,
     createParamWrapperReject,
+    $applyParamRejectionHandlers,
 } from "./manage";
 import { getPropertyModes } from "./manage";
 import { $defineProperty, getDecoratorType, isModeCompatible, rd_executeModeSelector } from "./utils";
@@ -324,10 +325,7 @@ export function $$init<T = any>(...args: any[]) {
                     // 判断是否是二维数组格式
                     const is2DArray = Array.isArray(paramRejectHandler) && Array.isArray(paramRejectHandler[0]);
                     // 判断是否是对象格式
-                    const isRecordFormat =
-                        typeof paramRejectHandler === "object" &&
-                        !Array.isArray(paramRejectHandler) &&
-                        !Array.isArray(paramRejectHandler[0]);
+                    const isRecordFormat = typeof paramRejectHandler === "object" && !Array.isArray(paramRejectHandler);
 
                     if (is2DArray || isRecordFormat) {
                         // 使用包装器处理二维数组或对象格式
@@ -346,7 +344,6 @@ export function $$init<T = any>(...args: any[]) {
                 }
 
                 setDescriptor(targetObj, key, rdDescriptor);
-                console.log(rdDescriptor);
 
                 // 处理方法描述符
                 if (descriptor) {
@@ -355,7 +352,18 @@ export function $$init<T = any>(...args: any[]) {
                         const originalMethod = descriptor.value;
                         descriptor.value = function (...args: any[]) {
                             const processedArgs = $applyParamHandlers(target, key, originalMethod, args);
-                            return originalMethod.apply(target, processedArgs);
+                            if (processedArgs.approached) return originalMethod.apply(target, processedArgs.output);
+
+                            // reject turn
+                            const rejectResult = $applyParamRejectionHandlers(target, key, originalMethod, args, processedArgs);
+                            if (rejectResult.approached) return rejectResult.output;
+
+                            // error
+                            const warningMsg = `Call method '$${String(key)}' rejected. Final output: ${JSON.stringify(
+                                rejectResult.output
+                            )}, this rule will not call the function.`;
+
+                            throw new Error(`🚫 ${warningMsg}`);
                         };
                         return descriptor;
                     }
@@ -471,8 +479,8 @@ export function $paramChecker(handle: paramFilterHandler, rejectHandle?: paramRe
             $addParamRejectionHandler(
                 target,
                 methodKey,
-                function (thisArg, key, method, args, conditionResult, prevResult, index, handlers) {
-                    return rejectHandle(thisArg, key, method, args, conditionResult, prevResult, index, handlers);
+                function (thisArg, key, method, args, FilterLastOutput, prevResult, index, handlers) {
+                    return rejectHandle(thisArg, key, method, args, FilterLastOutput, prevResult, index, handlers);
                 }
             );
         }

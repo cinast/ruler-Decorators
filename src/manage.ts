@@ -434,21 +434,47 @@ export function $applySetterHandlers(receiver: any, propertyKey: string | symbol
  * Apply parameter handlers for a method
  * 应用方法的参数处理器
  */
-export function $applyParamHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[]): any[] {
+export function $applyParamHandlers(
+    receiver: any,
+    methodKey: string | symbol,
+    method: Function,
+    args: any[]
+): {
+    approached: boolean;
+    output: any;
+} {
     // const prototype = Object.getPrototypeOf(receiver);
     const descriptor = getDescriptor(receiver, methodKey);
     const paramHandlers = descriptor.paramHandlers || [];
-    if (paramHandlers.length === 0) return args;
+    if (paramHandlers.length === 0)
+        return {
+            approached: false,
+            output: args,
+        };
 
     try {
-        return paramHandlers.reduce((prev, handler, idx, arr) => {
-            const result = handler(receiver, methodKey, method, args, { approached: false, output: prev }, idx, [...arr]);
-
-            return typeof result === "object" && "output" in result ? result.output : prev;
-        }, args);
+        const result = paramHandlers.reduce(
+            (prev, handler, idx, arr) => {
+                const r = handler(receiver, methodKey, method, args, prev, idx, [...arr]);
+                return typeof r === "boolean"
+                    ? {
+                          approached: r,
+                          output: prev.output,
+                      }
+                    : r;
+            },
+            {
+                approached: false,
+                output: args,
+            }
+        );
+        return result;
     } catch (error) {
         debugLogger(console.error, "Parameter handler error for method", methodKey, ":", error);
-        return args; // 发生错误时返回原始参数
+        return {
+            approached: false,
+            output: args,
+        }; // 发生错误时返回原始参数
     }
 }
 
@@ -461,19 +487,44 @@ export function $applyParamRejectionHandlers(
     methodKey: string | symbol,
     method: Function,
     args: any[],
-    conditionResult: any
-): any[] {
+    FilterLastOutput: any
+): {
+    approached: boolean;
+    output: any;
+} {
     // const prototype = Object.getPrototypeOf(receiver);
     const descriptor = getDescriptor(receiver, methodKey);
     const rejectHandlers = descriptor.paramRejectHandlers || [];
-    if (rejectHandlers.length === 0) return args;
+    if (rejectHandlers.length === 0)
+        return {
+            approached: false,
+            output: args,
+        };
 
-    return rejectHandlers.reduce((prev, handler, idx, arr) => {
-        const result = handler(receiver, methodKey, method, args, conditionResult, { approached: false, output: prev }, idx, [
-            ...arr,
-        ]);
-        return typeof result === "boolean" ? prev : result.output;
-    }, args);
+    try {
+        const result = rejectHandlers.reduce(
+            (prev, handler, idx, arr) => {
+                const r = handler(receiver, methodKey, method, args, FilterLastOutput, prev, idx, [...arr]);
+                return typeof r === "boolean"
+                    ? {
+                          approached: r,
+                          output: prev.output,
+                      }
+                    : r;
+            },
+            {
+                approached: false,
+                output: args,
+            }
+        );
+        return result;
+    } catch (error) {
+        debugLogger(console.error, "Parameter reject handler error for method", methodKey, ":", error);
+        return {
+            approached: false,
+            output: args,
+        }; // 发生错误时返回原始参数
+    }
 }
 
 export const createParamWrapperFilter = (handlerChain: ParamFilterHandlerChain): paramFilterHandler => {
@@ -543,7 +594,7 @@ export const createParamWrapperReject = (handlerChain: ParamRejectHandlerChain):
         }
     }
 
-    return function (thisArg, methodName, method, args, conditionResult, prevResult, currentIndex, handlers) {
+    return function (thisArg, methodName, method, args, FilterLastOutput, prevResult, currentIndex, handlers) {
         let processedArgs = [...prevResult.output];
         let anyApproached = false;
 
@@ -561,7 +612,7 @@ export const createParamWrapperReject = (handlerChain: ParamRejectHandlerChain):
                         argIdx,
                         args,
                         prevResult.output,
-                        conditionResult,
+                        FilterLastOutput,
                         prev,
                         currentIndex,
                         handlers
