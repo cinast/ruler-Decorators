@@ -302,8 +302,7 @@ export function $$init<T = any>(...args: any[]) {
                     // 判断是否是二维数组格式
                     const is2DArray = Array.isArray(paramHandler) && Array.isArray(paramHandler[0]);
                     // 判断是否是对象格式
-                    const isRecordFormat =
-                        typeof paramHandler === "object" && !Array.isArray(paramHandler) && !Array.isArray(paramHandler[0]);
+                    const isRecordFormat = typeof paramHandler === "object" && !Array.isArray(paramHandler);
 
                     if (is2DArray || isRecordFormat) {
                         // 使用包装器处理二维数组或对象格式
