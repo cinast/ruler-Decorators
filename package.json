@@ -43,7 +43,7 @@
     ],
     "scripts": {
         "[pwsh]clear-dist": "Remove-Item -Path './dist/**', './test/dist/**' -Force",
-        "[pwsh]clear-trash-at-src": "Remove-Item -Path './src/*.js','./src/*.d.ts','./src/*.d.ts.map' -Force",
+        "[pwsh]clear-trash-at-src": "Remove-Item -Path './src/**/*.js','./src/**/*.d.ts','./src/**/*.d.ts.map' -Force",
         "build": "npx tsc -b",
         "build:mjs": "esbuild src/rulerDecorators.ts --bundle --format=esm --outfile=dist/rulerDecorators.mjs",
         "build:watch": "npx tsc -w",

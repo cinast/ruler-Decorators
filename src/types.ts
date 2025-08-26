@@ -1,4 +1,4 @@
-import { paramFilterHandler, paramRejectionHandler, rd_GetterHandle, rd_SetterHandle } from "./type.handles";
+import { rd_GetterHandle, rd_SetterHandle } from "./type.handles";
 
 export interface rd_ProxyTraps<T extends any> {
     // apply: ((target: T, thisArg: any, argArray: any[]) => any)[];

@@ -51,7 +51,7 @@ export type filterHandler = (thisArg: any, key: string | symbol, value: any, pre
 /**
  * @handle_II
  * Rejection handler type for factoryII (conditional level)
- * 二阶工厂拒绝处理句柄类型
+ * 二阶工厂回绝处理句柄类型
  *
  * @template R type of return, whenever pass or not
  *          返回类型限制，不论通过与否
@@ -67,10 +67,13 @@ export type filterHandler = (thisArg: any, key: string | symbol, value: any, pre
  * @Waring Returns true/approached without processing will keep original value
  * @Waring 如果返回true/approached但未处理值，将保持原值
  */
-export type rejectionHandler = (thisArg: any, key: string | symbol, value: any, conditionHandleLastOutput: any, prevResult: {
+export type rejectHandler = (thisArg: any, key: string | symbol, value: any, conditionHandleLastOutput: {
     approached: boolean;
     output: any;
-}, currentIndex: number, handlers: rejectionHandler[]) => {
+}, prevResult: {
+    approached: boolean;
+    output: any;
+}, currentIndex: number, handlers: rejectHandler[]) => {
     approached: boolean;
     output: any;
 } | boolean;
@@ -91,17 +94,17 @@ export type rejectionHandler = (thisArg: any, key: string | symbol, value: any, 
  * @Waring Returns true/approached without processing will allow original call
  * @Waring 如果返回true/approached但未处理参数，将允许原始调用
  */
-export type paramHandler = (thisArg: any, methodName: string | symbol, method: Function, args: any[], prevResult: {
+export type paramFilterHandler = (thisArg: any, methodName: string | symbol, method: Function, args: any[], prevResult: {
     approached: boolean;
     output: any[];
-}, currentIndex: number, handlers: paramHandler[]) => {
+}, currentIndex: number, handlers: paramFilterHandler[]) => {
     approached: boolean;
     output: any[];
 } | boolean;
 /**
  * @handle_II
  * Parameter rejection handler type for function-param-accessor mode
- * 函数参数访问器模式的参数拒绝处理器类型
+ * 函数参数访问器模式的参数回绝处理器类型
  *
  * @tip param类句柄有特殊的调用模式，他只在参数输入原函数前调用
  *      由于参数的操作模式不多，最多也就是限制和预处理，所以没有一阶句柄
@@ -110,11 +113,41 @@ export type paramHandler = (thisArg: any, methodName: string | symbol, method: F
  * @tip Used when parameter conditions fail in function-param-accessor mode
  * @tip 用于函数参数访问器模式中参数条件失败时的处理
  */
-export type paramRejectionHandler = (thisArg: any, methodName: string | symbol, method: Function, args: any[], conditionHandleLastOutput: any, prevResult: {
+export type paramRejectionHandler = (thisArg: any, methodName: string | symbol, method: Function, args: any[], conditionHandleLastOutput: {
+    approached: boolean;
+    output: any;
+}, prevResult: {
     approached: boolean;
     output: any[];
 }, currentIndex: number, handlers: paramRejectionHandler[]) => {
     approached: boolean;
     output: any[];
 } | boolean;
+export type paramFilterChainHandler = (thisArg: any, methodName: string | symbol, method: Function, argIdx: number, args: any[], prevResult: {
+    approached: boolean;
+    output: any[];
+}, currentIndex: number, handlers: paramFilterHandler[]) => {
+    approached: boolean;
+    output: any[];
+} | boolean;
+export type paramRejectionChainHandler = (thisArg: any, methodName: string | symbol, method: Function, argIdx: number, args: any[], conditionHandleLastOutput: {
+    approached: boolean;
+    output: any;
+}, prevResult: {
+    approached: boolean;
+    output: any[];
+}, currentIndex: number, handlers: paramRejectionHandler[]) => {
+    approached: boolean;
+    output: any[];
+} | boolean;
+/**
+ * 参数处理器链类型定义
+ * 支持数组格式和对象格式的处理器链
+ */
+export type ParamFilterHandlerChain = paramFilterChainHandler[][] | Record<number, paramFilterChainHandler[]>;
+/**
+ * 参数拒绝处理器链类型定义
+ * 结构与ParamHandlerChain相同
+ */
+export type ParamRejectHandlerChain = paramRejectionChainHandler[][] | Record<number, paramRejectionChainHandler[]>;
 //# sourceMappingURL=type.handles.d.ts.map

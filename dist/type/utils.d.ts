@@ -1,5 +1,5 @@
 import { $interceptionModes, decoratorType } from "./rulerDecorators";
-export declare const byTheWay: (re: any, doSth: Function[]) => any;
+export declare const byTheWay: (re: any, doSth: ((r: typeof re) => any)[]) => any;
 export declare const processIt: (input: any, doSth: Function[]) => Function;
 /** Identifies decorator type from arguments */
 export declare function getDecoratorType(args: any[]): decoratorType | "UNKNOWN";

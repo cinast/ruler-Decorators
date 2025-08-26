@@ -1,5 +1,5 @@
 import { rd_Descriptor } from "./rulerDecorators";
-import { rd_SetterHandle, rd_GetterHandle, paramHandler, paramRejectionHandler } from "./type.handles";
+import { rd_SetterHandle, rd_GetterHandle, ParamFilterHandlerChain, paramFilterHandler, ParamRejectHandlerChain, paramRejectionHandler } from "./type.handles";
 /**
  * 标记属性由类代理管理
  */
@@ -82,12 +82,14 @@ export declare function $removeGetterHandler(target: object, propertyKey: string
  * Add parameter handler to specified method
  * 添加参数处理器到指定方法
  */
-export declare function $addParamHandler(target: object, methodKey: string | symbol, handler: paramHandler): void;
+export declare function $addParamHandler(target: object, methodKey: string | symbol, handler: paramFilterHandler): void;
+export declare function $addParamHandler(target: object, methodKey: string | symbol, handlers: ParamFilterHandlerChain): void;
 /**
  * Add parameter rejection handler to specified method
- * 添加参数拒绝处理器到指定方法
+ * 添加参数回绝处理器到指定方法
  */
 export declare function $addParamRejectionHandler(target: object, methodKey: string | symbol, handler: paramRejectionHandler): void;
+export declare function $addParamRejectionHandler(target: object, methodKey: string | symbol, handlers: ParamRejectHandlerChain): void;
 /**
  * Apply getter handlers for a property
  * 应用属性的 getter 处理器
@@ -105,7 +107,9 @@ export declare function $applySetterHandlers(receiver: any, propertyKey: string 
 export declare function $applyParamHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[]): any[];
 /**
  * Apply parameter rejection handlers for a method
- * 应用方法的参数拒绝处理器
+ * 应用方法的参数回绝处理器
  */
 export declare function $applyParamRejectionHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[], conditionResult: any): any[];
+export declare const createParamWrapperFilter: (handlerChain: ParamFilterHandlerChain) => paramFilterHandler;
+export declare const createParamWrapperReject: (handlerChain: ParamRejectHandlerChain) => paramRejectionHandler;
 //# sourceMappingURL=manage.d.ts.map

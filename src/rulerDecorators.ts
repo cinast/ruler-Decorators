@@ -22,6 +22,8 @@ import {
     filterHandler,
     rejectHandler,
     paramFilterHandler,
+    ParamFilterHandlerChain,
+    ParamRejectHandlerChain,
     paramRejectionHandler,
 } from "./type.handles";
 import { debugLogger } from "./api.test";
@@ -133,12 +135,12 @@ export function $$init<T = any>(ProxyHandlers: rd_ProxyTraps<T>): PropertyDecora
 // MethodDecorator 重载 (2套)
 export function $$init<T = any>(
     mode: "function-param-accessor",
-    initialParamHandler: paramFilterHandler[],
-    initialParamRejectionHandler?: paramRejectionHandler[]
+    initialParamHandler: paramFilterHandler[] | ParamFilterHandlerChain,
+    initialParamRejectionHandler?: paramFilterHandler[] | ParamRejectHandlerChain
 ): MethodDecorator & PropertyDecorator;
 export function $$init<T = any>(
-    initialParamHandler: paramFilterHandler[],
-    initialParamRejectionHandler?: paramRejectionHandler[]
+    initialParamHandler: paramFilterHandler[] | ParamFilterHandlerChain,
+    initialParamRejectionHandler?: paramFilterHandler[] | ParamRejectHandlerChain
 ): MethodDecorator & PropertyDecorator;
 
 export function $$init<T = any>(...args: any[]) {
@@ -311,6 +313,7 @@ export function $$init<T = any>(...args: any[]) {
                             const processedArgs = $applyParamHandlers(target, key, originalMethod, args);
                             return originalMethod.apply(target, processedArgs);
                         };
+                        console.log("thisPP", rdDescriptor);
 
                         return descriptor;
                     }

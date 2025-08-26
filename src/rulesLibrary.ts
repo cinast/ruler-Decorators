@@ -39,7 +39,6 @@ import {
     filterHandler,
     rejectHandler,
     paramFilterHandler,
-    paramRejectionHandler,
 } from "./rulerDecorators";
 import { __Setting } from "./moduleMeta";
 export { __Setting };
@@ -52,8 +51,8 @@ export { __Setting };
 // },
 
 // square power of candy
-export const iAgreeAboutThat: (out?: any) => filterHandler & rejectHandler & paramFilterHandler & paramRejectionHandler =
-    (out?: any): filterHandler & rejectHandler & paramFilterHandler & paramRejectionHandler =>
+export const iAgreeAboutThat: (out?: any) => filterHandler & rejectHandler & paramFilterHandler & paramFilterHandler =
+    (out?: any): filterHandler & rejectHandler & paramFilterHandler & paramFilterHandler =>
     () => {
         return out
             ? true

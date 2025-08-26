@@ -1,5 +1,5 @@
-import { rd_GetterHandle, rd_SetterHandle, filterHandler, rejectionHandler, paramHandler, paramRejectionHandler } from "./type.handles";
-import { rd_ProxyHandler } from "./types";
+import { rd_GetterHandle, rd_SetterHandle, filterHandler, rejectHandler, paramFilterHandler, ParamFilterHandlerChain, ParamRejectHandlerChain, paramRejectionHandler } from "./type.handles";
+import { rd_ProxyTraps } from "./types";
 export declare type drivingMod = "proxy" | "accessor";
 export declare type drivingModeWithAuto = drivingMod | "auto";
 /**
@@ -17,7 +17,7 @@ export declare type rd_Descriptor = {
     originalInstance?: object;
     setters?: rd_SetterHandle[];
     getters?: rd_GetterHandle[];
-    paramHandlers?: paramHandler[];
+    paramHandlers?: paramFilterHandler[];
     paramRejectHandlers?: paramRejectionHandler[];
     interceptionEnabled: boolean;
     propertyMode?: "proxy" | "accessor";
@@ -38,7 +38,8 @@ export declare type rd_Descriptor = {
  * Unified Storage for decorated things
  * 统一的存储
  */
-export declare const Storage: WeakMap<object, Map<string | symbol, rd_Descriptor>>;
+export declare const descriptorStorage: WeakMap<object, Map<string | symbol, rd_Descriptor>>;
+export declare const valueStorage: WeakMap<object, Map<string | symbol, any>>;
 /**
  * Initiate Decorator: do sth before apply rules
  * 初始化（隐/明性调用）装饰器
@@ -46,14 +47,20 @@ export declare const Storage: WeakMap<object, Map<string | symbol, rd_Descriptor
 export declare function $$init<T = any>(): ClassDecorator & PropertyDecorator & MethodDecorator;
 export declare function $$init<T = any>(...handlers: Function[]): ClassDecorator & PropertyDecorator & MethodDecorator;
 export declare function $$init<T = any>(mode: $interceptionModes, ...handlers: Function[]): ClassDecorator & PropertyDecorator & MethodDecorator;
-export declare function $$init<T = any>(mode: "class-proxy", ProxyHandlers: rd_ProxyHandler<T>): ClassDecorator;
-export declare function $$init<T = any>(ProxyHandlers: rd_ProxyHandler<T>): ClassDecorator;
+export declare function $$init<T = any>(mode: "class-proxy", ProxyHandlers: rd_ProxyTraps<T>): ClassDecorator;
+export declare function $$init<T = any>(ProxyHandlers: rd_ProxyTraps<T>): ClassDecorator;
 export declare function $$init<T = any>(mode: "accessor", initialSetters: rd_SetterHandle[], initialGetters: rd_GetterHandle[]): PropertyDecorator;
 export declare function $$init<T = any>(initialSetters: rd_SetterHandle[], initialGetters: rd_GetterHandle[]): PropertyDecorator;
-export declare function $$init<T = any>(mode: "property-proxy", ProxyHandlers: rd_ProxyHandler<T>): PropertyDecorator;
-export declare function $$init<T = any>(ProxyHandlers: rd_ProxyHandler<T>): PropertyDecorator;
-export declare function $$init<T = any>(mode: "function-param-accessor", initialParamHandler: paramHandler[], initialParamRejectionHandler?: paramRejectionHandler[]): MethodDecorator & PropertyDecorator;
-export declare function $$init<T = any>(initialParamHandler: paramHandler[], initialParamRejectionHandler?: paramRejectionHandler[]): MethodDecorator & PropertyDecorator;
+/**
+ * @deprecated
+ */
+export declare function $$init<T = any>(mode: "property-proxy", ProxyHandlers: rd_ProxyTraps<T>): PropertyDecorator;
+/**
+ * @deprecated
+ */
+export declare function $$init<T = any>(ProxyHandlers: rd_ProxyTraps<T>): PropertyDecorator;
+export declare function $$init<T = any>(mode: "function-param-accessor", initialParamHandler: paramFilterHandler[] | ParamFilterHandlerChain, initialParamRejectionHandler?: paramFilterHandler[] | ParamRejectHandlerChain): MethodDecorator & PropertyDecorator;
+export declare function $$init<T = any>(initialParamHandler: paramFilterHandler[] | ParamFilterHandlerChain, initialParamRejectionHandler?: paramFilterHandler[] | ParamRejectHandlerChain): MethodDecorator & PropertyDecorator;
 /**
  * 全局Proxy类装饰器
  * 显式启用全局代理拦截
@@ -78,17 +85,17 @@ export declare function $getter<R = any, I = R>(handle: rd_GetterHandle<R, I>): 
  * Parameter check handler decorator factory
  * 参数检查句柄装饰器工厂
  */
-export declare function $paramChecker(handle: paramHandler, rejectHandle?: paramRejectionHandler): MethodDecorator;
+export declare function $paramChecker(handle: paramFilterHandler, rejectHandle?: paramRejectionHandler): MethodDecorator;
 /**
  * Conditional write decorator factory
  * 条件写入装饰器工厂
  */
-export declare const $conditionalWrite: <R = any, I = R>(errorType: "ignore" | "Warn" | "Error", conditionHandles: filterHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
+export declare const $conditionalWrite: <R = any, I = R>(errorType: "ignore" | "Warn" | "Error", conditionHandles: filterHandler[], rejectHandlers?: rejectHandler[]) => PropertyDecorator & MethodDecorator;
 /**
  * Conditional read decorator factory
  * 条件读取装饰器工厂
  */
-export declare const $conditionalRead: <R = any, I = R>(errorType: "ignore" | "Warn" | "Error", conditionHandles: filterHandler[], rejectHandlers?: rejectionHandler[]) => PropertyDecorator & MethodDecorator;
+export declare const $conditionalRead: <R = any, I = R>(errorType: "ignore" | "Warn" | "Error", conditionHandles: filterHandler[], rejectHandlers?: rejectHandler[]) => PropertyDecorator & MethodDecorator;
 /**
  * types
  */
@@ -110,4 +117,8 @@ export * from "./api.test";
  * utils
  */
 export * from "./utils";
+/**
+ * types
+ */
+export * from "./types";
 //# sourceMappingURL=rulerDecorators.d.ts.map

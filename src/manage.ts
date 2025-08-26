@@ -1,6 +1,15 @@
 import { debugLogger } from "./api.test";
 import { rd_Descriptor, descriptorStorage } from "./rulerDecorators";
-import { rd_SetterHandle, rd_GetterHandle, paramFilterHandler, paramRejectionHandler } from "./type.handles";
+import {
+    rd_SetterHandle,
+    rd_GetterHandle,
+    ParamFilterHandlerChain,
+    paramFilterHandler,
+    ParamRejectHandlerChain,
+    paramRejectionHandler,
+    paramRejectionChainHandler,
+    paramFilterChainHandler,
+} from "./type.handles";
 
 /**
  * 标记属性由类代理管理
@@ -345,9 +354,24 @@ export function $removeGetterHandler(target: object, propertyKey: string | symbo
  * Add parameter handler to specified method
  * 添加参数处理器到指定方法
  */
-export function $addParamHandler(target: object, methodKey: string | symbol, handler: paramFilterHandler): void {
+export function $addParamHandler(target: object, methodKey: string | symbol, handler: paramFilterHandler): void;
+export function $addParamHandler(target: object, methodKey: string | symbol, handlers: ParamFilterHandlerChain): void;
+export function $addParamHandler(target: object, methodKey: string | symbol, handlerOrHandlers: any): void {
     const descriptor = getDescriptor(target, methodKey);
-    descriptor.paramHandlers = [...(descriptor.paramHandlers || []), handler];
+
+    if (Array.isArray(handlerOrHandlers) && Array.isArray(handlerOrHandlers[0])) {
+        // 二维数组格式 - 使用包装器
+        const wrapper = createParamWrapperFilter(handlerOrHandlers);
+        descriptor.paramHandlers = [...(descriptor.paramHandlers || []), wrapper];
+    } else if (typeof handlerOrHandlers === "object" && !Array.isArray(handlerOrHandlers)) {
+        // 对象格式 - 使用包装器
+        const wrapper = createParamWrapperFilter(handlerOrHandlers);
+        descriptor.paramHandlers = [...(descriptor.paramHandlers || []), wrapper];
+    } else {
+        // 单个处理器
+        descriptor.paramHandlers = [...(descriptor.paramHandlers || []), handlerOrHandlers as paramFilterHandler];
+    }
+
     setDescriptor(target, methodKey, descriptor);
 }
 
@@ -355,9 +379,24 @@ export function $addParamHandler(target: object, methodKey: string | symbol, han
  * Add parameter rejection handler to specified method
  * 添加参数回绝处理器到指定方法
  */
-export function $addParamRejectionHandler(target: object, methodKey: string | symbol, handler: paramRejectionHandler): void {
+export function $addParamRejectionHandler(target: object, methodKey: string | symbol, handler: paramRejectionHandler): void;
+export function $addParamRejectionHandler(target: object, methodKey: string | symbol, handlers: ParamRejectHandlerChain): void;
+export function $addParamRejectionHandler(target: object, methodKey: string | symbol, handlerOrHandlers: any): void {
     const descriptor = getDescriptor(target, methodKey);
-    descriptor.paramRejectHandlers = [...(descriptor.paramRejectHandlers || []), handler];
+
+    if (Array.isArray(handlerOrHandlers) && Array.isArray(handlerOrHandlers[0])) {
+        // 二维数组格式 - 使用包装器
+        const wrapper = createParamWrapperReject(handlerOrHandlers);
+        descriptor.paramRejectHandlers = [...(descriptor.paramRejectHandlers || []), wrapper];
+    } else if (typeof handlerOrHandlers === "object" && !Array.isArray(handlerOrHandlers)) {
+        // 对象格式 - 使用包装器
+        const wrapper = createParamWrapperReject(handlerOrHandlers);
+        descriptor.paramRejectHandlers = [...(descriptor.paramRejectHandlers || []), wrapper];
+    } else {
+        // 单个处理器
+        descriptor.paramRejectHandlers = [...(descriptor.paramRejectHandlers || []), handlerOrHandlers as paramRejectionHandler];
+    }
+
     setDescriptor(target, methodKey, descriptor);
 }
 /**
@@ -429,3 +468,60 @@ export function $applyParamRejectionHandlers(
         return typeof result === "boolean" ? prev : result.output;
     }, args);
 }
+
+export const createParamWrapperFilter = (handlerChain: ParamFilterHandlerChain): paramFilterHandler => {
+    let paramsChain: paramFilterChainHandler[][] = [];
+    if (!Array.isArray(handlerChain)) {
+        const map = Object.entries(handlerChain);
+        map.forEach((o, i, ar) => {
+            const k = Number(o[0]),
+                v = o[1];
+            paramsChain[k] = v;
+        });
+    } else {
+        paramsChain = handlerChain;
+    }
+    return function (thisArg, methodName, method, args, prevResult, currentIndex, handlers) {
+        let processedArgs: any[] = [],
+            approached: boolean = false;
+        paramsChain.forEach((chain, argIdx) => {
+            processedArgs[argIdx] = chain.reduce(
+                (p, handler, i, arr) => handler(thisArg, methodName, method, argIdx, args, prevResult, currentIndex, handlers),
+                prevResult.output[argIdx]
+            ).output;
+        });
+        return {
+            approached: approached,
+            output: processedArgs,
+        };
+    };
+};
+
+export const createParamWrapperReject = (handlerChain: ParamRejectHandlerChain): paramRejectionHandler => {
+    let paramsChain: paramRejectionChainHandler[][] = [];
+    if (!Array.isArray(handlerChain)) {
+        const map = Object.entries(handlerChain);
+        map.forEach((o, i, ar) => {
+            const k = Number(o[0]),
+                v = o[1];
+            paramsChain[k] = v;
+        });
+    } else {
+        paramsChain = handlerChain;
+    }
+    return function (thisArg, methodName, method, args, prevResult, filterOutput, currentIndex, handlers) {
+        let processedArgs: any[] = [],
+            approached: boolean = false;
+        paramsChain.forEach((chain, argIdx) => {
+            processedArgs[argIdx] = chain.reduce(
+                (p, handler, i, arr) =>
+                    handler(thisArg, methodName, method, argIdx, args, filterOutput, prevResult, currentIndex, handlers),
+                prevResult.output[argIdx]
+            ).output;
+        });
+        return {
+            approached: approached,
+            output: processedArgs,
+        };
+    };
+};

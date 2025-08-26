@@ -169,3 +169,50 @@ export type paramRejectionHandler = (
           output: any[];
       }
     | boolean;
+
+export type paramFilterChainHandler = (
+    thisArg: any,
+    methodName: string | symbol,
+    method: Function,
+    argIdx: number,
+    args: any[],
+    prevResult: { approached: boolean; output: any[] },
+    currentIndex: number,
+    handlers: paramFilterHandler[]
+) =>
+    | {
+          approached: boolean;
+          output: any[];
+      }
+    | boolean;
+
+export type paramRejectionChainHandler = (
+    thisArg: any,
+    methodName: string | symbol,
+    method: Function,
+    argIdx: number,
+    args: any[],
+    conditionHandleLastOutput: { approached: boolean; output: any },
+    prevResult: { approached: boolean; output: any[] },
+    currentIndex: number,
+    handlers: paramRejectionHandler[]
+) =>
+    | {
+          approached: boolean;
+          output: any[];
+      }
+    | boolean;
+
+/**
+ * 参数处理器链类型定义
+ * 支持数组格式和对象格式的处理器链
+ */
+export type ParamFilterHandlerChain =
+    | paramFilterChainHandler[][] // 数组格式: [param1_handlers, param2_handlers, ...]
+    | Record<number, paramFilterChainHandler[]>; // 对象格式: {paramIndex: handlers}
+
+/**
+ * 参数拒绝处理器链类型定义
+ * 结构与ParamHandlerChain相同
+ */
+export type ParamRejectHandlerChain = paramRejectionChainHandler[][] | Record<number, paramRejectionChainHandler[]>;

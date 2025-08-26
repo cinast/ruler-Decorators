@@ -9,32 +9,63 @@ Function-Param-Accessor
 
 ```ts
 addParamFilterHandler(
-    // param1
     [
-        // prase 1
-        () => {},
-        // prase 2
-        () => {},
-        // prase 3
-        () => {
-            return {
-                ap: true,
-                ot: ablbalbalb,
-            };
-        },
+        // param1
+        [
+            // prase 1
+            () => {},
+            // prase 2
+            () => {},
+            // prase 3
+            () => {
+                return {
+                    ap: true,
+                    ot: ablbalbalb,
+                };
+            },
+        ],
+        // param2
+        [
+            () => {},
+            () => {
+                return {
+                    ap: true,
+                    ot: ablbalbalb,
+                };
+            }
+        ]
     ],
-    // param2
-    [
-        () => {},
-        () => {
-            return {
-                ap: true,
-                ot: ablbalbalb,
-            };
-        }
-    ],
-    [rejects[][]]
+    rejects[][]
 );
+
+addParamFilterHandler(
+    {
+        // param2
+        2:[
+            // prase 1
+            () => {},
+            // prase 2
+            () => {
+                return {
+                    ap: true,
+                    ot: ablbalbalb,
+                };
+            },
+        ],
+        // param5
+        5:[
+            () => {},
+            () => {
+                return {
+                    ap: true,
+                    ot: ablbalbalb,
+                };
+            }
+        ]
+    },
+    Record<number,rejects[]>
+);
+
 export type paramFilterHandler = (
     thisArg: any,
     methodName: string | symbol,

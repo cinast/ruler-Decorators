@@ -1,5 +1,41 @@
+/**
+ * @namespace rulerDecorators
+ * Predefined property rule decorators collection
+ * 预定义的属性规则装饰器集合
+ *
+ * @functional Extensible decorator factories
+ * @functional 可扩展的装饰器工厂
+ * @extendable Can be used as base for custom rules
+ * @extendable 可作为自定义规则的基础
+ *
+ * @tip Built on factoryI/factoryII foundations
+ * @tip 基于一阶/二阶工厂构建
+ * @author cinast
+ * @since 2022-11-29
+ * @update 2025-8-19
+ * @version 1.0.0
+ *
+ * @notice Decorators type: experimental stage 2
+ * @notice 装饰器类型：实验性stage 2
+ * @warning tsconfig `experimentalDecorators` must be `true`
+ * @warning 必须设置tsconfig的experimentalDecorators为true
+ * @tip tsconfig.json should be placed at ts files' parent or sibling folders
+ * @tip tsconfig.json应放在ts文件的父级或同级目录
+ * @tip Requires TypeScript 5.2+
+ * @tip 需要TypeScript 5.2+版本
+ */
+/**
+ * @this
+ * @namespace rulerDecorators
+ */
+import { filterHandler, rejectHandler, paramFilterHandler } from "./rulerDecorators";
 import { __Setting } from "./moduleMeta";
 export { __Setting };
+export declare const iAgreeAboutThat: (out?: any) => filterHandler & rejectHandler & paramFilterHandler & paramFilterHandler;
+export declare const passThat: (out?: any) => {
+    approached: true;
+    output: any;
+};
 /**
  * *function for lazy you*
  *
@@ -84,9 +120,10 @@ export declare const minimum: (min: bigint | number, allowEqual?: boolean) => Pr
  *          超过最大值时返回新值，否则保持原值
  */
 export declare const maximum: (max: bigint | number, allowEqual?: boolean) => PropertyDecorator & MethodDecorator;
+export declare const range: (min: number, max: number) => PropertyDecorator & MethodDecorator;
 /**
  * Rejects strings containing specified patterns
- * 拒绝包含指定模式的字符串
+ * 回绝包含指定模式的字符串
  * @param patten - Patterns to exclude (string or RegExp)
  *                 要排除的模式(字符串或正则表达式)
  *
@@ -101,6 +138,7 @@ export declare const stringExcludes: (patten: (RegExp | string)[], replace?: str
  *                 要求的模式(字符串或正则表达式)
  */
 export declare const stringRequires: (...patten: (RegExp | string)[]) => PropertyDecorator & MethodDecorator;
+export declare const oneOf: (list: any[]) => PropertyDecorator & MethodDecorator;
 /**
  * @deprecated
  * @tip
