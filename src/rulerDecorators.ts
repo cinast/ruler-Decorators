@@ -7,7 +7,7 @@
  * @author cinast
  * @since 2022-11-29
  * @update 2025-8-23
- * @version 2.9.0
+ * @version 3.0.0
  *
  * @notice Decorators type: experimental stage 2
  * @warning tsconfig `experimentalDecorators` must be `true`

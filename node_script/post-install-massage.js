@@ -29,14 +29,14 @@ its useful, abdicable, and extendable,
 make it crazy people's eyes.
 
 Enjoy it, rulerDecorators still need to develop
-*rulerDecorators, 0.0.0-preview-test*
+*rulerDecorators, 1.0.0 1st edition
 now comes here————
 `);
 
     await sleep(2000);
 
     console.log(`
-ide Cosi at 8/17
+ide Cosi at 8/26
 A boring summer holiday in 2025
 `);
 
