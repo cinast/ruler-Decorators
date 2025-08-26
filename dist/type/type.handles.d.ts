@@ -10,7 +10,15 @@ export declare type rd_processing = ["filterII", "rejectII", "paramFilterII", "p
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
  */
-export type rd_SetterHandle<R = any, I = any> = (target: any, attr: string | symbol, value: any, lastResult: I, index: number, handlers: rd_SetterHandle[], ...args: any[]) => R;
+export type rd_SetterHandle<R = any, I = any> = (
+    target: any,
+    attr: string | symbol,
+    value: any,
+    lastResult: I,
+    index: number,
+    handlers: rd_SetterHandle[],
+    ...args: any[]
+) => R;
 /**
  * @handle_I
  * Core getter handler type for factoryI (base level)
@@ -21,7 +29,15 @@ export type rd_SetterHandle<R = any, I = any> = (target: any, attr: string | sym
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
  */
-export type rd_GetterHandle<R = any, I = any> = (target: any, attr: string | symbol, value: any, lastResult: I, index: number, handlers: rd_GetterHandle[], ...args: any[]) => R;
+export type rd_GetterHandle<R = any, I = any> = (
+    target: any,
+    attr: string | symbol,
+    value: any,
+    lastResult: I,
+    index: number,
+    handlers: rd_GetterHandle[],
+    ...args: any[]
+) => R;
 /**
  * @handle_II
  * Condition handler type for factoryII (conditional level)
@@ -41,13 +57,22 @@ export type rd_GetterHandle<R = any, I = any> = (target: any, attr: string | sym
  * @Waring Returns true/approached without processing will override value
  * @Waring 如果返回true/approached但未处理值，将直接覆盖原值
  */
-export type filterHandler = (thisArg: any, key: string | symbol, value: any, prevResult: {
-    approached: boolean;
-    output: any;
-}, currentIndex: number, handlers: filterHandler[]) => {
-    approached: boolean;
-    output: any;
-} | boolean;
+export type filterHandler = (
+    thisArg: any,
+    key: string | symbol,
+    value: any,
+    prevResult: {
+        approached: boolean;
+        output: any;
+    },
+    currentIndex: number,
+    handlers: filterHandler[]
+) =>
+    | {
+          approached: boolean;
+          output: any;
+      }
+    | boolean;
 /**
  * @handle_II
  * Rejection handler type for factoryII (conditional level)
@@ -67,16 +92,26 @@ export type filterHandler = (thisArg: any, key: string | symbol, value: any, pre
  * @Waring Returns true/approached without processing will keep original value
  * @Waring 如果返回true/approached但未处理值，将保持原值
  */
-export type rejectHandler = (thisArg: any, key: string | symbol, value: any, conditionHandleLastOutput: {
-    approached: boolean;
-    output: any;
-}, prevResult: {
-    approached: boolean;
-    output: any;
-}, currentIndex: number, handlers: rejectHandler[]) => {
-    approached: boolean;
-    output: any;
-} | boolean;
+export type rejectHandler = (
+    thisArg: any,
+    key: string | symbol,
+    value: any,
+    FilterLastOutput: {
+        approached: boolean;
+        output: any;
+    },
+    prevResult: {
+        approached: boolean;
+        output: any;
+    },
+    currentIndex: number,
+    handlers: rejectHandler[]
+) =>
+    | {
+          approached: boolean;
+          output: any;
+      }
+    | boolean;
 /**
  * @handle_II
  * Parameter handler type for function-param-accessor mode
@@ -94,13 +129,23 @@ export type rejectHandler = (thisArg: any, key: string | symbol, value: any, con
  * @Waring Returns true/approached without processing will allow original call
  * @Waring 如果返回true/approached但未处理参数，将允许原始调用
  */
-export type paramFilterHandler = (thisArg: any, methodName: string | symbol, method: Function, args: any[], prevResult: {
-    approached: boolean;
-    output: any[];
-}, currentIndex: number, handlers: paramFilterHandler[]) => {
-    approached: boolean;
-    output: any[];
-} | boolean;
+export type paramFilterHandler = (
+    thisArg: any,
+    methodName: string | symbol,
+    method: Function,
+    args: any[],
+    prevResult: {
+        approached: boolean;
+        output: any[];
+    },
+    currentIndex: number,
+    handlers: paramFilterHandler[]
+) =>
+    | {
+          approached: boolean;
+          output: any[];
+      }
+    | boolean;
 /**
  * @handle_II
  * Parameter rejection handler type for function-param-accessor mode
@@ -113,33 +158,67 @@ export type paramFilterHandler = (thisArg: any, methodName: string | symbol, met
  * @tip Used when parameter conditions fail in function-param-accessor mode
  * @tip 用于函数参数访问器模式中参数条件失败时的处理
  */
-export type paramRejectionHandler = (thisArg: any, methodName: string | symbol, method: Function, args: any[], conditionHandleLastOutput: {
-    approached: boolean;
-    output: any;
-}, prevResult: {
-    approached: boolean;
-    output: any[];
-}, currentIndex: number, handlers: paramRejectionHandler[]) => {
-    approached: boolean;
-    output: any[];
-} | boolean;
-export type paramFilterChainHandler = (thisArg: any, methodName: string | symbol, method: Function, argIdx: number, args: any[], prevResult: {
-    approached: boolean;
-    output: any[];
-}, currentIndex: number, handlers: paramFilterHandler[]) => {
-    approached: boolean;
-    output: any[];
-} | boolean;
-export type paramRejectionChainHandler = (thisArg: any, methodName: string | symbol, method: Function, argIdx: number, args: any[], conditionHandleLastOutput: {
-    approached: boolean;
-    output: any;
-}, prevResult: {
-    approached: boolean;
-    output: any[];
-}, currentIndex: number, handlers: paramRejectionHandler[]) => {
-    approached: boolean;
-    output: any[];
-} | boolean;
+export type paramRejectionHandler = (
+    thisArg: any,
+    methodName: string | symbol,
+    method: Function,
+    args: any[],
+    FilterLastOutput: {
+        approached: boolean;
+        output: any;
+    },
+    prevResult: {
+        approached: boolean;
+        output: any[];
+    },
+    currentIndex: number,
+    handlers: paramRejectionHandler[]
+) =>
+    | {
+          approached: boolean;
+          output: any[];
+      }
+    | boolean;
+export type paramFilterChainHandler = (
+    thisArg: any,
+    methodName: string | symbol,
+    method: Function,
+    argIdx: number,
+    args: any[],
+    prevResult: {
+        approached: boolean;
+        output: any[];
+    },
+    currentIndex: number,
+    handlers: paramFilterHandler[]
+) =>
+    | {
+          approached: boolean;
+          output: any[];
+      }
+    | boolean;
+export type paramRejectionChainHandler = (
+    thisArg: any,
+    methodName: string | symbol,
+    method: Function,
+    argIdx: number,
+    args: any[],
+    FilterLastOutput: {
+        approached: boolean;
+        output: any;
+    },
+    prevResult: {
+        approached: boolean;
+        output: any[];
+    },
+    currentIndex: number,
+    handlers: paramRejectionHandler[]
+) =>
+    | {
+          approached: boolean;
+          output: any[];
+      }
+    | boolean;
 /**
  * 参数处理器链类型定义
  * 支持数组格式和对象格式的处理器链

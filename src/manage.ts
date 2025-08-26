@@ -384,17 +384,23 @@ export function $addParamRejectionHandler(target: object, methodKey: string | sy
 export function $addParamRejectionHandler(target: object, methodKey: string | symbol, handlerOrHandlers: any): void {
     const descriptor = getDescriptor(target, methodKey);
 
-    if (Array.isArray(handlerOrHandlers) && Array.isArray(handlerOrHandlers[0])) {
-        // 二维数组格式 - 使用包装器
-        const wrapper = createParamWrapperReject(handlerOrHandlers);
-        descriptor.paramRejectHandlers = [...(descriptor.paramRejectHandlers || []), wrapper];
-    } else if (typeof handlerOrHandlers === "object" && !Array.isArray(handlerOrHandlers)) {
-        // 对象格式 - 使用包装器
-        const wrapper = createParamWrapperReject(handlerOrHandlers);
-        descriptor.paramRejectHandlers = [...(descriptor.paramRejectHandlers || []), wrapper];
+    // 确保 paramHandlers 数组存在
+    if (!descriptor.paramHandlers) {
+        descriptor.paramHandlers = [];
+    }
+
+    // 检查是否是处理器链格式（数组的数组或对象）
+    const isHandlerChain =
+        (Array.isArray(handlerOrHandlers) && Array.isArray(handlerOrHandlers[0])) ||
+        (typeof handlerOrHandlers === "object" && !Array.isArray(handlerOrHandlers));
+
+    if (isHandlerChain) {
+        // 使用包装器处理处理器链
+        const wrapper = createParamWrapperFilter(handlerOrHandlers);
+        descriptor.paramHandlers.push(wrapper);
     } else {
         // 单个处理器
-        descriptor.paramRejectHandlers = [...(descriptor.paramRejectHandlers || []), handlerOrHandlers as paramRejectHandler];
+        descriptor.paramHandlers.push(handlerOrHandlers as paramFilterHandler);
     }
 
     setDescriptor(target, methodKey, descriptor);
@@ -470,61 +476,108 @@ export function $applyParamRejectionHandlers(
 }
 
 export const createParamWrapperFilter = (handlerChain: ParamFilterHandlerChain): paramFilterHandler => {
-    let paramsChain: paramFilterChainHandler[][] = [];
-    if (!Array.isArray(handlerChain)) {
-        const map = Object.entries(handlerChain);
-        map.forEach((o, i, ar) => {
-            const k = Number(o[0]),
-                v = o[1];
-            paramsChain[k] = v;
-        });
+    // 创建完整的参数处理器数组，确保所有索引都有值
+    let paramsChain: (paramFilterChainHandler[] | undefined)[] = [];
+
+    if (Array.isArray(handlerChain)) {
+        // 数组格式
+        paramsChain = [...handlerChain];
     } else {
-        paramsChain = handlerChain;
+        // 对象格式 {paramIndex: handlers}
+        const maxIndex = Math.max(...Object.keys(handlerChain).map(Number));
+        paramsChain = Array(maxIndex + 1).fill(undefined);
+
+        for (const [indexStr, handlers] of Object.entries(handlerChain)) {
+            const index = Number(indexStr);
+            paramsChain[index] = handlers;
+        }
     }
+
     return function (thisArg, methodName, method, args, prevResult, currentIndex, handlers) {
-        let processedArgs: any[] = [],
-            approached: boolean = false;
-        paramsChain.forEach((chain, argIdx) => {
+        let processedArgs = [...prevResult.output];
+        let anyApproached = false;
+
+        // 处理每个参数的处理器链
+        for (let argIdx = 0; argIdx < paramsChain.length; argIdx++) {
+            const chain = paramsChain[argIdx];
+            if (!chain || chain.length === 0) continue;
+
             const result = chain.reduce(
-                (p, handler, i, arr) => handler(thisArg, methodName, method, argIdx, args, prevResult, currentIndex, handlers),
-                prevResult.output[argIdx]
+                (prev, handler, handlerIndex, handlerArray) => {
+                    const r = handler(thisArg, methodName, method, argIdx, args, prevResult.output, prev, handlerIndex, handlers);
+
+                    return typeof r === "boolean" ? { approached: r, output: prev.output } : r;
+                },
+                { approached: false, output: processedArgs[argIdx] }
             );
+
             processedArgs[argIdx] = result.output;
-            approached = result.approached;
-        });
+            if (result.approached) {
+                anyApproached = true;
+            }
+        }
+
         return {
-            approached: approached,
+            approached: anyApproached,
             output: processedArgs,
         };
     };
 };
 
 export const createParamWrapperReject = (handlerChain: ParamRejectHandlerChain): paramRejectHandler => {
-    let paramsChain: paramRejectChainHandler[][] = [];
-    if (!Array.isArray(handlerChain)) {
-        const map = Object.entries(handlerChain);
-        map.forEach((o, i, ar) => {
-            const k = Number(o[0]),
-                v = o[1];
-            paramsChain[k] = v;
-        });
+    let paramsChain: (paramRejectChainHandler[] | undefined)[] = [];
+
+    if (Array.isArray(handlerChain)) {
+        // 数组格式
+        paramsChain = [...handlerChain];
     } else {
-        paramsChain = handlerChain;
+        // 对象格式 {paramIndex: handlers}
+        const maxIndex = Math.max(...Object.keys(handlerChain).map(Number));
+        paramsChain = Array(maxIndex + 1).fill(undefined);
+
+        for (const [indexStr, handlers] of Object.entries(handlerChain)) {
+            const index = Number(indexStr);
+            paramsChain[index] = handlers;
+        }
     }
-    return function (thisArg, methodName, method, args, prevResult, filterOutput, currentIndex, handlers) {
-        let processedArgs: any[] = [],
-            approached: boolean = false;
-        paramsChain.forEach((chain, argIdx) => {
+
+    return function (thisArg, methodName, method, args, FilterLastOutput, prevResult, currentIndex, handlers) {
+        let processedArgs = [...prevResult.output];
+        let anyApproached = false;
+
+        // 处理每个参数的处理器链
+        for (let argIdx = 0; argIdx < paramsChain.length; argIdx++) {
+            const chain = paramsChain[argIdx];
+            if (!chain || chain.length === 0) continue;
+
             const result = chain.reduce(
-                (p, handler, i, arr) =>
-                    handler(thisArg, methodName, method, argIdx, args, filterOutput, prevResult, currentIndex, handlers),
-                prevResult.output[argIdx]
+                (prev, handler, handlerIndex, handlerArray) => {
+                    const r = handler(
+                        thisArg,
+                        methodName,
+                        method,
+                        argIdx,
+                        args,
+                        prevResult.output,
+                        FilterLastOutput,
+                        prev,
+                        handlerIndex,
+                        handlers
+                    );
+
+                    return typeof r === "boolean" ? { approached: r, output: prev.output } : r;
+                },
+                { approached: false, output: processedArgs[argIdx] }
             );
+
             processedArgs[argIdx] = result.output;
-            approached = result.approached;
-        });
+            if (result.approached) {
+                anyApproached = true;
+            }
+        }
+
         return {
-            approached: approached,
+            approached: anyApproached,
             output: processedArgs,
         };
     };

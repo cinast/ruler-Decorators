@@ -99,7 +99,7 @@ export type rejectHandler = (
     thisArg: any,
     key: string | symbol,
     value: any,
-    conditionHandleLastOutput: { approached: boolean; output: any },
+    FilterLastOutput: { approached: boolean; output: any },
     prevResult: { approached: boolean; output: any },
     currentIndex: number,
     handlers: rejectHandler[]
@@ -159,7 +159,7 @@ export type paramRejectHandler = (
     methodName: string | symbol,
     method: Function,
     args: any[],
-    conditionHandleLastOutput: { approached: boolean; output: any },
+    FilterLastOutput: { approached: boolean; output: any[] },
     prevResult: { approached: boolean; output: any[] },
     currentIndex: number,
     handlers: paramRejectHandler[]
@@ -170,13 +170,17 @@ export type paramRejectHandler = (
       }
     | boolean;
 
+/**
+ * 针对单个参数的句柄
+ */
 export type paramFilterChainHandler = (
     thisArg: any,
     methodName: string | symbol,
     method: Function,
     argIdx: number,
     args: any[],
-    prevResult: { approached: boolean; output: any[] },
+    inputArgs: any[],
+    prevResult: { approached: boolean; output: any },
     currentIndex: number,
     handlers: paramFilterHandler[]
 ) =>
@@ -186,14 +190,18 @@ export type paramFilterChainHandler = (
       }
     | boolean;
 
+/**
+ * 针对单个参数的句柄
+ */
 export type paramRejectChainHandler = (
     thisArg: any,
     methodName: string | symbol,
     method: Function,
     argIdx: number,
     args: any[],
-    conditionHandleLastOutput: { approached: boolean; output: any },
-    prevResult: { approached: boolean; output: any[] },
+    inputArgs: any[],
+    FilterLastOutput: { approached: boolean; output: any },
+    prevResult: { approached: boolean; output: any },
     currentIndex: number,
     handlers: paramRejectHandler[]
 ) =>

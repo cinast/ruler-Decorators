@@ -12,17 +12,17 @@ class TestClass {
             // param1 的处理器链
             [
                 // phase 1
-                (thisArg, methodName, method, argIdx, args, prevResult, currentIndex, handlers) => {
+                (thisArg, methodName, method, argIdx, args, inputArgs, prevResult, currentIndex, handlers) => {
                     console.log(`Param1 - Phase 1: argIdx=${argIdx}, value=${args[argIdx]}`);
                     return { approached: false, output: prevResult.output };
                 },
                 // phase 2
-                (thisArg, methodName, method, argIdx, args, prevResult, currentIndex, handlers) => {
+                (thisArg, methodName, method, argIdx, args, inputArgs, prevResult, currentIndex, handlers) => {
                     console.log(`Param1 - Phase 2: argIdx=${argIdx}, value=${args[argIdx]}`);
                     return { approached: false, output: prevResult.output };
                 },
                 // phase 3
-                (thisArg, methodName, method, argIdx, args, prevResult, currentIndex, handlers) => {
+                (thisArg, methodName, method, argIdx, args, inputArgs, prevResult, currentIndex, handlers) => {
                     console.log(`Param1 - Phase 3: argIdx=${argIdx}, value=${args[argIdx]}`);
                     return {
                         approached: true,
@@ -33,12 +33,12 @@ class TestClass {
             // param2 的处理器链
             [
                 // phase 1
-                (thisArg, methodName, method, argIdx, args, prevResult, currentIndex, handlers) => {
+                (thisArg, methodName, method, argIdx, args, inputArgs, prevResult, currentIndex, handlers) => {
                     console.log(`Param2 - Phase 1: argIdx=${argIdx}, value=${args[argIdx]}`);
                     return { approached: false, output: prevResult.output };
                 },
                 // phase 2
-                (thisArg, methodName, method, argIdx, args, prevResult, currentIndex, handlers) => {
+                (thisArg, methodName, method, argIdx, args, inputArgs, prevResult, currentIndex, handlers) => {
                     console.log(`Param2 - Phase 2: argIdx=${argIdx}, value=${args[argIdx]}`);
                     return {
                         approached: true,
@@ -50,14 +50,14 @@ class TestClass {
         [
             // param1 的拒绝处理器链
             [
-                (thisArg, methodName, method, argIdx, args, conditionResult, prevResult, currentIndex, handlers) => {
+                (thisArg, methodName, method, argIdx, args, inputArgs, FilterLastOutput, prevResult, currentIndex, handlers) => {
                     console.log(`Param1 Reject - Phase 1: argIdx=${argIdx}`);
                     return { approached: false, output: prevResult.output };
                 },
             ],
             // param2 的拒绝处理器链
             [
-                (thisArg, methodName, method, argIdx, args, conditionResult, prevResult, currentIndex, handlers) => {
+                (thisArg, methodName, method, argIdx, args, inputArgs, FilterLastOutput, prevResult, currentIndex, handlers) => {
                     console.log(`Param2 Reject - Phase 1: argIdx=${argIdx}`);
                     return { approached: false, output: prevResult.output };
                 },
@@ -72,7 +72,7 @@ class TestClass {
     @$$init("function-param-accessor", {
         0: [
             // 第一个参数的处理器
-            (thisArg, methodName, method, argIdx, args, prevResult, currentIndex, handlers) => {
+            (thisArg, methodName, method, argIdx, args, inputArgs, prevResult, currentIndex, handlers) => {
                 console.log(`Object Format - Param0: ${args[argIdx]}`);
                 return {
                     approached: true,
@@ -82,7 +82,7 @@ class TestClass {
         ],
         2: [
             // 第三个参数的处理器
-            (thisArg, methodName, method, argIdx, args, prevResult, currentIndex, handlers) => {
+            (thisArg, methodName, method, argIdx, args, inputArgs, prevResult, currentIndex, handlers) => {
                 console.log(`Object Format - Param2: ${args[argIdx]}`);
                 return {
                     approached: true,
@@ -113,9 +113,7 @@ class EmptyTestClass {
         [], // param1 无处理器
         [
             // param2 有处理器
-            (thisArg, methodName, method, argIdx, args, prevResult, currentIndex, handlers) => {
-                console.log(409);
-
+            (thisArg, methodName, method, argIdx, args, inputArgs, prevResult, currentIndex, handlers) => {
                 return {
                     approached: true,
                     output: prevResult.output.map((val, idx) => (idx === argIdx ? val * 3 : val)),

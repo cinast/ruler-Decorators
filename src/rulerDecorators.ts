@@ -37,6 +37,8 @@ import {
     getDescriptor,
     $markPropertyAsClassProxyManaged,
     setDescriptor,
+    createParamWrapperFilter,
+    createParamWrapperReject,
 } from "./manage";
 import { getPropertyModes } from "./manage";
 import { $defineProperty, getDecoratorType, isModeCompatible, rd_executeModeSelector } from "./utils";
@@ -160,7 +162,7 @@ export function $$init<T = any>(...args: any[]) {
         if (whoIsThisDecorator === "UNKNOWN") throw "rulerDecorators now not suppose this kind of Decorator";
 
         const [interceptionMode, handlers]: [$interceptionModes, Function[]] =
-            args.length > 0
+            args.length === 0
                 ? [
                       rd_executeModeSelector(
                           whoIsThisDecorator as Exclude<decoratorType, "ParameterDecorator">,
@@ -291,20 +293,61 @@ export function $$init<T = any>(...args: any[]) {
                 break;
             case "MethodDecorator":
                 // 注册句柄
-                console.log("handlers", handlers);
-
                 rdDescriptor.interceptionModes = "function-param-accessor";
-                rdDescriptor.paramHandlers = [
-                    ...(rdDescriptor.paramHandlers || []),
-                    ...(handlers.length > 0 ? (handlers[0] as unknown as paramFilterHandler[]) : []),
-                ];
-                rdDescriptor.paramRejectHandlers = [
-                    ...(rdDescriptor.paramRejectHandlers || []),
-                    ...(handlers.length > 0 ? (handlers[1] as unknown as paramRejectHandler[]) : []),
-                ];
-                console.log("this", rdDescriptor);
+
+                // 处理参数过滤器处理器
+                if (handlers.length > 0) {
+                    const paramHandler = handlers[0];
+
+                    // 判断是否是二维数组格式
+                    const is2DArray = Array.isArray(paramHandler) && Array.isArray(paramHandler[0]);
+                    // 判断是否是对象格式
+                    const isRecordFormat =
+                        typeof paramHandler === "object" && !Array.isArray(paramHandler) && !Array.isArray(paramHandler[0]);
+
+                    if (is2DArray || isRecordFormat) {
+                        // 使用包装器处理二维数组或对象格式
+                        const wrapper = createParamWrapperFilter(paramHandler as ParamFilterHandlerChain);
+                        rdDescriptor.paramHandlers = [...(rdDescriptor.paramHandlers || []), wrapper];
+                    } else if (Array.isArray(paramHandler)) {
+                        // 一维数组格式 - 保持原有逻辑
+                        rdDescriptor.paramHandlers = [...(rdDescriptor.paramHandlers || []), ...paramHandler];
+                    } else {
+                        // 单个处理器
+                        rdDescriptor.paramHandlers = [...(rdDescriptor.paramHandlers || []), paramHandler as paramFilterHandler];
+                    }
+                }
+
+                // 处理参数拒绝处理器
+                if (handlers.length > 1) {
+                    const paramRejectHandler = handlers[1];
+
+                    // 判断是否是二维数组格式
+                    const is2DArray = Array.isArray(paramRejectHandler) && Array.isArray(paramRejectHandler[0]);
+                    // 判断是否是对象格式
+                    const isRecordFormat =
+                        typeof paramRejectHandler === "object" &&
+                        !Array.isArray(paramRejectHandler) &&
+                        !Array.isArray(paramRejectHandler[0]);
+
+                    if (is2DArray || isRecordFormat) {
+                        // 使用包装器处理二维数组或对象格式
+                        const wrapper = createParamWrapperReject(paramRejectHandler as ParamRejectHandlerChain);
+                        rdDescriptor.paramRejectHandlers = [...(rdDescriptor.paramRejectHandlers || []), wrapper];
+                    } else if (Array.isArray(paramRejectHandler)) {
+                        // 一维数组格式 - 保持原有逻辑
+                        rdDescriptor.paramRejectHandlers = [...(rdDescriptor.paramRejectHandlers || []), ...paramRejectHandler];
+                    } else {
+                        // 单个处理器
+                        rdDescriptor.paramRejectHandlers = [
+                            ...(rdDescriptor.paramRejectHandlers || []),
+                            paramRejectHandler as paramRejectHandler,
+                        ];
+                    }
+                }
 
                 setDescriptor(targetObj, key, rdDescriptor);
+                console.log(rdDescriptor);
 
                 // 处理方法描述符
                 if (descriptor) {
@@ -315,8 +358,6 @@ export function $$init<T = any>(...args: any[]) {
                             const processedArgs = $applyParamHandlers(target, key, originalMethod, args);
                             return originalMethod.apply(target, processedArgs);
                         };
-                        console.log("thisPP", rdDescriptor);
-
                         return descriptor;
                     }
                     // 检查是否是访问器（getter/setter）
