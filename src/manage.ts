@@ -485,10 +485,12 @@ export const createParamWrapperFilter = (handlerChain: ParamFilterHandlerChain):
         let processedArgs: any[] = [],
             approached: boolean = false;
         paramsChain.forEach((chain, argIdx) => {
-            processedArgs[argIdx] = chain.reduce(
+            const result = chain.reduce(
                 (p, handler, i, arr) => handler(thisArg, methodName, method, argIdx, args, prevResult, currentIndex, handlers),
                 prevResult.output[argIdx]
-            ).output;
+            );
+            processedArgs[argIdx] = result.output;
+            approached = result.approached;
         });
         return {
             approached: approached,
@@ -513,11 +515,13 @@ export const createParamWrapperReject = (handlerChain: ParamRejectHandlerChain):
         let processedArgs: any[] = [],
             approached: boolean = false;
         paramsChain.forEach((chain, argIdx) => {
-            processedArgs[argIdx] = chain.reduce(
+            const result = chain.reduce(
                 (p, handler, i, arr) =>
                     handler(thisArg, methodName, method, argIdx, args, filterOutput, prevResult, currentIndex, handlers),
                 prevResult.output[argIdx]
-            ).output;
+            );
+            processedArgs[argIdx] = result.output;
+            approached = result.approached;
         });
         return {
             approached: approached,

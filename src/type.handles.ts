@@ -182,7 +182,7 @@ export type paramFilterChainHandler = (
 ) =>
     | {
           approached: boolean;
-          output: any[];
+          output: any;
       }
     | boolean;
 
@@ -199,7 +199,7 @@ export type paramRejectionChainHandler = (
 ) =>
     | {
           approached: boolean;
-          output: any[];
+          output: any;
       }
     | boolean;
 
