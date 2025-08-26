@@ -446,3 +446,9 @@ style="height: 1rem; width: 1rem; border-radius: 50%; background: center, center
 proxy+访问器的模式确定了  
 三个装饰器类型，五个装饰器，四种装载模式  
 但是发现描述符装载不了了
+
+## 2025-08-26
+
+function-param-acc 做的也快差不多了，今天支持了另一种写法  
+不过实际上是一个打包的函数  
+但是至少让规则制定变得轻松起来
