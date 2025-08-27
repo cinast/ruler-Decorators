@@ -16,6 +16,7 @@ import {
     rulerDecorators,
     valueRecorder,
 } from "../src/rulerDecorators";
+import { iAgreeAboutThat } from "../src/rulesLibrary";
 
 rulerDecorators.__Setting.godMod();
 
@@ -90,12 +91,12 @@ class ConditionalTest {
     @$conditionalWrite(
         "Error",
         [
-            (obj, key, value) => value % 2 === 0, // 只允许偶数
+            (p) => p.output % 2 === 0, // 只允许偶数
         ],
         [
-            (obj, key, value, conditionResult) => {
-                console.log(`拒绝写入 ${value}，不是偶数`);
-                return { approached: true, output: conditionResult.output + 1 }; // 自动修正为下一个奇数
+            (p) => {
+                console.log(`拒绝写入 ${p.output}，不是偶数`);
+                return { approached: true, output: p.output + 1 }; // 自动修正为下一个奇数
             },
         ]
     )
@@ -105,11 +106,11 @@ class ConditionalTest {
     @$conditionalRead(
         "Warn",
         [
-            (obj, key, value) => value > 100, // 只允许读取大于100的值
+            (p) => p.output > 100, // 只允许读取大于100的值
         ],
         [
-            (obj, key, value, conditionResult) => {
-                console.log(`拒绝读取 ${value}，值太小`);
+            (p) => {
+                console.log(`拒绝读取 ${p.output}，值太小`);
                 return { approached: true, output: 100 }; // 返回最小值
             },
         ]
@@ -204,10 +205,6 @@ class PropertyProxyTest {
 
 console.log("创建 PropertyProxyTest 实例...");
 const propertyProxyTest = new PropertyProxyTest();
-console.log("初始值:");
-console.log("ratedValue:", propertyProxyTest.ratedValue, "预期保持不变");
-console.log("normalValue:", propertyProxyTest.normalValue, "预期保持不变");
-
 // 测试属性代理
 console.log("\n测试属性代理...");
 propertyProxyTest.ratedValue = 15;
@@ -265,11 +262,15 @@ console.log("创建 MethodParamTest 实例...");
 const methodParamTest = new MethodParamTest();
 // 测试方法参数处理
 console.log("\n测试方法参数处理...");
-methodParamTest.addValues(1, -2, 3, -4); // 负数预期被转为正数
-console.log("values:", methodParamTest.values, "预期包含 [1, 2, 3, 4]");
+try {
+    methodParamTest.addValues(1, -2, 3, -4); // 负数预期被转为正数
+    console.log("values:", methodParamTest.values, "预期包含 [1, 2, 3, 4]");
 
-methodParamTest.setPercentage(150); //"预期被修正为 100
-methodParamTest.setPercentage(-50); // "预期被修正为 0
+    methodParamTest.setPercentage(150); //"预期被修正为 100
+    methodParamTest.setPercentage(-50); // "预期被修正为 0
+} catch (error) {
+    console.log(error);
+}
 
 // ==================== 6. 自定义setter/getter测试 ====================
 console.log("\n6. 自定义setter/getter测试");
@@ -278,18 +279,18 @@ class CustomAccessorTest {
     private _value: number = 0;
 
     @$$init()
-    @$setter((obj, key, value) => {
+    @$setter((p, value, target, key) => {
         console.log(`设置 ${String(key)}: ${value}`);
         return value * 2; // 所有设置的值都翻倍
     })
-    @$getter((obj, key, value) => {
+    @$getter((p, value, target, key) => {
         console.log(`获取 ${String(key)}: ${value}`);
         return value / 2; // 所有获取的值都减半
     })
     customValue: number = 10;
 
     @$$init()
-    @$setter((obj, key, value) => {
+    @$setter((p, value, target, key) => {
         if (typeof value === "string") {
             return value.toUpperCase();
         }
@@ -391,7 +392,7 @@ class MixedModeTest {
 
     @$$init()
     @rulerDecorators.alwaysPositive
-    @$conditionalWrite("Warn", [(obj, key, value) => value < 1000])
+    @$conditionalWrite("Warn", [(p, value, target, key) => value < 1000])
     accessorValue: number = 100;
 
     @$$init()
@@ -437,9 +438,12 @@ console.log("proxiedValue undo", mixedModeTest.proxiedValue);
 // 测试方法参数处理
 console.log("\n测试方法参数处理...");
 console.log(getDescriptor(mixedModeTest, "processData"));
-
-const result = mixedModeTest.processData(5, -10, 15);
-console.log("processData(5, -10, 15) ->", result, "预期是 [10, 20, 30]");
+try {
+    const result = mixedModeTest.processData(5, -10, 15);
+    console.log("processData(5, -10, 15) ->", result, "预期是 [10, 20, 30]");
+} catch (error) {
+    console.log(error);
+}
 
 // ==================== 9. function-param-accessor 检查 ====================
 console.log("\n9.function-param-accessor 检查");

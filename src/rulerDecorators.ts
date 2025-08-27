@@ -352,17 +352,17 @@ export function $$init<T = any>(...args: any[]) {
                     if (typeof descriptor.value === "function") {
                         const originalMethod = descriptor.value;
                         descriptor.value = function (...args: any[]) {
-                            const processedArgs = $applyParamHandlers(this, key, originalMethod, args);
-                            if (processedArgs.approached) return originalMethod.apply(this, processedArgs.output);
+                            const processedArgs = $applyParamHandlers(target, key, originalMethod, args);
+                            if (processedArgs.approached) return originalMethod.apply(target, processedArgs.output);
 
                             // reject turn
-                            const rejectResult = $applyParamRejectionHandlers(this, key, originalMethod, args, processedArgs);
+                            const rejectResult = $applyParamRejectionHandlers(target, key, originalMethod, args, processedArgs);
                             if (rejectResult.approached) return rejectResult.output;
 
                             // error
                             const warningMsg = `Call method '$${String(key)}' rejected. Final output: ${JSON.stringify(
                                 rejectResult.output
-                            )}, this rule will not call the function.`;
+                            )},the function will not be called.`;
 
                             throw new Error(`🚫 ${warningMsg}`);
                         };

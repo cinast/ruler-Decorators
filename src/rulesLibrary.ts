@@ -37,6 +37,7 @@ import {
     $conditionalRead,
     $conditionalWrite,
     $setter,
+    byTheWay,
     filterHandler,
     paramFilterHandler,
     rejectHandler,
@@ -45,15 +46,13 @@ export { __Setting };
 ("use strict");
 
 // debugging use
-// (___, p) => {
-//     console.log(p);
-//     return p.approached;
-// },
+// (p) => byTheWay(p, [(g) => console.log("ℹ️ catches", g)]),
+// bug探测仪
 
 // square power of candy
 export const iAgreeAboutThat: (out?: any) => filterHandler & rejectHandler & paramFilterHandler & paramFilterHandler =
     (out?: any): filterHandler & rejectHandler & paramFilterHandler & paramFilterHandler =>
-    () => {
+    (...args: any[]) => {
         return out
             ? true
             : {
@@ -188,6 +187,7 @@ export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
     $conditionalWrite<number | bigint>(
         "ignore",
         [
+            (p) => byTheWay(p, [(g) => console.log("ℹ️ catches", g)]),
             (p) => {
                 const v = p.output;
                 return allowEqual

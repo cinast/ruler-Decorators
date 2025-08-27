@@ -411,13 +411,14 @@ export function $addParamRejectionHandler(target: object, methodKey: string | sy
  * 应用属性的 getter 处理器
  */
 export function $applyGetterHandlers(receiver: any, propertyKey: string | symbol, value: any): any {
-    const prototype = Object.getPrototypeOf(receiver);
-    const descriptor = getDescriptor(prototype, propertyKey);
+    // const prototype = Object.getPrototypeOf(receiver);
+    const descriptor = getDescriptor(receiver, propertyKey);
     const getters = descriptor.getters || [];
     if (getters.length === 0) return value;
 
-    return getters.reduce((prev, handler, idx, arr) =>
-        handler(prev, value, receiver, propertyKey, { index: idx, handlers: [...arr] })
+    return getters.reduce(
+        (prev, handler, idx, arr) => handler(prev, value, receiver, propertyKey, { index: idx, handlers: [...arr] }),
+        value
     );
 }
 /**
@@ -425,13 +426,14 @@ export function $applyGetterHandlers(receiver: any, propertyKey: string | symbol
  * 应用属性的 setter 处理器
  */
 export function $applySetterHandlers(receiver: any, propertyKey: string | symbol, value: any): any {
-    const prototype = Object.getPrototypeOf(receiver);
-    const descriptor = getDescriptor(prototype, propertyKey);
+    // const prototype = Object.getPrototypeOf(receiver);
+    const descriptor = getDescriptor(receiver, propertyKey);
     const setters = descriptor.setters || [];
     if (setters.length === 0) return value;
 
-    return setters.reduce((prev, handler, idx, arr) =>
-        handler(prev, value, receiver, propertyKey, { index: idx, handlers: [...arr] })
+    return setters.reduce(
+        (prev, handler, idx, arr) => handler(prev, value, receiver, propertyKey, { index: idx, handlers: arr }),
+        value
     );
 }
 /**
