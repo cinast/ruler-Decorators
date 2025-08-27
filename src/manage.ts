@@ -262,7 +262,7 @@ export function createClassProxy(instance: any, prototype: any): any {
             const getters = descriptor.getters || [];
             if (getters.length > 0) {
                 value = getters.reduce(
-                    (prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]),
+                    (prev, handler, idx, arr) => handler(prev, value, receiver, propertyKey, { index: idx, handlers: [...arr] }),
                     value
                 );
             }
@@ -281,7 +281,7 @@ export function createClassProxy(instance: any, prototype: any): any {
             const setters = descriptor.setters || [];
             if (setters.length > 0) {
                 processedValue = setters.reduce(
-                    (prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]),
+                    (prev, handler, idx, arr) => handler(prev, value, receiver, propertyKey, { index: idx, handlers: [...arr] }),
                     value
                 );
             }
@@ -416,7 +416,9 @@ export function $applyGetterHandlers(receiver: any, propertyKey: string | symbol
     const getters = descriptor.getters || [];
     if (getters.length === 0) return value;
 
-    return getters.reduce((prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]), value);
+    return getters.reduce((prev, handler, idx, arr) =>
+        handler(prev, value, receiver, propertyKey, { index: idx, handlers: [...arr] })
+    );
 }
 /**
  * Apply setter handlers for a property
@@ -428,7 +430,9 @@ export function $applySetterHandlers(receiver: any, propertyKey: string | symbol
     const setters = descriptor.setters || [];
     if (setters.length === 0) return value;
 
-    return setters.reduce((prev, handler, idx, arr) => handler(receiver, propertyKey, value, prev, idx, [...arr]), value);
+    return setters.reduce((prev, handler, idx, arr) =>
+        handler(prev, value, receiver, propertyKey, { index: idx, handlers: [...arr] })
+    );
 }
 /**
  * Apply parameter handlers for a method
@@ -441,7 +445,7 @@ export function $applyParamHandlers(
     args: any[]
 ): {
     approached: boolean;
-    output: any;
+    output: any[];
 } {
     // const prototype = Object.getPrototypeOf(receiver);
     const descriptor = getDescriptor(receiver, methodKey);
@@ -455,7 +459,12 @@ export function $applyParamHandlers(
     try {
         const result = paramHandlers.reduce(
             (prev, handler, idx, arr) => {
-                const r = handler(receiver, methodKey, method, args, prev, idx, [...arr]);
+                const r = handler(
+                    prev,
+                    args,
+                    { this: receiver, methodName: methodKey, method: method },
+                    { currentIndex: idx, handlers: [...arr] }
+                );
                 return typeof r === "boolean"
                     ? {
                           approached: r,
@@ -490,7 +499,7 @@ export function $applyParamRejectionHandlers(
     FilterLastOutput: any
 ): {
     approached: boolean;
-    output: any;
+    output: any[];
 } {
     // const prototype = Object.getPrototypeOf(receiver);
     const descriptor = getDescriptor(receiver, methodKey);
@@ -504,7 +513,13 @@ export function $applyParamRejectionHandlers(
     try {
         const result = rejectHandlers.reduce(
             (prev, handler, idx, arr) => {
-                const r = handler(receiver, methodKey, method, args, FilterLastOutput, prev, idx, [...arr]);
+                const r = handler(
+                    prev,
+                    FilterLastOutput,
+                    args,
+                    { this: receiver, methodName: methodKey, method: method },
+                    { currentIndex: idx, handlers: [...arr] }
+                );
                 return typeof r === "boolean"
                     ? {
                           approached: r,
@@ -545,7 +560,7 @@ export const createParamWrapperFilter = (handlerChain: ParamFilterHandlerChain):
         }
     }
 
-    return function (thisArg, methodName, method, args, prevResult, currentIndex, handlers) {
+    return function (prevResult, args, thisInfo, pipeInfo) {
         let processedArgs = [...prevResult.output];
         let anyApproached = false;
 
@@ -556,7 +571,17 @@ export const createParamWrapperFilter = (handlerChain: ParamFilterHandlerChain):
 
             const result = chain.reduce(
                 (prev, handler, handlerIndex, handlerArray) => {
-                    const r = handler(thisArg, methodName, method, argIdx, args, prevResult.output, prev, currentIndex, handlers);
+                    const r = handler(
+                        prev,
+                        args[argIdx],
+                        {
+                            argIdx: argIdx,
+                            args: args,
+                            inputArgs: prevResult.output,
+                        },
+                        thisInfo,
+                        pipeInfo
+                    );
 
                     return typeof r === "boolean" ? { approached: r, output: prev.output } : r;
                 },
@@ -594,7 +619,7 @@ export const createParamWrapperReject = (handlerChain: ParamRejectHandlerChain):
         }
     }
 
-    return function (thisArg, methodName, method, args, FilterLastOutput, prevResult, currentIndex, handlers) {
+    return function (prevResult, FilterLastOutput, args, thisInfo, pipeInfo) {
         let processedArgs = [...prevResult.output];
         let anyApproached = false;
 
@@ -606,16 +631,16 @@ export const createParamWrapperReject = (handlerChain: ParamRejectHandlerChain):
             const result = chain.reduce(
                 (prev, handler, handlerIndex, handlerArray) => {
                     const r = handler(
-                        thisArg,
-                        methodName,
-                        method,
-                        argIdx,
-                        args,
-                        prevResult.output,
-                        FilterLastOutput,
                         prev,
-                        currentIndex,
-                        handlers
+                        FilterLastOutput,
+                        args[argIdx],
+                        {
+                            argIdx: argIdx,
+                            args: args,
+                            inputArgs: prevResult.output,
+                        },
+                        thisInfo,
+                        pipeInfo
                     );
 
                     return typeof r === "boolean" ? { approached: r, output: prev.output } : r;

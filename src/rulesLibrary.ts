@@ -45,7 +45,7 @@ export { __Setting };
 ("use strict");
 
 // debugging use
-// (_, __, v, ___, p) => {
+// (___, p) => {
 //     console.log(p);
 //     return p.approached;
 // },
@@ -91,11 +91,17 @@ export const auto = (handler: Function, ...args: any[]) => $setter((_, __, v) =>
  * @template T Input type, or let it infer by itself
  */
 export const watchSet = <T>(
-    handle: (thisArg: any, attr: string | symbol, value: T, lastResult: any, idx: number, handlers: Function[]) => T
+    handle: (
+        thisArg: any,
+        attr: string | symbol,
+        value: T,
+        lastResult: any,
+        pipeInfo: { index: number; handlers: Function[] }
+    ) => T
 ) =>
-    $setter<T>((target, attr, v, lastResult, idx, handlers) => {
-        handle(target, attr, v, lastResult, idx, handlers);
-        return v;
+    $setter<T>((lastResult, value, target, attr, pipeInfo) => {
+        handle(target, attr, value, lastResult, pipeInfo);
+        return value;
     });
 
 //     -------- math toy --------
@@ -118,15 +124,15 @@ export const watchSet = <T>(
 export const Int = (onError?: ((v: number | bigint, o?: unknown) => number) | "ceil" | "floor" | "round" | number) =>
     $conditionalWrite<number>(
         "Error",
-        [(_, __, v, p) => !p.output.toString().includes(".")],
+        [(p) => !p.output.toString().includes(".")],
         [
-            (_, __, v, fp, p) =>
+            (p, fr) =>
                 onError
                     ? {
                           approached: true,
                           output:
                               typeof onError == "function"
-                                  ? onError(p.output, fp)
+                                  ? onError(p.output, fr)
                                   : typeof onError == "number"
                                   ? onError
                                   : {
@@ -150,7 +156,7 @@ export const Int = (onError?: ((v: number | bigint, o?: unknown) => number) | "c
  * @returns true if value is positive, false otherwise
  *          如果值为正数返回true，否则返回false
  */
-export const alwaysPositive = $conditionalWrite<bigint | number>("Warn", [(thisArg, key, v, p) => p.output > 0]);
+export const alwaysPositive = $conditionalWrite<bigint | number>("Warn", [(p) => p.output > 0]);
 
 /**
  * Negative number validator decorator
@@ -163,7 +169,7 @@ export const alwaysPositive = $conditionalWrite<bigint | number>("Warn", [(thisA
  * @returns true if value is negative, false otherwise
  *          如果值为负数返回true，否则返回false
  */
-export const alwaysNegative = $conditionalWrite<bigint | number>("Warn", [(thisArg, key, v, p) => p.output < 0]);
+export const alwaysNegative = $conditionalWrite<bigint | number>("Warn", [(p) => p.output < 0]);
 
 /**
  * Minimum value validator decorator
@@ -182,17 +188,19 @@ export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
     $conditionalWrite<number | bigint>(
         "ignore",
         [
-            (_, __, v, p) =>
-                allowEqual
+            (p) => {
+                const v = p.output;
+                return allowEqual
                     ? typeof v == "number"
                         ? v >= Number(min)
                         : v >= min
                     : typeof v == "number"
                     ? v > Number(min)
-                    : v > min,
+                    : v > min;
+            },
         ],
         [
-            (_, __, v, fp, p) => {
+            (p, fr) => {
                 return { approached: true, output: min };
             },
         ]
@@ -219,20 +227,22 @@ export const maximum = (max: bigint | number, allowEqual: boolean = true) =>
     $conditionalWrite<number | bigint>(
         "ignore",
         [
-            (_, __, v, p) =>
-                allowEqual
-                    ? typeof p.output == "number"
-                        ? Math.max(p.output, Number(max)) == max
-                        : p.output <= max
-                    : typeof p.output == "number"
-                    ? Math.max(p.output, Number(max)) == max && p.output !== Number(max)
-                    : p.output < max,
+            (p) => {
+                const v = p.output;
+                return allowEqual
+                    ? typeof v == "number"
+                        ? Math.max(v, Number(max)) == max
+                        : v <= max
+                    : typeof v == "number"
+                    ? Math.max(v, Number(max)) == max && p.output !== Number(max)
+                    : v < max;
+            },
         ],
         [iAgreeAboutThat(max)]
     );
 
 export const range = (min: number, max: number) =>
-    $conditionalWrite("ignore", [(_, __, v, p) => passThat(Math.min(Math.max(p.output, min), max))]);
+    $conditionalWrite("ignore", [(p) => passThat(Math.min(Math.max(p.output, min), max))]);
 
 //     -------- String  toy --------
 /**
@@ -248,12 +258,12 @@ export const stringExcludes = (patten: (RegExp | string)[], replace: string = ""
     $conditionalWrite(
         "Warn",
         [
-            (_, __, v, p) =>
+            (p) =>
                 typeof p.output == "string" &&
                 !patten.some((pat) => (typeof pat === "string" ? p.output.includes(pat) : pat.test(p.output))),
         ],
         [
-            (_, __, v, fp, p) => {
+            (p, fr) => {
                 // 回绝处理器 - 直接返回过滤后的值
                 if (typeof p.output === "string") {
                     let result = p.output;
@@ -279,14 +289,14 @@ export const stringExcludes = (patten: (RegExp | string)[], replace: string = ""
  */
 export const stringRequires = (...patten: (RegExp | string)[]) =>
     $conditionalWrite("Warn", [
-        (_, __, v, p) =>
+        (p) =>
             typeof p.output == "string" &&
             patten.every((pat) => (typeof pat == "string" ? p.output.includes(pat) : pat.test(p.output))),
     ]);
 
 // value limit
 
-export const oneOf = (list: any[]) => $conditionalWrite("Warn", [(_, __, v, p) => list.includes(v)]);
+export const oneOf = (list: any[]) => $conditionalWrite("Warn", [(p) => list.includes(p.output)]);
 
 //     -------- authority like --------
 

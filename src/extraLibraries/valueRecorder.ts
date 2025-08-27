@@ -29,11 +29,11 @@ const recordStorage = new WeakMap<
  */
 export namespace valueRecorder {
     export const $recordThis = (maxSteps: number = 10) => {
-        return $setter((thisArg, key: keyof typeof thisArg, value) => {
-            if (!recordStorage.get(thisArg)) {
-                recordStorage.set(thisArg, {});
+        return $setter((lastResult, value, target, key, pipeInfo) => {
+            if (!recordStorage.get(target)) {
+                recordStorage.set(target, {});
             }
-            const storage = recordStorage.get(thisArg)!;
+            const storage = recordStorage.get(target)!;
 
             // 初始化历史记录列表
             if (!storage[key]) {
@@ -48,7 +48,7 @@ export namespace valueRecorder {
                 return value;
             }
 
-            const currentValue = thisArg[key];
+            const currentValue = target[key];
             const history = storage[key];
 
             // 保存旧值到历史记录

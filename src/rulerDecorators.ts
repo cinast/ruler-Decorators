@@ -352,11 +352,11 @@ export function $$init<T = any>(...args: any[]) {
                     if (typeof descriptor.value === "function") {
                         const originalMethod = descriptor.value;
                         descriptor.value = function (...args: any[]) {
-                            const processedArgs = $applyParamHandlers(target, key, originalMethod, args);
-                            if (processedArgs.approached) return originalMethod.apply(target, processedArgs.output);
+                            const processedArgs = $applyParamHandlers(this, key, originalMethod, args);
+                            if (processedArgs.approached) return originalMethod.apply(this, processedArgs.output);
 
                             // reject turn
-                            const rejectResult = $applyParamRejectionHandlers(target, key, originalMethod, args, processedArgs);
+                            const rejectResult = $applyParamRejectionHandlers(this, key, originalMethod, args, processedArgs);
                             if (rejectResult.approached) return rejectResult.output;
 
                             // error
@@ -448,8 +448,8 @@ export function $PropertyProxy(): PropertyDecorator {
  */
 export function $setter<R = any, I = R>(handle: rd_SetterHandle<R, I>): PropertyDecorator & MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
-        $addSetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
-            return handle(thisArg, key, value, lastResult, index, handlers);
+        $addSetterHandler(target, attr, function (lastResult, value, target, key, pipeInfo) {
+            return handle(lastResult, value, target, key, pipeInfo);
         });
     };
 }
@@ -460,8 +460,8 @@ export function $setter<R = any, I = R>(handle: rd_SetterHandle<R, I>): Property
  */
 export function $getter<R = any, I = R>(handle: rd_GetterHandle<R, I>): PropertyDecorator & MethodDecorator {
     return function (target: any, attr: string | symbol, descriptor?: PropertyDescriptor) {
-        $addGetterHandler(target, attr, function (thisArg, key, value, lastResult, index, handlers) {
-            return handle(thisArg, key, value, lastResult, index, handlers);
+        $addGetterHandler(target, attr, function (lastResult, value, target, key, pipeInfo) {
+            return handle(lastResult, value, target, key, pipeInfo);
         });
     };
 }
@@ -472,18 +472,14 @@ export function $getter<R = any, I = R>(handle: rd_GetterHandle<R, I>): Property
  */
 export function $paramChecker(handle: paramFilterHandler, rejectHandle?: paramRejectHandler): MethodDecorator {
     return function (target: any, methodKey: string | symbol, descriptor?: PropertyDescriptor) {
-        $addParamHandler(target, methodKey, function (thisArg, key, method, args, prevResult, index, handlers) {
-            return handle(thisArg, key, method, args, prevResult, index, handlers);
+        $addParamHandler(target, methodKey, function (lastResult, args, thisInfo, pipeInfo) {
+            return handle(lastResult, args, thisInfo, pipeInfo);
         });
 
         if (rejectHandle) {
-            $addParamRejectionHandler(
-                target,
-                methodKey,
-                function (thisArg, key, method, args, FilterLastOutput, prevResult, index, handlers) {
-                    return rejectHandle(thisArg, key, method, args, FilterLastOutput, prevResult, index, handlers);
-                }
-            );
+            $addParamRejectionHandler(target, methodKey, function (lastResult, FilterLastOutput, args, thisInfo, pipeInfo) {
+                return rejectHandle(lastResult, FilterLastOutput, args, thisInfo, pipeInfo);
+            });
         }
     };
 }
@@ -499,9 +495,9 @@ export const $conditionalWrite = <R = any, I = R>(
     conditionHandles: filterHandler[],
     rejectHandlers?: rejectHandler[]
 ) => {
-    return $setter<R, I>((thisArg, key, newVal, lastResult: I, index, handlers) => {
+    return $setter<R, I>((lastResult: I, value, target, key, pipeInfo) => {
         const handlersArray = [...conditionHandles];
-        const callResult:
+        const FilterLastOutput:
             | {
                   approached: true;
                   output: R;
@@ -511,13 +507,13 @@ export const $conditionalWrite = <R = any, I = R>(
                   output: any;
               } = handlersArray.reduce<{ approached: boolean; output: any }>(
             (lastProcess, handler, idx, arr) => {
-                const r = handler(thisArg, key, newVal, lastProcess, idx, conditionHandles);
+                const r = handler(lastProcess, value, target, key, { currentIndex: idx, handlers: arr });
                 return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
             },
             { approached: false, output: lastResult }
         );
 
-        if (callResult.approached) return callResult.output;
+        if (FilterLastOutput.approached) return FilterLastOutput.output;
 
         if (rejectHandlers?.length) {
             const rejectHandlersArray = [...rejectHandlers];
@@ -531,7 +527,7 @@ export const $conditionalWrite = <R = any, I = R>(
                       output: any;
                   } = rejectHandlersArray.reduce<{ approached: boolean; output: any }>(
                 (lastProcess, handler, idx, arr) => {
-                    const r = handler(thisArg, key, newVal, callResult, lastProcess, idx, rejectHandlers);
+                    const r = handler(lastProcess, FilterLastOutput, value, target, key, { currentIndex: idx, handlers: arr });
                     return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
                 },
                 {
@@ -553,7 +549,7 @@ export const $conditionalWrite = <R = any, I = R>(
                     throw new Error(`🚫 ${warningMsg}`);
             }
         }
-        return thisArg[key];
+        return target[key];
     });
 };
 /**
@@ -565,9 +561,9 @@ export const $conditionalRead = <R = any, I = R>(
     conditionHandles: filterHandler[],
     rejectHandlers?: rejectHandler[]
 ) => {
-    return $getter((thisArg, key, value, lastResult: I, index, handlers) => {
+    return $getter((lastResult: I, value, target, key, pipeInfo) => {
         const handlersArray = [...conditionHandles];
-        const callResult:
+        const FilterLastOutput:
             | {
                   approached: true;
                   output: R;
@@ -577,13 +573,13 @@ export const $conditionalRead = <R = any, I = R>(
                   output: any;
               } = handlersArray.reduce<{ approached: boolean; output: any }>(
             (lastProcess, handler, idx, arr) => {
-                const r = handler(thisArg, key, value, lastProcess, idx, conditionHandles);
+                const r = handler(lastProcess, value, target, key, { currentIndex: idx, handlers: arr });
                 return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
             },
             { approached: false, output: lastResult }
         );
 
-        if (callResult.approached) return callResult.output;
+        if (FilterLastOutput.approached) return FilterLastOutput.output;
 
         if (rejectHandlers?.length) {
             const rejectHandlersArray = [...rejectHandlers];
@@ -597,7 +593,7 @@ export const $conditionalRead = <R = any, I = R>(
                       output: any;
                   } = rejectHandlersArray.reduce<{ approached: boolean; output: any }>(
                 (lastProcess, handler, idx, arr) => {
-                    const r = handler(thisArg, key, value, callResult, lastProcess, idx, rejectHandlers);
+                    const r = handler(lastProcess, FilterLastOutput, value, target, key, { currentIndex: idx, handlers: arr });
                     return typeof r === "boolean" ? { approached: r, output: lastProcess.output } : r;
                 },
                 {
