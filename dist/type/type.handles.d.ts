@@ -10,7 +10,10 @@ export declare type rd_processing = ["filterII", "rejectII", "paramFilterII", "p
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
  */
-export type rd_SetterHandle<R = any, I = any> = (target: any, attr: string | symbol, value: any, lastResult: I, index: number, handlers: rd_SetterHandle[], ...args: any[]) => R;
+export type rd_SetterHandle<R = any, I = any> = (lastResult: I, value: any, target: any, attr: string | symbol, pipeInfo: {
+    index: number;
+    handlers: rd_SetterHandle[];
+}, ...args: any[]) => R;
 /**
  * @handle_I
  * Core getter handler type for factoryI (base level)
@@ -21,7 +24,10 @@ export type rd_SetterHandle<R = any, I = any> = (target: any, attr: string | sym
  * @chainable Processed via Array.reduce() in execution flow
  * @chainable 通过Array.reduce()实现链式执行
  */
-export type rd_GetterHandle<R = any, I = any> = (target: any, attr: string | symbol, value: any, lastResult: I, index: number, handlers: rd_GetterHandle[], ...args: any[]) => R;
+export type rd_GetterHandle<R = any, I = any> = (lastResult: I, value: any, target: any, attr: string | symbol, pipeInfo: {
+    index: number;
+    handlers: rd_GetterHandle[];
+}, ...args: any[]) => R;
 /**
  * @handle_II
  * Condition handler type for factoryII (conditional level)
@@ -33,18 +39,21 @@ export type rd_GetterHandle<R = any, I = any> = (target: any, attr: string | sym
  * @template I type of input, with default of `R`, is optional and could specific the input while that unknown or otherwise
  *          输入类型限制，默认是`R`，在不知道输入的时候有用
  *
- * @see rulerDecorators.ts > conditionalR > $getter() callback > callResult > satisfies
- * @see rulerDecorators.ts > conditionalW > $setter() callback > callResult > satisfies
+ * @see rulerDecorators.ts > conditionalR > $getter() callback > FilterLastOutput > satisfies
+ * @see rulerDecorators.ts > conditionalW > $setter() callback > FilterLastOutput > satisfies
  *
  * @tip Used in $conditionalWrite/$conditionalRead decorators
  * @tip 用于条件写入/读取装饰器的条件判断
  * @Waring Returns true/approached without processing will override value
  * @Waring 如果返回true/approached但未处理值，将直接覆盖原值
  */
-export type filterHandler = (thisArg: any, key: string | symbol, value: any, prevResult: {
+export type filterHandler = (prevResult: {
     approached: boolean;
     output: any;
-}, currentIndex: number, handlers: filterHandler[]) => {
+}, value: any, thisArg: any, key: string | symbol, pipeInfo: {
+    currentIndex: number;
+    handlers: filterHandler[];
+}) => {
     approached: boolean;
     output: any;
 } | boolean;
@@ -67,13 +76,16 @@ export type filterHandler = (thisArg: any, key: string | symbol, value: any, pre
  * @Waring Returns true/approached without processing will keep original value
  * @Waring 如果返回true/approached但未处理值，将保持原值
  */
-export type rejectHandler = (thisArg: any, key: string | symbol, value: any, FilterLastOutput: {
+export type rejectHandler = (prevResult: {
     approached: boolean;
     output: any;
-}, prevResult: {
+}, FilterLastOutput: {
     approached: boolean;
     output: any;
-}, currentIndex: number, handlers: rejectHandler[]) => {
+}, value: any, thisArg: any, key: string | symbol, pipeInfo: {
+    currentIndex: number;
+    handlers: rejectHandler[];
+}) => {
     approached: boolean;
     output: any;
 } | boolean;
@@ -94,10 +106,17 @@ export type rejectHandler = (thisArg: any, key: string | symbol, value: any, Fil
  * @Waring Returns true/approached without processing will allow original call
  * @Waring 如果返回true/approached但未处理参数，将允许原始调用
  */
-export type paramFilterHandler = (thisArg: any, methodName: string | symbol, method: Function, args: any[], prevResult: {
+export type paramFilterHandler = (prevResult: {
     approached: boolean;
     output: any[];
-}, currentIndex: number, handlers: paramFilterHandler[]) => {
+}, args: any[], thisInfo: {
+    this: any;
+    methodName: string | symbol;
+    method: Function;
+}, pipeInfo: {
+    currentIndex: number;
+    handlers: paramFilterHandler[];
+}) => {
     approached: boolean;
     output: any[];
 } | boolean;
@@ -113,36 +132,65 @@ export type paramFilterHandler = (thisArg: any, methodName: string | symbol, met
  * @tip Used when parameter conditions fail in function-param-accessor mode
  * @tip 用于函数参数访问器模式中参数条件失败时的处理
  */
-export type paramRejectHandler = (thisArg: any, methodName: string | symbol, method: Function, args: any[], FilterLastOutput: {
+export type paramRejectHandler = (prevResult: {
     approached: boolean;
     output: any[];
-}, prevResult: {
+}, FilterLastOutput: {
     approached: boolean;
     output: any[];
-}, currentIndex: number, handlers: paramRejectHandler[]) => {
+}, args: any[], thisInfo: {
+    this: any;
+    methodName: string | symbol;
+    method: Function;
+}, pipeInfo: {
+    currentIndex: number;
+    handlers: paramRejectHandler[];
+}) => {
     approached: boolean;
     output: any[];
 } | boolean;
 /**
  * 针对单个参数的句柄
  */
-export type paramFilterChainHandler = (thisArg: any, methodName: string | symbol, method: Function, argIdx: number, args: any[], inputArgs: any[], prevResult: {
+export type paramFilterChainHandler = (prevResult: {
     approached: boolean;
     output: any;
-}, currentIndex: number, handlers: paramFilterHandler[]) => {
+}, theArgument: any, argsInfo: {
+    argIdx: number;
+    args: any[];
+    inputArgs: any[];
+}, thisInfo: {
+    this: any;
+    methodName: string | symbol;
+    method: Function;
+}, pipeInfo: {
+    currentIndex: number;
+    handlers: paramFilterHandler[];
+}) => {
     approached: boolean;
     output: any;
 } | boolean;
 /**
  * 针对单个参数的句柄
  */
-export type paramRejectChainHandler = (thisArg: any, methodName: string | symbol, method: Function, argIdx: number, args: any[], inputArgs: any[], FilterLastOutput: {
+export type paramRejectChainHandler = (prevResult: {
     approached: boolean;
     output: any;
-}, prevResult: {
+}, FilterLastOutput: {
     approached: boolean;
     output: any;
-}, currentIndex: number, handlers: paramRejectHandler[]) => {
+}, theArgument: any, argsInfo: {
+    argIdx: number;
+    args: any[];
+    inputArgs: any[];
+}, thisInfo: {
+    this: any;
+    methodName: string | symbol;
+    method: Function;
+}, pipeInfo: {
+    currentIndex: number;
+    handlers: paramRejectHandler[];
+}) => {
     approached: boolean;
     output: any;
 } | boolean;

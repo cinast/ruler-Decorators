@@ -28,8 +28,8 @@
  * @this
  * @namespace rulerDecorators
  */
-import { filterHandler, rejectHandler, paramFilterHandler } from "./rulerDecorators";
 import { __Setting } from "./moduleMeta";
+import { filterHandler, paramFilterHandler, rejectHandler } from "./rulerDecorators";
 export { __Setting };
 export declare const iAgreeAboutThat: (out?: any) => filterHandler & rejectHandler & paramFilterHandler & paramFilterHandler;
 export declare const passThat: (out?: any) => {
@@ -51,7 +51,10 @@ export declare const auto: (handler: Function, ...args: any[]) => PropertyDecora
  * So is why it called `Watch`
  * @template T Input type, or let it infer by itself
  */
-export declare const watchSet: <T>(handle: (thisArg: any, attr: string | symbol, value: T, lastResult: any, idx: number, handlers: Function[]) => T) => PropertyDecorator & MethodDecorator;
+export declare const watchSet: <T>(handle: (thisArg: any, attr: string | symbol, value: T, lastResult: any, pipeInfo: {
+    index: number;
+    handlers: Function[];
+}) => T) => PropertyDecorator & MethodDecorator;
 /**
  * Integer value validator decorator
  * 整数值验证装饰器

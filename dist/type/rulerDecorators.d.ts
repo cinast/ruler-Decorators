@@ -1,4 +1,4 @@
-import { rd_GetterHandle, rd_SetterHandle, filterHandler, rejectHandler, paramFilterHandler, ParamFilterHandlerChain, ParamRejectHandlerChain, paramRejectHandler } from "./type.handles";
+import { filterHandler, paramFilterHandler, ParamFilterHandlerChain, paramRejectHandler, ParamRejectHandlerChain, rd_GetterHandle, rd_SetterHandle, rejectHandler } from "./type.handles";
 import { rd_ProxyTraps } from "./types";
 export declare type drivingMod = "proxy" | "accessor";
 export declare type drivingModeWithAuto = drivingMod | "auto";

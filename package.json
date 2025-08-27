@@ -1,6 +1,6 @@
 {
     "name": "ruler-decorators",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "edition": "1st",
     "description": "TypeScript decorators library for property access control and validation",
     "keywords": [
@@ -46,7 +46,7 @@
         "[pwsh]clear-dist": "Remove-Item -Path './dist/**', './test/dist/**' -Force",
         "[pwsh]clear-trash-at-src": "Remove-Item -Path './src/**/*.js','./src/**/*.d.ts','./src/**/*.d.ts.map' -Force",
         "build": "npx tsc -b",
-        "build:mjs": "esbuild src/rulerDecorators.ts --bundle --format=esm --outfile=dist/rulerDecorators.mjs",
+        "build:mjs": "pnpx esbuild src/rulerDecorators.ts --bundle --format=esm --outfile=dist/rulerDecorators.mjs",
         "build:watch": "npx tsc -w",
         "build:test": "npx tsc -p test/tsconfig.json",
         "run:test": "node test/dist/test/example.js",

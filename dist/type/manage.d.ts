@@ -1,5 +1,5 @@
 import { rd_Descriptor } from "./rulerDecorators";
-import { rd_SetterHandle, rd_GetterHandle, ParamFilterHandlerChain, paramFilterHandler, ParamRejectHandlerChain, paramRejectHandler } from "./type.handles";
+import { ParamFilterHandlerChain, ParamRejectHandlerChain, paramFilterHandler, paramRejectHandler, rd_GetterHandle, rd_SetterHandle } from "./type.handles";
 /**
  * 标记属性由类代理管理
  */
@@ -106,7 +106,7 @@ export declare function $applySetterHandlers(receiver: any, propertyKey: string 
  */
 export declare function $applyParamHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[]): {
     approached: boolean;
-    output: any;
+    output: any[];
 };
 /**
  * Apply parameter rejection handlers for a method
@@ -114,7 +114,7 @@ export declare function $applyParamHandlers(receiver: any, methodKey: string | s
  */
 export declare function $applyParamRejectionHandlers(receiver: any, methodKey: string | symbol, method: Function, args: any[], FilterLastOutput: any): {
     approached: boolean;
-    output: any;
+    output: any[];
 };
 export declare const createParamWrapperFilter: (handlerChain: ParamFilterHandlerChain) => paramFilterHandler;
 export declare const createParamWrapperReject: (handlerChain: ParamRejectHandlerChain) => paramRejectHandler;
