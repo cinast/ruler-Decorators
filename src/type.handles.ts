@@ -1,5 +1,3 @@
-import { __Setting, thisSymbols } from "./moduleMeta";
-
 export declare type rd_operation = ["setterI", "getterI", "deleteI"];
 export declare type rd_processing = ["filterII", "rejectII", "paramFilterII", "paramRejectII"];
 

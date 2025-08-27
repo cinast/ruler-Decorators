@@ -15,36 +15,37 @@
  * @tip tsc needs 5.2+
  */
 ("use strict");
-import { __Setting, thisSymbols } from "./moduleMeta";
-import {
-    rd_GetterHandle,
-    rd_SetterHandle,
-    filterHandler,
-    rejectHandler,
-    paramFilterHandler,
-    ParamFilterHandlerChain,
-    ParamRejectHandlerChain,
-    paramRejectHandler,
-} from "./type.handles";
 import { debugLogger } from "./api.test";
 import {
     $addGetterHandler,
     $addParamHandler,
     $addParamRejectionHandler,
     $addSetterHandler,
-    createClassProxy,
-    createPropertyProxy,
-    getDescriptor,
+    $applyGetterHandlers,
+    $applyParamHandlers,
+    $applyParamRejectionHandlers,
+    $applySetterHandlers,
     $markPropertyAsClassProxyManaged,
-    setDescriptor,
+    createClassProxy,
     createParamWrapperFilter,
     createParamWrapperReject,
-    $applyParamRejectionHandlers,
+    getDecoratedPropertyCount,
+    getDescriptor,
+    getPropertyModes,
+    setDescriptor,
 } from "./manage";
-import { getPropertyModes } from "./manage";
-import { $defineProperty, getDecoratorType, isModeCompatible, rd_executeModeSelector } from "./utils";
-import { getDecoratedPropertyCount } from "./manage";
-import { $applyGetterHandlers, $applyParamHandlers, $applySetterHandlers } from "./manage";
+import { __Setting } from "./moduleMeta";
+import {
+    filterHandler,
+    paramFilterHandler,
+    ParamFilterHandlerChain,
+    paramRejectHandler,
+    ParamRejectHandlerChain,
+    rd_GetterHandle,
+    rd_SetterHandle,
+    rejectHandler,
+} from "./type.handles";
+import { $defineProperty, getDecoratorType, rd_executeModeSelector } from "./utils";
 
 import { createAccessorInterception } from "./manage";
 import { rd_ProxyTraps } from "./types";
