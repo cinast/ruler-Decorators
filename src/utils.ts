@@ -148,3 +148,77 @@ export function rd_executeModeSelector(
     // 6. 回退到默认值
     return __Setting["Optimize.$$init.defaultMod"] == "proxy" ? "property-proxy" : "accessor";
 }
+export const is_supposedTypes = [
+    "array",
+    "bigint",
+    "boolean",
+    "function",
+    "number",
+    "object",
+    "string",
+    "symbol",
+    "null",
+    "undefined",
+    "NaN",
+    "Infinity",
+    "Integer",
+    "float",
+    "promise",
+    "regexp",
+    "date",
+    "error",
+    "map",
+    "set",
+    "weakmap",
+    "weakset",
+    "arraybuffer",
+    "typedarray",
+    "generator",
+    "generatorfunction",
+    "asyncfunction",
+    "arguments",
+] as const;
+export type is_supposedTypesT = (typeof is_supposedTypes)[number];
+export const is = (type: is_supposedTypesT) => (v: any) => {
+    return {
+        // 基本类型
+        array: Array.isArray(v),
+        bigint: typeof v === "bigint",
+        boolean: typeof v === "boolean",
+        function: typeof v === "function",
+        number: typeof v === "number",
+        object: typeof v === "object" && v !== null,
+        string: typeof v === "string",
+        symbol: typeof v === "symbol",
+
+        // 特殊值
+        null: v === null,
+        undefined: typeof v === "undefined",
+        NaN: Number.isNaN(v),
+        Infinity: typeof v === "number" && !isFinite(v) && !Number.isNaN(v),
+
+        // 数学
+        Integer: Number.isInteger(v),
+        float: typeof v === "number" && !Number.isInteger(v) && isFinite(v),
+
+        // 对象子类型
+        promise: v instanceof Promise,
+        regexp: v instanceof RegExp,
+        date: v instanceof Date,
+        error: v instanceof Error,
+        map: v instanceof Map,
+        set: v instanceof Set,
+        weakmap: v instanceof WeakMap,
+        weakset: v instanceof WeakSet,
+        arraybuffer: v instanceof ArrayBuffer,
+
+        // 函数子类型
+        generator: Object.prototype.toString.call(v) === "[object Generator]",
+        generatorfunction: Object.prototype.toString.call(v) === "[object GeneratorFunction]",
+        asyncfunction: Object.prototype.toString.call(v) === "[object AsyncFunction]",
+        arguments: Object.prototype.toString.call(v) === "[object Arguments]",
+
+        // 类数组类型
+        typedarray: ArrayBuffer.isView(v) && !(v instanceof DataView),
+    }[type];
+};

@@ -36,9 +36,11 @@ import { __Setting } from "./moduleMeta";
 import {
     $conditionalRead,
     $conditionalWrite,
+    $getter,
     $setter,
-    byTheWay,
     filterHandler,
+    is,
+    is_supposedTypesT,
     paramFilterHandler,
     rejectHandler,
 } from "./rulerDecorators";
@@ -49,16 +51,17 @@ export { __Setting };
 // (p) => byTheWay(p, [(g) => console.log("ℹ️ catches", g)]),
 // bug探测仪
 
-// square power of candy
+/**
+ *  square power of candy
+ *  but toxic
+ */
 export const iAgreeAboutThat: (out?: any) => filterHandler & rejectHandler & paramFilterHandler & paramFilterHandler =
     (out?: any): filterHandler & rejectHandler & paramFilterHandler & paramFilterHandler =>
     (...args: any[]) => {
-        return out
-            ? true
-            : {
-                  approached: true,
-                  output: out,
-              };
+        return {
+            approached: true,
+            output: out,
+        };
     };
 
 export const passThat: (out?: any) => {
@@ -70,8 +73,10 @@ export const passThat: (out?: any) => {
         output: out,
     };
 };
-
 //     -------- script candy --------
+
+export const inputTypeis = (type: is_supposedTypesT) => $setter((p) => is(type)(p));
+export const outputTypeis = (type: is_supposedTypesT) => $getter((p) => is(type)(p));
 
 /**
  * *function for lazy you*
@@ -103,6 +108,18 @@ export const watchSet = <T>(
         return value;
     });
 
+/**
+ * block the process if not approached
+ * @param expr function for checking
+ * @param throws error massage
+ * @returns
+ */
+export const forceCheck = (expr: (v: any) => boolean, throws?: any) =>
+    $setter((p) => {
+        if (!expr(p)) throw throws || new Error("Check not passed");
+        return p;
+    });
+
 //     -------- math toy --------
 
 /**
@@ -123,7 +140,7 @@ export const watchSet = <T>(
 export const Int = (onError?: ((v: number | bigint, o?: unknown) => number) | "ceil" | "floor" | "round" | number) =>
     $conditionalWrite<number>(
         "Error",
-        [(p) => !p.output.toString().includes(".")],
+        [(p) => is("Integer")(p.output)],
         [
             (p, fr) =>
                 onError
@@ -198,11 +215,7 @@ export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
                     : v > min;
             },
         ],
-        [
-            (p, fr) => {
-                return { approached: true, output: min };
-            },
-        ]
+        [iAgreeAboutThat(min)]
     );
 
 // coming-soon
@@ -287,15 +300,16 @@ export const stringExcludes = (patten: (RegExp | string)[], replace: string = ""
  *                 要求的模式(字符串或正则表达式)
  */
 export const stringRequires = (...patten: (RegExp | string)[]) =>
-    $conditionalWrite("Warn", [
+    $conditionalWrite("Error", [
         (p) =>
             typeof p.output == "string" &&
             patten.every((pat) => (typeof pat == "string" ? p.output.includes(pat) : pat.test(p.output))),
     ]);
 
-// value limit
+// -------- value limit --------
 
-export const oneOf = (list: any[]) => $conditionalWrite("Warn", [(p) => list.includes(p.output)]);
+export const oneOf = (list: any[]) => $conditionalWrite("Error", [(p) => list.includes(p.output)]);
+export const notOneOf = (list: any[]) => $conditionalWrite("Error", [(p) => !list.includes(p.output)]);
 
 //     -------- authority like --------
 
