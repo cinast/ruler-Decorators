@@ -13,7 +13,6 @@
  *
  * @see src\rulerDecorators.ts
  */
-import { __Setting } from "./moduleMeta";
 /**
  * @switch `__Setting["debugLogger.logInnerDetails"]`
  *
@@ -49,7 +48,7 @@ export declare function debugLogger(f: Function, ...args: any[]): any;
  *   ) {}
  * }
  */
-export declare function $debugger(logArgs?: boolean, ...debuggers: (string | ((...args: any[]) => any))[]): any extends (typeof __Setting)["$debug.allowUsing"] ? ClassDecorator & MethodDecorator & PropertyDecorator & ParameterDecorator : void;
+export declare function $debugger(logArgs?: boolean, ...debuggers: (any | ((...args: any[]) => any))[]): ClassDecorator & MethodDecorator & PropertyDecorator & ParameterDecorator;
 /**
  * triple
  */

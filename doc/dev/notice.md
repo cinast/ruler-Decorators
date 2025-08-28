@@ -25,7 +25,9 @@
 
     -   代理模式，包含：
         -   **class-proxy**: 监控整个对象
-        -   **property-proxy**: 监控特定属性
+        -   **property-proxy**: 监控特定属性  
+            ⚠️ 由于技术限制，需要在 class 头顶加@$$init()  
+            实际上这个模式是由 cls-proxy 驱动的
 
 3.  **function-param-accessor**
 

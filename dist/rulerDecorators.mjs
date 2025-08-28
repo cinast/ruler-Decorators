@@ -161,7 +161,7 @@ function debugLogger(f, ...args) {
   if (__Setting["debugLogger.logInnerDetails"]) return f(...args);
 }
 function $debugger(logArgs = false, ...debuggers) {
-  if (!__Setting["$debug.allowUsing"]) return;
+  if (!__Setting["$debug.allowUsing"]) throw new Error("$debugger baned,\nsee __Setting.$debug.allowUsing\n[status: false]");
   const shouldLogArgs = typeof logArgs === "boolean" ? logArgs : false;
   const debugHandlers = typeof logArgs === "boolean" ? debuggers : [logArgs, ...debuggers].filter(Boolean);
   return function(...args) {
@@ -173,8 +173,7 @@ function $debugger(logArgs = false, ...debuggers) {
     if (__Setting["$debug.callHandles"])
       debugHandlers.forEach((debug, i) => {
         try {
-          if (typeof debug === "string" && __Setting["$debug.enableLog"]) console.log(`\u{1F4E2} ${debug}`);
-          else if (typeof debug === "function" && __Setting["$debug.callHandles"]) {
+          if (typeof debug === "function" && __Setting["$debug.callHandles"]) {
             const result = debug(...args);
             if (__Setting["$debug.enableLog"])
               console.log({
@@ -182,6 +181,7 @@ function $debugger(logArgs = false, ...debuggers) {
                 message: `\u{1F4E2} Debugger result: ${result}`
               });
           }
+          if (__Setting["$debug.enableLog"]) console.log(`\u{1F4E2} ${debug}`);
         } catch (e) {
           if (__Setting["$debug.enableWarn"]) console.error(`\u26A0\uFE0F Debug handler[${i}] error:`, e);
         }
@@ -718,7 +718,6 @@ var alwaysNegative = $conditionalWrite("Warn", [(p) => p.output < 0]);
 var minimum = (min, allowEqual = true) => $conditionalWrite(
   "ignore",
   [
-    (p) => byTheWay(p, [(g) => console.log("\u2139\uFE0F catches", g)]),
     (p) => {
       const v = p.output;
       return allowEqual ? typeof v == "number" ? v >= Number(min) : v >= min : typeof v == "number" ? v > Number(min) : v > min;
@@ -900,16 +899,16 @@ function $$init(...args) {
         if (classProxyDescriptor.ClassProxyEnabled) {
           $markPropertyAsClassProxyManaged(targetObj, key);
         }
+        rdDescriptor.setters = [
+          ...rdDescriptor.setters || [],
+          ...handlers.length > 0 ? handlers[0] : []
+        ];
+        rdDescriptor.getters = [
+          ...rdDescriptor.getters || [],
+          ...handlers.length > 1 ? handlers[1] : []
+        ];
         switch (driveMod) {
           case "accessor":
-            rdDescriptor.setters = [
-              ...rdDescriptor.setters || [],
-              ...handlers.length > 0 ? handlers[0] : []
-            ];
-            rdDescriptor.getters = [
-              ...rdDescriptor.getters || [],
-              ...handlers.length > 1 ? handlers[1] : []
-            ];
             if (!classProxyDescriptor.ClassProxyEnabled) {
               if (!valueStorage.has(targetObj)) {
                 valueStorage.set(targetObj, /* @__PURE__ */ new Map());
@@ -939,9 +938,6 @@ function $$init(...args) {
           case "proxy":
             const propertyModes = getPropertyModes(targetObj);
             propertyModes.set(key, "proxy");
-            if (descriptor) {
-              return descriptor;
-            }
             break;
         }
         break;

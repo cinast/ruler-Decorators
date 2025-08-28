@@ -187,7 +187,6 @@ export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
     $conditionalWrite<number | bigint>(
         "ignore",
         [
-            (p) => byTheWay(p, [(g) => console.log("ℹ️ catches", g)]),
             (p) => {
                 const v = p.output;
                 return allowEqual

@@ -1,22 +1,14 @@
 import {
-    processIt,
-    descriptorStorage,
-    $ClassProxy,
-    $getter,
-    $paramChecker,
-    $PropertyProxy,
-    valueStorage,
-} from "./../src/rulerDecorators";
-import {
     $$init,
     $conditionalRead,
     $conditionalWrite,
+    $debugger,
     $setter,
     getDescriptor,
     rulerDecorators,
     valueRecorder,
 } from "../src/rulerDecorators";
-import { iAgreeAboutThat } from "../src/rulesLibrary";
+import { $ClassProxy, $getter, $paramChecker, $PropertyProxy, descriptorStorage, valueStorage } from "./../src/rulerDecorators";
 
 rulerDecorators.__Setting.godMod();
 
@@ -188,14 +180,18 @@ console.log("getInfo():", classProxyTest.getInfo());
 // ==================== 4. 属性代理模式测试 ====================
 console.log("\n4. 属性代理模式测试");
 
+@$$init()
 class PropertyProxyTest {
     @$$init("property-proxy")
-    @$PropertyProxy()
     @rulerDecorators.range(1, 10)
     ratedValue: number = 5;
 
-    @$$init()
+    @$setter<number>((p, v) => {
+        console.log(p);
+        return p;
+    })
     @rulerDecorators.alwaysPositive
+    @$$init("property-proxy")
     normalValue: number = -5;
 
     constructor() {

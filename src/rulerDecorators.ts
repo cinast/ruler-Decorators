@@ -29,6 +29,7 @@ import {
     createClassProxy,
     createParamWrapperFilter,
     createParamWrapperReject,
+    createPropertyProxy,
     getDecoratedPropertyCount,
     getDescriptor,
     getPropertyModes,
@@ -209,6 +210,7 @@ export function $$init<T = any>(...args: any[]) {
                               if (driveMod === "proxy") {
                                   return createClassProxy(this, target.prototype);
                               } else {
+                                  // 我不知道，但是先留着
                                   return createAccessorInterception(this, target.prototype);
                               }
                           }
@@ -226,18 +228,18 @@ export function $$init<T = any>(...args: any[]) {
                     $markPropertyAsClassProxyManaged(targetObj, key);
                 }
 
+                // 注册句柄
+                rdDescriptor.setters = [
+                    ...(rdDescriptor.setters || []),
+                    ...(handlers.length > 0 ? (handlers[0] as unknown as rd_SetterHandle[]) : []),
+                ];
+                rdDescriptor.getters = [
+                    ...(rdDescriptor.getters || []),
+                    ...(handlers.length > 1 ? (handlers[1] as unknown as rd_GetterHandle[]) : []),
+                ];
+
                 switch (driveMod) {
                     case "accessor":
-                        // 注册句柄
-                        rdDescriptor.setters = [
-                            ...(rdDescriptor.setters || []),
-                            ...(handlers.length > 0 ? (handlers[0] as unknown as rd_SetterHandle[]) : []),
-                        ];
-                        rdDescriptor.getters = [
-                            ...(rdDescriptor.getters || []),
-                            ...(handlers.length > 1 ? (handlers[1] as unknown as rd_GetterHandle[]) : []),
-                        ];
-
                         if (!classProxyDescriptor.ClassProxyEnabled) {
                             // 初始化值存储
                             if (!valueStorage.has(targetObj)) {
@@ -286,9 +288,7 @@ export function $$init<T = any>(...args: any[]) {
                         // 属性代理模式下，设置属性模式
                         const propertyModes = getPropertyModes(targetObj);
                         propertyModes.set(key, "proxy");
-                        if (descriptor) {
-                            return descriptor;
-                        }
+
                         break;
                 }
 
@@ -505,6 +505,7 @@ export const $conditionalWrite = <R = any, I = R>(
             | {
                   approached: false;
                   output: any;
+                  // 本来想写never的
               } = handlersArray.reduce<{ approached: boolean; output: any }>(
             (lastProcess, handler, idx, arr) => {
                 const r = handler(lastProcess, value, target, key, { currentIndex: idx, handlers: arr });
@@ -552,6 +553,7 @@ export const $conditionalWrite = <R = any, I = R>(
         return target[key];
     });
 };
+
 /**
  * Conditional read decorator factory
  * 条件读取装饰器工厂

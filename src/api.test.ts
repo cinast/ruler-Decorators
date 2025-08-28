@@ -57,11 +57,9 @@ export function debugLogger(f: Function, ...args: any[]) {
  */
 export function $debugger(
     logArgs: boolean = false,
-    ...debuggers: (string | ((...args: any[]) => any))[]
-): any extends (typeof __Setting)["$debug.allowUsing"]
-    ? ClassDecorator & MethodDecorator & PropertyDecorator & ParameterDecorator
-    : void {
-    if (!__Setting["$debug.allowUsing"]) return;
+    ...debuggers: (any | ((...args: any[]) => any))[]
+): ClassDecorator & MethodDecorator & PropertyDecorator & ParameterDecorator {
+    if (!__Setting["$debug.allowUsing"]) throw new Error("$debugger baned,\nsee __Setting.$debug.allowUsing\n[status: false]");
 
     const shouldLogArgs = typeof logArgs === "boolean" ? logArgs : false;
     const debugHandlers = typeof logArgs === "boolean" ? debuggers : [logArgs, ...debuggers].filter(Boolean);
@@ -77,8 +75,7 @@ export function $debugger(
         if (__Setting["$debug.callHandles"])
             debugHandlers.forEach((debug, i) => {
                 try {
-                    if (typeof debug === "string" && __Setting["$debug.enableLog"]) console.log(`📢 ${debug}`);
-                    else if (typeof debug === "function" && __Setting["$debug.callHandles"]) {
+                    if (typeof debug === "function" && __Setting["$debug.callHandles"]) {
                         const result = debug(...args);
                         if (__Setting["$debug.enableLog"])
                             console.log({
@@ -86,6 +83,7 @@ export function $debugger(
                                 message: `📢 Debugger result: ${result}`,
                             });
                     }
+                    if (__Setting["$debug.enableLog"]) console.log(`📢 ${debug}`);
                 } catch (e) {
                     if (__Setting["$debug.enableWarn"]) console.error(`⚠️ Debug handler[${i}] error:`, e);
                 }
