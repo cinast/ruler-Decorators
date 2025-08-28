@@ -166,10 +166,7 @@ class SecureData {
 
     ```ts
     class UserForm {
-        @$conditionalWrite(
-            "ignore",
-            [(p, v) => (p ? Number(v) : v)] // 自动转换为数字
-        )
+        @setter((p, v) => (p ? v : Number(v)))
         @inputTypeis("NaN")
         age: number = 0;
     }
