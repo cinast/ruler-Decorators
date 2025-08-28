@@ -87,7 +87,7 @@ export const outputTypeis = (type: is_supposedTypesT) => $getter((p) => is(type)
  * @param args args[0] value of property
  * @returns processed thing
  */
-export const auto = (handler: Function, ...args: any[]) => $setter((_, __, v) => handler(v));
+export const auto = (handler: Function, ...args: any[]) => $setter((p) => handler(p));
 
 /**
  * Intercept when it gonna change, do sth other but not disturb it
@@ -220,7 +220,7 @@ export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
 
 // coming-soon
 // export const interval = (min: bigint | number, max: bigint | number, leftEqual: boolean = true, rightEqual: boolean = true) =>
-//     $conditionalWrite<number | bigint>((_, __, v) => {});
+//     $conditionalWrite<number | bigint>((pv) => {});
 
 /**
  * Maximum value validator decorator
