@@ -137,9 +137,12 @@ export const forceCheck = (expr: (v: any) => boolean, throws?: any) =>
  * @warning Returns undefined if validation fails and no onError provided
  * @warning 如果验证失败且未提供onError处理，则返回undefined
  */
-export const Int = (onError?: ((v: number | bigint, o?: unknown) => number) | "ceil" | "floor" | "round" | number) =>
+export const Int = (
+    onError?: ((v: number | bigint, o?: unknown) => number) | "ceil" | "floor" | "round" | number,
+    errType: "ignore" | "Warn" | "Error" = "ignore"
+) =>
     $conditionalWrite<number>(
-        "Error",
+        errType,
         [(p) => is("Integer")(p.output)],
         [
             (p, fr) =>
@@ -172,7 +175,8 @@ export const Int = (onError?: ((v: number | bigint, o?: unknown) => number) | "c
  * @returns true if value is positive, false otherwise
  *          如果值为正数返回true，否则返回false
  */
-export const alwaysPositive = $conditionalWrite<bigint | number>("Warn", [(p) => p.output > 0]);
+export const alwaysPositive = (errType: "ignore" | "Warn" | "Error" = "Error") =>
+    $conditionalWrite<bigint | number>(errType, [(p) => p.output > 0]);
 
 /**
  * Negative number validator decorator
@@ -185,7 +189,8 @@ export const alwaysPositive = $conditionalWrite<bigint | number>("Warn", [(p) =>
  * @returns true if value is negative, false otherwise
  *          如果值为负数返回true，否则返回false
  */
-export const alwaysNegative = $conditionalWrite<bigint | number>("Warn", [(p) => p.output < 0]);
+export const alwaysNegative = (errType: "ignore" | "Warn" | "Error" = "Error") =>
+    $conditionalWrite<bigint | number>(errType, [(p) => p.output < 0]);
 
 /**
  * Minimum value validator decorator
@@ -200,9 +205,9 @@ export const alwaysNegative = $conditionalWrite<bigint | number>("Warn", [(p) =>
  * @returns New value if below minimum, original value otherwise
  *          低于最小值时返回新值，否则保持原值
  */
-export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
+export const minimum = (min: bigint | number, allowEqual: boolean = true, errType: "ignore" | "Warn" | "Error" = "ignore") =>
     $conditionalWrite<number | bigint>(
-        "ignore",
+        errType,
         [
             (p) => {
                 const v = p.output;
@@ -235,9 +240,9 @@ export const minimum = (min: bigint | number, allowEqual: boolean = true) =>
  * @returns New value if above maximum, original value otherwise
  *          超过最大值时返回新值，否则保持原值
  */
-export const maximum = (max: bigint | number, allowEqual: boolean = true) =>
+export const maximum = (max: bigint | number, allowEqual: boolean = true, errType: "ignore" | "Warn" | "Error" = "ignore") =>
     $conditionalWrite<number | bigint>(
-        "ignore",
+        errType,
         [
             (p) => {
                 const v = p.output;
@@ -253,8 +258,8 @@ export const maximum = (max: bigint | number, allowEqual: boolean = true) =>
         [iAgreeAboutThat(max)]
     );
 
-export const range = (min: number, max: number) =>
-    $conditionalWrite("ignore", [(p) => passThat(Math.min(Math.max(p.output, min), max))]);
+export const range = (min: number, max: number, errType: "ignore" | "Warn" | "Error" = "ignore") =>
+    $conditionalWrite(errType, [(p) => passThat(Math.min(Math.max(p.output, min), max))]);
 
 //     -------- String  toy --------
 /**
@@ -266,9 +271,13 @@ export const range = (min: number, max: number) =>
  * @param replace - replace excluded string
  *                  替换排除的字符串
  */
-export const stringExcludes = (patten: (RegExp | string)[], replace: string = "") =>
+export const stringExcludes = (
+    patten: (RegExp | string)[],
+    replace: string = "",
+    errType: "ignore" | "Warn" | "Error" = "ignore"
+) =>
     $conditionalWrite(
-        "Warn",
+        errType,
         [
             (p) =>
                 typeof p.output == "string" &&
