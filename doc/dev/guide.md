@@ -92,36 +92,49 @@ _然而陷阱种类不止这两个，[mdn:Proxy](https://mdn.org.cn/en-US/docs/W
 ```ts
 /**
  * @handle_I
- * Handle definition for factoryI
- * Type definition for basic foundation of setter handler
- * setter句柄类型定义
+ * Core setter handler type for factoryI (base level)
+ * 一阶工厂基础setter句柄类型
+ *
+ * @tip Chainable unit in WeakMap-stored handler chain
+ * @tip WeakMap存储的句柄链中的可链式调用单元
+ * @chainable Processed via Array.reduce() in execution flow
+ * @chainable 通过Array.reduce()实现链式执行
  */
-export type rd_SetterHandle = (
+export type rd_SetterHandle<R = any, I = any> = (
+    lastResult: I,
+    value: any,
     target: any,
     attr: string | symbol,
-    value: any,
-    lastResult: unknown,
-    index: number,
-    handlers: rd_SetterHandle[],
+    pipeInfo: {
+        index: number;
+        handlers: rd_SetterHandle[];
+    },
     ...args: any[]
-) => any;
+) => R;
 
 /**
  * @handle_I
- * Handle definition for factoryI
- * Type definition for basic foundation of getter handler
- * getter句柄类型定义
+ * Core getter handler type for factoryI (base level)
+ * 一阶工厂基础getter句柄类型
+ *
+ * @tip Chainable unit in WeakMap-stored handler chain
+ * @tip WeakMap存储的句柄链中的可链式调用单元
+ * @chainable Processed via Array.reduce() in execution flow
+ * @chainable 通过Array.reduce()实现链式执行
  */
-export type rd_GetterHandle = (
+export type rd_GetterHandle<R = any, I = any> = (
+    lastResult: I,
+    value: any,
     target: any,
     attr: string | symbol,
-    lastResult: unknown,
-    index: number,
-    handlers: rd_GetterHandle[],
+    pipeInfo: {
+        index: number;
+        handlers: rd_GetterHandle[];
+    },
     ...args: any[]
-) => any;
+) => R;
 
-/** @2025-8-10 */
+/** @2025-8-28 */
 ```
 
 这些句柄是钩子，针对的是某方面的操作的钩子，  
@@ -150,17 +163,17 @@ export const $conditionalWrite = <T = any>(conditionHandles: FilterHandler[], re
 ```ts
 export const alwaysPositive = $conditionalWrite<bigint | number>(
     [
-        (thisArg, key, v: bigint | number) => {
+        (v: bigint | number) => {
             return v > 0;
         },
 
-        (thisArg, key, v: bigint | number, p) => {
+        (v: bigint | number, p) => {
             console.log("A:alwaysPositive validator called with:", v);
             console.log("A:And I think:" + p.approached ? "yes that can be" : "I think no");
         },
     ],
     [
-        (_, __, ___, p) => {
+        (p) => {
             console.log("Me:WHAT?! EVEN NOT PASSED");
             console.log("Me:FXXK U, IM THE GOD WHO CANT DISOBEY MY ORDER");
             return {
@@ -182,11 +195,11 @@ export const alwaysPositive = $conditionalWrite<bigint | number>(
 你要记得在最后一个回调上加入一个检查关口
 
 ```ts
-export const $conditionalWrite = <T = any>(errorType: "ignore" | "Warn" | "Error", ,conditionHandles: FilterHandler[], rejectHandlers?: rejectionHandler[]) =>{
-    return $getter((thisArg, key, value) => {
+export const $conditionalWrite = <T = any>(errorType: "ignore" | "Warn" | "Error" ,conditionHandles: FilterHandler[], rejectHandlers?: rejectionHandler[]) =>{
+    return $getter((value,thisArg, key) => {
         const callResult = conditionHandles.reduce(
             (lastProcess, handler, idx, arr) => {
-                const r = handler(thisArg, key, value, lastProcess, idx, arr);
+                const r = handler(lastProcess, value, {thisInfo}, {pipeInfo});
                 return typeof r == "boolean"
                     ? {
                           approached: r,

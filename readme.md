@@ -167,9 +167,10 @@ class SecureData {
     ```ts
     class UserForm {
         @$conditionalWrite(
-            [(_, __, v) => !isNaN(Number(v))], // 验证是否为数字
-            [(_, __, v) => Number(v)] // 自动转换为数字
+            "ignore",
+            [(p, v) => (p ? Number(v) : v)] // 自动转换为数字
         )
+        @inputTypeis("NaN")
         age: number = 0;
     }
 
@@ -182,26 +183,22 @@ class SecureData {
 
     ```ts
     class Product {
+        @$debugger(true, "Debugging property")
+
         // 自动保持2位小数，并确保非负数
-        @$conditionalWrite(
-            [(_, __, v) => v >= 0],
-            [
-                (_, __, v) => Math.max(0, parseFloat(v.toFixed(2))), // 处理负数和小数位
-                (_, __, v) => __Setting.priceWarningEnabled && console.warn(`价格调整为${v}`),
-            ]
+        @$setter(
+            (v) => Math.max(0, parseFloat(v.toFixed(2))) // 处理负数和小数位
         )
+        @rulerDecorator.minium(0)
         price: number = 0;
 
         // 折扣率自动限制在0-1之间
-        @minimum(0)
-        @maximum(1)
+        @range(0, 1)
         discount: number = 0;
 
         // 自动计算折后价格（只读）
-        @$getter((_, __, v) => this.price * (1 - this.discount))
-        get finalPrice(): number {
-            return 0;
-        }
+        @$getter(() => this.price * (1 - this.discount))
+        finalPrice: number;
     }
     ```
 
@@ -250,13 +247,13 @@ import { $$init, $conditionalWrite, $conditionalRead } from "ruler-decorators";
 class Example {
     @$$init()
     @$conditionalWrite("Warn", [
-        (obj, key, value) => value % 2 === 0, // 只允许偶数
+        (v) => value % 2 === 0, // 只允许偶数
     ])
     evenNumber = 2;
 
     @$$init()
     @$conditionalRead("Warn", [
-        (obj, key, value) => value > 100, // 只允许读取大于100的值
+        (v) => value > 100, // 只允许读取大于100的值
     ])
     largeNumber = 50;
 }
@@ -293,7 +290,7 @@ import { $$init, $paramChecker } from "ruler-decorators";
 
 class Example {
     @$$init()
-    @$paramChecker((obj, methodName, method, args, prevResult) => {
+    @$paramChecker((p, args) => {
         // 将所有参数转换为正数
         const processedArgs = prevResult.output.map((arg) => (typeof arg === "number" ? Math.abs(arg) : arg));
         return { approached: true, output: processedArgs };
@@ -336,16 +333,19 @@ valueRecorder.redo(example, "value"); // 重做到 3
 import { $$init, $setter, $conditionalWrite } from "ruler-decorators";
 
 // 简单自定义规则
-export const doubleValue = $setter((target, key, value) => {
-    return value * 2;
+export const doubleValue = $setter((p) => {
+    return p * 2;
 });
 
 // 条件自定义规则
 export const positiveOnly = $conditionalWrite(
     "Error",
-    [(target, key, value) => value > 0],
+    [(p) => p > 0],
     [
-        (target, key, value, conditionResult) => 1, // 失败时返回 1
+        () => {
+            approached: true,
+            output: 1
+        }, // 失败时返回 1
     ]
 );
 
