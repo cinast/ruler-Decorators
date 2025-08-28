@@ -338,16 +338,7 @@ export const doubleValue = $setter((p) => {
 });
 
 // 条件自定义规则
-export const positiveOnly = $conditionalWrite(
-    "Error",
-    [(p) => p > 0],
-    [
-        () => {
-            approached: true,
-            output: 1
-        }, // 失败时返回 1
-    ]
-);
+export const positiveOnly = $setter((v) => (v > 0 ? 1 : 2));
 
 class Example {
     @$$init()
